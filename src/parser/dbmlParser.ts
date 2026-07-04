@@ -1,10 +1,12 @@
 import {
+  defaultBadgeVisuals,
   TABLE_MIN_WIDTH,
   TABLE_PADDING_X,
   defaultDiagramVisual,
   defaultRelationVisual,
   defaultTableVisual,
   getTableMinHeight,
+  normalizeGridSize,
 } from "../model/defaults";
 import type {
   Cardinality,
@@ -41,7 +43,8 @@ export function parseDbml(source: string): DiagramModel {
   validateDbmlSyntax(source);
 
   const special = parseSpecialComments(source);
-  const tables = parseTables(source, special.tableProps);
+  const visual = createDiagramVisual(special.diagramProps.visual);
+  const tables = parseTables(source, special.tableProps, visual.defaultTable);
   const enums = parseEnums(source);
   const parsedRelations = dedupeRelations([
     ...parseRefLines(source),
@@ -69,7 +72,7 @@ export function parseDbml(source: string): DiagramModel {
 
   return {
     id: "diagram-main",
-    visual: { ...defaultDiagramVisual, ...(special.diagramProps.visual ?? {}) },
+    visual,
     tables: tablesWithForeignKeys,
     relations,
     groups: special.groups,
@@ -78,14 +81,21 @@ export function parseDbml(source: string): DiagramModel {
   };
 }
 
-function parseTables(source: string, tableProps: Map<string, Partial<TableModel>>): TableModel[] {
+function parseTables(
+  source: string,
+  tableProps: ReturnType<typeof parseSpecialComments>["tableProps"],
+  defaultTable: TableModel["visual"],
+): TableModel[] {
   return scanBlocks(source, "Table").map((block, index) => {
     const tableName = cleanIdentifier(block.name);
     const parsed = parseTableBody(tableName, block.lines);
     const special = tableProps.get(tableName) || tableProps.get(slugify(tableName));
     const measuredWidth = measureWidth(tableName, parsed.columns);
     const measuredHeight = getTableMinHeight(parsed.columns.length);
-    const visual = { ...defaultTableVisual, ...(special?.visual ?? {}) };
+    const usesDefaultStyle = special?.usesDefaultStyle ?? true;
+    const visual = usesDefaultStyle
+      ? { ...defaultTable }
+      : { ...defaultTable, ...(special?.visual ?? {}) };
 
     return {
       id: slugify(tableName),
@@ -94,13 +104,45 @@ function parseTables(source: string, tableProps: Map<string, Partial<TableModel>
       x: special?.x ?? index * 300,
       y: special?.y ?? index * 120,
       width: special?.width || measuredWidth,
-      height: Math.max(special?.height ?? measuredHeight, measuredHeight),
+      height: measuredHeight,
       visual,
+      usesDefaultStyle,
       indexes: parsed.indexes,
       note: parsed.note,
       layoutSource: special?.layoutSource ?? "auto",
     };
   });
+}
+
+function createDiagramVisual(visual?: Partial<DiagramModel["visual"]>): DiagramModel["visual"] {
+  return {
+    backgroundColor: visual?.backgroundColor ?? defaultDiagramVisual.backgroundColor,
+    gridColor: visual?.gridColor ?? defaultDiagramVisual.gridColor,
+    gridSize: normalizeGridSize(visual?.gridSize, defaultDiagramVisual.gridSize),
+    defaultTable: {
+      ...defaultTableVisual,
+      ...(visual?.defaultTable ?? {}),
+    },
+    badges: {
+      primaryKey: {
+        ...defaultBadgeVisuals.primaryKey,
+        ...(visual?.badges?.primaryKey ?? {}),
+      },
+      foreignKey: {
+        ...defaultBadgeVisuals.foreignKey,
+        ...(visual?.badges?.foreignKey ?? {}),
+      },
+      notNull: {
+        ...defaultBadgeVisuals.notNull,
+        ...(visual?.badges?.notNull ?? {}),
+      },
+      unique: {
+        ...defaultBadgeVisuals.unique,
+        ...(visual?.badges?.unique ?? {}),
+      },
+    },
+    savedColors: [...(visual?.savedColors ?? [])],
+  };
 }
 
 function parseTableBody(

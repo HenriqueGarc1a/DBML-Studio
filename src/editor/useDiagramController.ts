@@ -1,8 +1,10 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
+  defaultBadgeVisuals,
   defaultDiagramVisual,
   defaultGroupVisual,
   defaultRelationVisual,
+  defaultTableVisual,
   GROUP_MIN_HEIGHT,
   GROUP_MIN_WIDTH,
   getTableMinHeight,
@@ -12,6 +14,7 @@ import {
 import type {
   ColumnModel,
   DiagramModel,
+  Direction,
   GroupModel,
   Point,
   RelationModel,
@@ -20,7 +23,8 @@ import type {
 } from "../model/types";
 import { exportDbml } from "../exporter/dbmlExporter";
 import { parseDbml } from "../parser/dbmlParser";
-import { makeId, uniqueId } from "../utils/id";
+import { listWorkspaceDbml, saveWorkspaceDbml, sendWorkspaceDbmlBeacon } from "../utils/fileSave";
+import { makeId, slugify, uniqueId } from "../utils/id";
 import { demoDbml } from "./demoDbml";
 
 export interface DiagramController {
@@ -29,6 +33,7 @@ export interface DiagramController {
   diagrams: SavedDiagram[];
   activeDiagramId: string;
   diagramName: string;
+  diagramFilename: string;
   selected: Selection | undefined;
   exportedDbml: string;
   exportedTikz: string;
@@ -47,16 +52,19 @@ export interface DiagramController {
   setDiagramName: (value: string) => void;
   createDiagram: () => Promise<void>;
   openDiagram: (id: string) => Promise<void>;
-  deleteDiagram: () => Promise<void>;
   applyAutoLayout: () => Promise<void>;
-  saveLayoutToEditor: () => Promise<void>;
+  saveLayoutToEditor: () => Promise<string>;
   updateDiagramVisual: (patch: Partial<DiagramModel["visual"]>) => void;
+  addTable: () => void;
   updateTable: (id: string, patch: Partial<TableModel>) => void;
   moveTable: (id: string, dx: number, dy: number) => void;
-  resizeTable: (id: string, width: number, height: number) => void;
+  resizeTable: (id: string, width: number) => void;
+  removeTable: (id: string) => void;
   addColumn: (tableId: string) => void;
   updateColumn: (tableId: string, columnId: string, patch: Partial<ColumnModel>) => void;
   removeColumn: (tableId: string, columnId: string) => void;
+  addRelation: (fromTableId: string, fromColumn: string, toTableId: string, toColumn: string) => void;
+  removeRelation: (id: string) => void;
   updateRelation: (id: string, patch: Partial<RelationModel>) => void;
   resetRelation: (id: string) => void;
   addViaPoint: (id: string, point: Point) => void;
@@ -66,6 +74,7 @@ export interface DiagramController {
   moveGroup: (id: string, dx: number, dy: number) => void;
   resizeGroup: (id: string, width: number, height: number) => void;
   addGroup: () => void;
+  removeGroup: (id: string) => void;
   sendGroupBackward: (id: string) => void;
   bringGroupForward: (id: string) => void;
 }
@@ -75,11 +84,12 @@ export interface SavedDiagram {
   name: string;
   dbml: string;
   updatedAt: number;
+  filename?: string;
 }
 
 const emptyDiagram: DiagramModel = {
   id: "diagram-main",
-  visual: { ...defaultDiagramVisual },
+  visual: createDiagramVisual(),
   tables: [],
   relations: [],
   groups: [],
@@ -90,6 +100,7 @@ const emptyDiagram: DiagramModel = {
 const LEGACY_SAVED_DBML_KEY = "dbml-studio-saved-dbml";
 const DIAGRAMS_STORAGE_KEY = "dbml-studio-diagrams";
 const ACTIVE_DIAGRAM_STORAGE_KEY = "dbml-studio-active-diagram-id";
+const ACTIVE_DIAGRAM_FILENAME_STORAGE_KEY = "dbml-studio-active-diagram-filename";
 const MAX_HISTORY_ENTRIES = 80;
 
 interface DiagramHistory {
@@ -103,6 +114,11 @@ interface DiagramLibrary {
   diagrams: SavedDiagram[];
   activeDiagramId: string;
   activeDiagram: SavedDiagram;
+}
+
+interface PersistedDiagramSnapshot {
+  name: string;
+  dbml: string;
 }
 
 export function useDiagramController(): DiagramController {
@@ -134,6 +150,7 @@ export function useDiagramController(): DiagramController {
   const initialRelationsRef = useRef(new Map<string, RelationModel>());
   const parseRevisionRef = useRef(0);
   const lastValidDbmlRef = useRef(initialLibrary.activeDiagram.dbml);
+  const workspaceSaveTimerRef = useRef<number | undefined>();
 
   const bumpHistoryVersion = useCallback(() => setHistoryVersion((version) => version + 1), []);
 
@@ -145,7 +162,7 @@ export function useDiagramController(): DiagramController {
     writeDiagramLibrary(nextDiagrams, nextActiveId);
   }, []);
 
-  const persistCurrentDiagram = useCallback((options: { silent?: boolean } = {}) => {
+  const persistCurrentDiagram = useCallback((options: { silent?: boolean } = {}): PersistedDiagramSnapshot => {
     const id = activeDiagramIdRef.current;
     const now = Date.now();
     const name = normalizeDiagramName(diagramNameRef.current);
@@ -160,7 +177,7 @@ export function useDiagramController(): DiagramController {
     });
 
     if (!found) {
-      nextDiagrams.push({ id, name, dbml, updatedAt: now });
+      nextDiagrams.push({ id, name, dbml, updatedAt: now, filename: dbmlFilename(name) });
     }
 
     commitDiagramLibrary(nextDiagrams, id);
@@ -169,7 +186,35 @@ export function useDiagramController(): DiagramController {
     if (!options.silent) {
       setSaveMessage(`Salvo ${new Date(now).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}`);
     }
+
+    return { name, dbml };
   }, [commitDiagramLibrary]);
+
+  const scheduleWorkspaceSave = useCallback((dbml: string, delay = 800) => {
+    if (!dbml.trim()) return;
+    if (workspaceSaveTimerRef.current !== undefined) {
+      window.clearTimeout(workspaceSaveTimerRef.current);
+    }
+
+    const filename = currentDbmlFilename(
+      diagramsRef.current,
+      activeDiagramIdRef.current,
+      normalizeDiagramName(diagramNameRef.current),
+    );
+
+    workspaceSaveTimerRef.current = window.setTimeout(() => {
+      workspaceSaveTimerRef.current = undefined;
+      void saveWorkspaceDbml(filename, dbml);
+    }, delay);
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      if (workspaceSaveTimerRef.current !== undefined) {
+        window.clearTimeout(workspaceSaveTimerRef.current);
+      }
+    };
+  }, []);
 
   const pushHistory = useCallback((snapshot: DiagramModel) => {
     const history = historyRef.current;
@@ -254,12 +299,59 @@ export function useDiagramController(): DiagramController {
   const updateDbmlText = useCallback((value: string) => {
     setDbmlText(value);
     setSaveMessage("");
-    void importDbmlText(value, { resetHistory: true });
-  }, [importDbmlText]);
+    void importDbmlText(value, { resetHistory: true }).then((valid) => {
+      if (valid) scheduleWorkspaceSave(value);
+    });
+  }, [importDbmlText, scheduleWorkspaceSave]);
 
   useEffect(() => {
-    void importDbmlText(dbmlText);
-  }, []);
+    let cancelled = false;
+
+    async function loadInitialDiagram() {
+      const files = await listWorkspaceDbml();
+
+      if (!cancelled && files?.length) {
+        const nextDiagrams = files.map((file) => ({
+          id: `file:${file.filename}`,
+          name: normalizeDiagramName(file.name),
+          dbml: migrateDarkOnlyDbml(file.dbml),
+          updatedAt: file.updatedAt,
+          filename: file.filename,
+        }));
+        const previousActiveId = activeDiagramIdRef.current;
+        const previousFilename =
+          diagramsRef.current.find((item) => item.id === previousActiveId)?.filename ??
+          localStorage.getItem(ACTIVE_DIAGRAM_FILENAME_STORAGE_KEY);
+        const active =
+          nextDiagrams.find((item) => item.id === previousActiveId) ??
+          nextDiagrams.find((item) => item.filename === previousFilename) ??
+          nextDiagrams[0];
+
+        diagramNameRef.current = active.name;
+        setDiagramNameState(active.name);
+        setDbmlText(active.dbml);
+        lastValidDbmlRef.current = active.dbml;
+        setDbmlError(undefined);
+        commitDiagramLibrary(nextDiagrams, active.id);
+
+        const loaded = await importDbmlText(active.dbml, { resetHistory: true });
+        if (!cancelled) {
+          setSaveMessage(loaded ? "Pasta dbml sincronizada" : "Arquivo DBML invalido");
+        }
+        return;
+      }
+
+      if (!cancelled) {
+        await importDbmlText(lastValidDbmlRef.current, { resetHistory: true });
+      }
+    }
+
+    void loadInitialDiagram();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [commitDiagramLibrary, importDbmlText]);
 
   useEffect(() => {
     let cancelled = false;
@@ -275,6 +367,7 @@ export function useDiagramController(): DiagramController {
           lastValidDbmlRef.current = nextDbml;
           setDbmlText(nextDbml);
           setDbmlError(undefined);
+          scheduleWorkspaceSave(nextDbml);
         }
       }
     }
@@ -284,7 +377,7 @@ export function useDiagramController(): DiagramController {
     return () => {
       cancelled = true;
     };
-  }, [diagram]);
+  }, [diagram, scheduleWorkspaceSave]);
 
 
   const applyAutoLayout = useCallback(async () => {
@@ -301,7 +394,11 @@ export function useDiagramController(): DiagramController {
     lastValidDbmlRef.current = nextDbml;
     setDbmlError(undefined);
     initialRelationsRef.current = new Map(current.relations.map((relation) => [relation.id, relation]));
-    persistCurrentDiagram();
+    const snapshot = persistCurrentDiagram();
+    void saveWorkspaceDbml(currentDbmlFilename(diagramsRef.current, activeDiagramIdRef.current, snapshot.name), snapshot.dbml, {
+      keepalive: true,
+    });
+    return nextDbml;
   }, [persistCurrentDiagram]);
 
   const renameDiagram = useCallback((value: string) => {
@@ -321,7 +418,8 @@ export function useDiagramController(): DiagramController {
   const openDiagram = useCallback(async (id: string) => {
     if (id === activeDiagramIdRef.current) return;
 
-    persistCurrentDiagram({ silent: true });
+    const snapshot = persistCurrentDiagram({ silent: true });
+    void saveWorkspaceDbml(currentDbmlFilename(diagramsRef.current, activeDiagramIdRef.current, snapshot.name), snapshot.dbml);
     const record = diagramsRef.current.find((item) => item.id === id);
     if (!record) return;
 
@@ -338,13 +436,16 @@ export function useDiagramController(): DiagramController {
   }, [importDbmlText, persistCurrentDiagram]);
 
   const createDiagram = useCallback(async () => {
-    persistCurrentDiagram({ silent: true });
+    const snapshot = persistCurrentDiagram({ silent: true });
+    void saveWorkspaceDbml(currentDbmlFilename(diagramsRef.current, activeDiagramIdRef.current, snapshot.name), snapshot.dbml, {
+      keepalive: true,
+    });
 
     const id = uniqueId("diagram");
     const name = nextDiagramName(diagramsRef.current);
     const dbml = createBlankDiagramDbml();
     const now = Date.now();
-    const record: SavedDiagram = { id, name, dbml, updatedAt: now };
+    const record: SavedDiagram = { id, name, dbml, updatedAt: now, filename: dbmlFilename(name) };
     const nextDiagrams = [...diagramsRef.current, record];
 
     diagramNameRef.current = name;
@@ -354,37 +455,14 @@ export function useDiagramController(): DiagramController {
     setDbmlError(undefined);
     setSaveMessage(`Novo ${name}`);
     commitDiagramLibrary(nextDiagrams, id);
+    void saveWorkspaceDbml(record.filename ?? dbmlFilename(name), dbml, { keepalive: true });
     await importDbmlText(dbml, { resetHistory: true });
   }, [commitDiagramLibrary, importDbmlText, persistCurrentDiagram]);
 
-  const deleteDiagram = useCallback(async () => {
-    const currentId = activeDiagramIdRef.current;
-    const deletedName = normalizeDiagramName(diagramNameRef.current);
-    const currentIndex = Math.max(0, diagramsRef.current.findIndex((item) => item.id === currentId));
-    const remaining = diagramsRef.current.filter((item) => item.id !== currentId);
-    const now = Date.now();
-    const nextRecord = remaining[currentIndex] ?? remaining[currentIndex - 1] ?? {
-      id: uniqueId("diagram"),
-      name: "Diagrama 1",
-      dbml: createBlankDiagramDbml(),
-      updatedAt: now,
-    };
-    const nextDiagrams = remaining.length ? remaining : [nextRecord];
-
-    diagramNameRef.current = nextRecord.name;
-    setDiagramNameState(nextRecord.name);
-    setDbmlText(nextRecord.dbml);
-    lastValidDbmlRef.current = nextRecord.dbml;
-    setDbmlError(undefined);
-    setSaveMessage(`Excluido ${deletedName}`);
-    localStorage.setItem(LEGACY_SAVED_DBML_KEY, nextRecord.dbml);
-    commitDiagramLibrary(nextDiagrams, nextRecord.id);
-    await importDbmlText(nextRecord.dbml, { resetHistory: true });
-  }, [commitDiagramLibrary, importDbmlText]);
-
   useEffect(() => {
     const intervalId = window.setInterval(() => {
-      persistCurrentDiagram({ silent: true });
+      const snapshot = persistCurrentDiagram({ silent: true });
+      void saveWorkspaceDbml(currentDbmlFilename(diagramsRef.current, activeDiagramIdRef.current, snapshot.name), snapshot.dbml);
       setSaveMessage(`Autos salvo ${new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}`);
     }, 60_000);
 
@@ -392,14 +470,53 @@ export function useDiagramController(): DiagramController {
   }, [persistCurrentDiagram]);
 
   useEffect(() => {
-    const saveBeforeClose = () => persistCurrentDiagram({ silent: true });
+    const saveBeforeClose = () => {
+      const snapshot = persistCurrentDiagram({ silent: true });
+      const filename = currentDbmlFilename(diagramsRef.current, activeDiagramIdRef.current, snapshot.name);
+
+      if (workspaceSaveTimerRef.current !== undefined) {
+        window.clearTimeout(workspaceSaveTimerRef.current);
+        workspaceSaveTimerRef.current = undefined;
+      }
+
+      if (!sendWorkspaceDbmlBeacon(filename, snapshot.dbml)) {
+        void saveWorkspaceDbml(filename, snapshot.dbml, { keepalive: true });
+      }
+    };
     window.addEventListener("pagehide", saveBeforeClose);
     return () => window.removeEventListener("pagehide", saveBeforeClose);
   }, [persistCurrentDiagram]);
 
   const updateDiagramVisual = useCallback((patch: Partial<DiagramModel["visual"]>) => {
     updateDiagramState((current) => {
-      const visual = { ...current.visual, ...patch };
+      const visual: DiagramModel["visual"] = {
+        ...current.visual,
+        ...patch,
+        defaultTable: {
+          ...current.visual.defaultTable,
+          ...(patch.defaultTable ?? {}),
+        },
+        badges: {
+          primaryKey: {
+            ...current.visual.badges.primaryKey,
+            ...(patch.badges?.primaryKey ?? {}),
+          },
+          foreignKey: {
+            ...current.visual.badges.foreignKey,
+            ...(patch.badges?.foreignKey ?? {}),
+          },
+          notNull: {
+            ...current.visual.badges.notNull,
+            ...(patch.badges?.notNull ?? {}),
+          },
+          unique: {
+            ...current.visual.badges.unique,
+            ...(patch.badges?.unique ?? {}),
+          },
+        },
+        savedColors: patch.savedColors ? normalizeSavedColors(patch.savedColors) : current.visual.savedColors,
+      };
+
       if (patch.gridSize !== undefined) {
         visual.gridSize = normalizeGridSize(patch.gridSize, current.visual.gridSize);
       }
@@ -408,19 +525,54 @@ export function useDiagramController(): DiagramController {
     });
   }, [updateDiagramState]);
 
+  const addTable = useCallback(() => {
+    let tableId = "";
+
+    updateDiagramState((current) => {
+      const name = nextTableName(current.tables);
+      const id = slugify(name);
+      tableId = id;
+      const columns: ColumnModel[] = [];
+      const table: TableModel = {
+        id,
+        name,
+        columns,
+        x: 80 + (current.tables.length % 3) * 300,
+        y: 80 + Math.floor(current.tables.length / 3) * 220,
+        width: TABLE_MIN_WIDTH,
+        height: getTableMinHeight(columns.length),
+        visual: { ...current.visual.defaultTable },
+        usesDefaultStyle: true,
+        indexes: [],
+        layoutSource: "manual",
+      };
+
+      return { ...current, tables: [...current.tables, table] };
+    });
+
+    if (tableId) {
+      setSelected({ type: "table", id: tableId });
+    }
+  }, [updateDiagramState]);
+
   const updateTable = useCallback((id: string, patch: Partial<TableModel>) => {
     updateDiagramState((current) => ({
       ...current,
-      tables: current.tables.map((table) =>
-        table.id === id
-          ? {
-              ...table,
-              ...patch,
-              visual: { ...table.visual, ...(patch.visual ?? {}) },
-              layoutSource: patch.x !== undefined || patch.y !== undefined ? "manual" : table.layoutSource,
-            }
-          : table,
-      ),
+      tables: current.tables.map((table) => {
+        if (table.id !== id) return table;
+
+        const nextTable = {
+          ...table,
+          ...patch,
+          visual: { ...table.visual, ...(patch.visual ?? {}) },
+          layoutSource: patch.x !== undefined || patch.y !== undefined ? "manual" : table.layoutSource,
+        };
+
+        return {
+          ...nextTable,
+          height: getTableMinHeight(nextTable.columns.length),
+        };
+      }),
     }));
   }, [updateDiagramState]);
 
@@ -433,20 +585,24 @@ export function useDiagramController(): DiagramController {
     });
   }, [updateTable]);
 
-  const resizeTable = useCallback((id: string, width: number, height: number) => {
+  const resizeTable = useCallback((id: string, width: number) => {
+    updateTable(id, {
+      width: Math.max(TABLE_MIN_WIDTH, width),
+      layoutSource: "manual",
+    });
+  }, [updateTable]);
+
+  const removeTable = useCallback((id: string) => {
     updateDiagramState((current) => ({
       ...current,
-      tables: current.tables.map((table) =>
-        table.id === id
-          ? {
-              ...table,
-              width: Math.max(TABLE_MIN_WIDTH, width),
-              height: Math.max(getTableMinHeight(table.columns.length), height),
-              layoutSource: "manual",
-            }
-          : table,
-      ),
+      tables: current.tables.filter((table) => table.id !== id),
+      relations: current.relations.filter((relation) => relation.fromTable !== id && relation.toTable !== id),
+      groups: current.groups.map((group) => ({
+        ...group,
+        tables: group.tables.filter((tableId) => tableId !== id),
+      })),
     }));
+    setSelected(undefined);
   }, [updateDiagramState]);
 
   const addColumn = useCallback((tableId: string) => {
@@ -464,7 +620,7 @@ export function useDiagramController(): DiagramController {
         return {
           ...table,
           columns,
-          height: Math.max(table.height, getTableMinHeight(columns.length)),
+          height: getTableMinHeight(columns.length),
           layoutSource: "manual",
         };
       }),
@@ -531,7 +687,7 @@ export function useDiagramController(): DiagramController {
         return {
           ...table,
           columns,
-          height: Math.max(table.height, getTableMinHeight(columns.length)),
+          height: getTableMinHeight(columns.length),
           layoutSource: "manual" as const,
         };
       });
@@ -548,6 +704,103 @@ export function useDiagramController(): DiagramController {
           : current.relations,
       };
     });
+  }, [updateDiagramState]);
+
+  const addRelation = useCallback((
+    fromTableId: string,
+    fromColumn: string,
+    toTableId: string,
+    toColumn: string,
+  ) => {
+    let relationId: string | undefined;
+
+    updateDiagramState((current) => {
+      if (fromTableId === toTableId && fromColumn === toColumn) return current;
+
+      const fromTable = current.tables.find((table) => table.id === fromTableId);
+      const toTable = current.tables.find((table) => table.id === toTableId);
+      if (!fromTable || !toTable) return current;
+
+      const duplicate = current.relations.find((relation) =>
+        relation.fromTable === fromTableId &&
+        relation.fromColumn === fromColumn &&
+        relation.toTable === toTableId &&
+        relation.toColumn === toColumn,
+      );
+      if (duplicate) {
+        relationId = duplicate.id;
+        return current;
+      }
+
+      const [fromSide, toSide] = inferRelationSides(fromTable, toTable);
+      const relation: RelationModel = {
+        id: makeId(
+          "relation",
+          `${fromTable.name}-${fromColumn}-${toTable.name}-${toColumn}`,
+          current.relations.length,
+        ),
+        fromTable: fromTableId,
+        fromColumn,
+        toTable: toTableId,
+        toColumn,
+        ...defaultRelationVisual,
+        fromSide,
+        toSide,
+      };
+      relationId = relation.id;
+
+      return {
+        ...current,
+        tables: current.tables.map((table) =>
+          table.id === fromTableId
+            ? {
+                ...table,
+                columns: table.columns.map((column) =>
+                  column.name === fromColumn ? { ...column, foreignKey: true } : column,
+                ),
+              }
+            : table,
+        ),
+        relations: [...current.relations, relation],
+      };
+    });
+
+    if (relationId) {
+      setSelected({ type: "relation", id: relationId });
+    }
+  }, [updateDiagramState]);
+
+  const removeRelation = useCallback((id: string) => {
+    updateDiagramState((current) => {
+      const removed = current.relations.find((relation) => relation.id === id);
+      const relations = current.relations.filter((relation) => relation.id !== id);
+
+      if (!removed) return { ...current, relations };
+
+      return {
+        ...current,
+        relations,
+        tables: current.tables.map((table) => {
+          if (table.id !== removed.fromTable) return table;
+
+          const stillRelationBacked = relations.some((relation) =>
+            relation.fromTable === removed.fromTable && relation.fromColumn === removed.fromColumn,
+          );
+
+          if (stillRelationBacked) return table;
+
+          return {
+            ...table,
+            columns: table.columns.map((column) =>
+              column.name === removed.fromColumn && !hasManualForeignKeySetting(column)
+                ? { ...column, foreignKey: false }
+                : column,
+            ),
+          };
+        }),
+      };
+    });
+    setSelected(undefined);
   }, [updateDiagramState]);
 
   const updateRelation = useCallback((id: string, patch: Partial<RelationModel>) => {
@@ -644,7 +897,6 @@ export function useDiagramController(): DiagramController {
 
   const addGroup = useCallback(() => {
     const id = uniqueId("group");
-    const tableIds = selected?.type === "table" ? [selected.id] : [];
     const selectedTable = selected?.type === "table"
       ? diagram.tables.find((table) => table.id === selected.id)
       : undefined;
@@ -657,12 +909,20 @@ export function useDiagramController(): DiagramController {
       width: selectedTable ? selectedTable.width + 56 : 420,
       height: selectedTable ? selectedTable.height + 80 : 260,
       ...defaultGroupVisual,
-      tables: tableIds,
+      tables: [],
     };
 
     updateDiagramState((current) => ({ ...current, groups: [...current.groups, group] }));
     setSelected({ type: "group", id });
   }, [diagram.tables, selected, updateDiagramState]);
+
+  const removeGroup = useCallback((id: string) => {
+    updateDiagramState((current) => ({
+      ...current,
+      groups: current.groups.filter((group) => group.id !== id),
+    }));
+    setSelected(undefined);
+  }, [updateDiagramState]);
 
   const sendGroupBackward = useCallback((id: string) => {
     updateDiagramState((current) => {
@@ -737,6 +997,7 @@ export function useDiagramController(): DiagramController {
     diagrams,
     activeDiagramId,
     diagramName,
+    diagramFilename: currentDbmlFilename(diagrams, activeDiagramId, diagramName),
     selected,
     exportedDbml,
     exportedTikz,
@@ -755,16 +1016,19 @@ export function useDiagramController(): DiagramController {
     setDiagramName: renameDiagram,
     createDiagram,
     openDiagram,
-    deleteDiagram,
     applyAutoLayout,
     saveLayoutToEditor,
     updateDiagramVisual,
+    addTable,
     updateTable,
     moveTable,
     resizeTable,
+    removeTable,
     addColumn,
     updateColumn,
     removeColumn,
+    addRelation,
+    removeRelation,
     updateRelation,
     resetRelation,
     addViaPoint,
@@ -774,8 +1038,25 @@ export function useDiagramController(): DiagramController {
     moveGroup,
     resizeGroup,
     addGroup,
+    removeGroup,
     sendGroupBackward,
     bringGroupForward,
+  };
+}
+
+function createDiagramVisual(): DiagramModel["visual"] {
+  return {
+    backgroundColor: defaultDiagramVisual.backgroundColor,
+    gridColor: defaultDiagramVisual.gridColor,
+    gridSize: defaultDiagramVisual.gridSize,
+    defaultTable: { ...defaultTableVisual },
+    badges: {
+      primaryKey: { ...defaultBadgeVisuals.primaryKey },
+      foreignKey: { ...defaultBadgeVisuals.foreignKey },
+      notNull: { ...defaultBadgeVisuals.notNull },
+      unique: { ...defaultBadgeVisuals.unique },
+    },
+    savedColors: [],
   };
 }
 
@@ -809,6 +1090,55 @@ function nextColumnName(columns: ColumnModel[]): string {
   return name;
 }
 
+function nextTableName(tables: TableModel[]): string {
+  const names = new Set(tables.map((table) => table.name));
+  let index = tables.length + 1;
+  let name = `tabela-${index}`;
+
+  while (names.has(name)) {
+    index += 1;
+    name = `tabela-${index}`;
+  }
+
+  return name;
+}
+
+function inferRelationSides(fromTable: TableModel, toTable: TableModel): [Direction, Direction] {
+  const fromCenter = {
+    x: fromTable.x + fromTable.width / 2,
+    y: fromTable.y + fromTable.height / 2,
+  };
+  const toCenter = {
+    x: toTable.x + toTable.width / 2,
+    y: toTable.y + toTable.height / 2,
+  };
+  const dx = toCenter.x - fromCenter.x;
+  const dy = toCenter.y - fromCenter.y;
+
+  if (Math.abs(dx) >= Math.abs(dy)) {
+    return dx >= 0 ? ["east", "west"] : ["west", "east"];
+  }
+
+  return dy >= 0 ? ["south", "north"] : ["north", "south"];
+}
+
+function normalizeSavedColors(colors: DiagramModel["visual"]["savedColors"]): DiagramModel["visual"]["savedColors"] {
+  const seen = new Set<string>();
+  const next: DiagramModel["visual"]["savedColors"] = [];
+
+  for (const [index, item] of colors.entries()) {
+    const color = item.color;
+    if (!/^#[0-9a-fA-F]{3}$/.test(color) && !/^#[0-9a-fA-F]{6}$/.test(color)) continue;
+    const name = item.name.trim() || `Cor ${index + 1}`;
+    const key = `${name.toLowerCase()}|${color.toLowerCase()}`;
+    if (seen.has(key)) continue;
+    seen.add(key);
+    next.push({ name, color });
+  }
+
+  return next;
+}
+
 function normalizeManualForeignKeySetting(column: ColumnModel): ColumnModel {
   const rawSettings = column.rawSettings.filter((setting) => {
     const lower = setting.toLowerCase();
@@ -820,6 +1150,13 @@ function normalizeManualForeignKeySetting(column: ColumnModel): ColumnModel {
   }
 
   return { ...column, rawSettings };
+}
+
+function hasManualForeignKeySetting(column: ColumnModel): boolean {
+  return column.rawSettings.some((setting) => {
+    const lower = setting.toLowerCase();
+    return lower === "fk" || lower === "foreign key" || lower.startsWith("ref:");
+  });
 }
 
 function loadDiagramLibrary(): DiagramLibrary {
@@ -834,10 +1171,15 @@ function loadDiagramLibrary(): DiagramLibrary {
           name: "Diagrama 1",
           dbml: migrateDarkOnlyDbml(legacyDbml ?? demoDbml),
           updatedAt: Date.now(),
+          filename: dbmlFilename("Diagrama 1"),
         },
       ];
   const activeId = localStorage.getItem(ACTIVE_DIAGRAM_STORAGE_KEY);
-  const activeDiagram = diagrams.find((item) => item.id === activeId) ?? diagrams[0];
+  const activeFilename = localStorage.getItem(ACTIVE_DIAGRAM_FILENAME_STORAGE_KEY);
+  const activeDiagram =
+    diagrams.find((item) => item.id === activeId) ??
+    diagrams.find((item) => item.filename === activeFilename) ??
+    diagrams[0];
 
   writeDiagramLibrary(diagrams, activeDiagram.id);
   return {
@@ -862,6 +1204,7 @@ function readStoredDiagrams(): SavedDiagram[] {
         name: normalizeDiagramName(item.name),
         dbml: migrateDarkOnlyDbml(item.dbml),
         updatedAt: item.updatedAt,
+        filename: item.filename ?? dbmlFilename(item.name),
       }));
   } catch {
     return [];
@@ -869,8 +1212,13 @@ function readStoredDiagrams(): SavedDiagram[] {
 }
 
 function writeDiagramLibrary(diagrams: SavedDiagram[], activeDiagramId: string): void {
+  const active = diagrams.find((item) => item.id === activeDiagramId);
+
   localStorage.setItem(DIAGRAMS_STORAGE_KEY, JSON.stringify(diagrams));
   localStorage.setItem(ACTIVE_DIAGRAM_STORAGE_KEY, activeDiagramId);
+  if (active?.filename) {
+    localStorage.setItem(ACTIVE_DIAGRAM_FILENAME_STORAGE_KEY, active.filename);
+  }
 }
 
 function isStoredDiagram(value: unknown): value is SavedDiagram {
@@ -880,7 +1228,8 @@ function isStoredDiagram(value: unknown): value is SavedDiagram {
     typeof item.id === "string" &&
     typeof item.name === "string" &&
     typeof item.dbml === "string" &&
-    typeof item.updatedAt === "number"
+    typeof item.updatedAt === "number" &&
+    (item.filename === undefined || typeof item.filename === "string")
   );
 }
 
@@ -905,6 +1254,15 @@ function createBlankDiagramDbml(): string {
 // gridColor=${defaultDiagramVisual.gridColor}
 // gridSize=${defaultDiagramVisual.gridSize}
 `;
+}
+
+function currentDbmlFilename(diagrams: SavedDiagram[], activeDiagramId: string, diagramName: string): string {
+  return diagrams.find((item) => item.id === activeDiagramId)?.filename ?? dbmlFilename(diagramName);
+}
+
+function dbmlFilename(value: string): string {
+  const cleaned = value.trim().replace(/[^a-zA-Z0-9_-]+/g, "-").replace(/^-+|-+$/g, "") || "diagram";
+  return `${cleaned}.dbml`;
 }
 
 function migrateDarkOnlyDbml(dbml: string): string {

@@ -27,6 +27,7 @@ const table: TableModel = {
     headerColor: "#dbeafe",
     opacity: 1,
   },
+  usesDefaultStyle: false,
   indexes: [],
   layoutSource: "manual",
 };

@@ -22,6 +22,7 @@ const table: TableModel = {
   width: 220,
   height: 120,
   visual: defaultTableVisual,
+  usesDefaultStyle: false,
   indexes: [],
   layoutSource: "manual",
 };

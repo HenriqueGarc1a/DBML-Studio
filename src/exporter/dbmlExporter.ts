@@ -24,12 +24,27 @@ export function exportDbml(diagram: DiagramModel): string {
 }
 
 function exportDiagram(diagram: DiagramModel): string {
+  const { visual } = diagram;
+  const badgeComments = [
+    ...exportBadge("pk", visual.badges.primaryKey),
+    ...exportBadge("fk", visual.badges.foreignKey),
+    ...exportBadge("notNull", visual.badges.notNull),
+    ...exportBadge("unique", visual.badges.unique),
+  ];
+
   return [
     "// @diagram",
-    `// background=${diagram.visual.backgroundColor}`,
-    `// gridColor=${diagram.visual.gridColor}`,
-    `// gridSize=${round(diagram.visual.gridSize, 0)}`,
-  ].join("\n");
+    `// background=${visual.backgroundColor}`,
+    `// gridColor=${visual.gridColor}`,
+    `// gridSize=${round(visual.gridSize, 0)}`,
+    `// tableBackground=${visual.defaultTable.backgroundColor}`,
+    `// tableBorder=${visual.defaultTable.borderColor}`,
+    `// tableHeader=${visual.defaultTable.headerColor}`,
+    `// tableText=${visual.defaultTable.textColor}`,
+    `// tableOpacity=${round(visual.defaultTable.opacity, 2)}`,
+    ...badgeComments,
+    visual.savedColors.length ? `// savedColors=${visual.savedColors.map(exportSavedColor).join(",")}` : "",
+  ].filter(Boolean).join("\n");
 }
 
 function exportTable(table: TableModel): string {
@@ -39,11 +54,16 @@ function exportTable(table: TableModel): string {
     `// y=${round(table.y)}`,
     `// width=${round(table.width)}`,
     `// height=${round(table.height)}`,
-    `// background=${table.visual.backgroundColor}`,
-    `// border=${table.visual.borderColor}`,
-    `// header=${table.visual.headerColor}`,
-    `// text=${table.visual.textColor}`,
-    `// opacity=${round(table.visual.opacity, 2)}`,
+    `// useDefaultStyle=${table.usesDefaultStyle}`,
+    ...(!table.usesDefaultStyle
+      ? [
+          `// background=${table.visual.backgroundColor}`,
+          `// border=${table.visual.borderColor}`,
+          `// header=${table.visual.headerColor}`,
+          `// text=${table.visual.textColor}`,
+          `// opacity=${round(table.visual.opacity, 2)}`,
+        ]
+      : []),
   ];
 
   const columns = table.columns.map((column) => `  ${exportColumn(column)}`);
@@ -68,6 +88,21 @@ function exportTable(table: TableModel): string {
     ...note,
     ...indexes,
   ].join("\n")}\n}`;
+}
+
+function exportBadge(
+  prefix: "pk" | "fk" | "notNull" | "unique",
+  visual: DiagramModel["visual"]["badges"]["primaryKey"],
+): string[] {
+  return [
+    `// ${prefix}BadgeBackground=${visual.backgroundColor}`,
+    `// ${prefix}BadgeBorder=${visual.borderColor}`,
+    `// ${prefix}BadgeText=${visual.textColor}`,
+  ];
+}
+
+function exportSavedColor(item: DiagramModel["visual"]["savedColors"][number]): string {
+  return `${encodeURIComponent(item.name)}:${item.color}`;
 }
 
 function exportColumn(column: ColumnModel): string {
@@ -138,7 +173,6 @@ function exportGroup(group: GroupModel): string {
     `// background=${group.backgroundColor}`,
     `// border=${group.borderColor}`,
     `// opacity=${round(group.opacity, 2)}`,
-    `// tables=${group.tables.join(",")}`,
   ].join("\n");
 }
 

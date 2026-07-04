@@ -1,4 +1,4 @@
-import type { DiagramVisual, GroupModel, RelationModel, TableVisual } from "./types";
+import type { BadgeVisualSet, DiagramVisual, GroupModel, RelationModel, TableVisual } from "./types";
 
 export const TABLE_HEADER_HEIGHT = 38;
 export const TABLE_ROW_HEIGHT = 28;
@@ -12,7 +12,7 @@ export const DIAGRAM_MIN_GRID_SIZE = 2;
 export const DIAGRAM_MAX_GRID_SIZE = 128;
 
 export function getTableMinHeight(columnCount: number): number {
-  return Math.max(TABLE_MIN_HEIGHT, TABLE_HEADER_HEIGHT + columnCount * TABLE_ROW_HEIGHT);
+  return TABLE_HEADER_HEIGHT + columnCount * TABLE_ROW_HEIGHT;
 }
 
 export function normalizeGridSize(value: unknown, fallback = DIAGRAM_DEFAULT_GRID_SIZE): number {
@@ -29,10 +29,41 @@ export const defaultTableVisual: TableVisual = {
   opacity: 1,
 };
 
+export const defaultBadgeVisuals: BadgeVisualSet = {
+  primaryKey: {
+    backgroundColor: "#3f2d12",
+    borderColor: "#f59e0b",
+    textColor: "#fcd34d",
+  },
+  foreignKey: {
+    backgroundColor: "#12312e",
+    borderColor: "#2dd4bf",
+    textColor: "#99f6e4",
+  },
+  notNull: {
+    backgroundColor: "#3b1620",
+    borderColor: "#fb7185",
+    textColor: "#fecdd3",
+  },
+  unique: {
+    backgroundColor: "#1e1b4b",
+    borderColor: "#818cf8",
+    textColor: "#c7d2fe",
+  },
+};
+
 export const defaultDiagramVisual: DiagramVisual = {
   backgroundColor: "#0f172a",
   gridColor: "#1f2a3a",
   gridSize: DIAGRAM_DEFAULT_GRID_SIZE,
+  defaultTable: { ...defaultTableVisual },
+  badges: {
+    primaryKey: { ...defaultBadgeVisuals.primaryKey },
+    foreignKey: { ...defaultBadgeVisuals.foreignKey },
+    notNull: { ...defaultBadgeVisuals.notNull },
+    unique: { ...defaultBadgeVisuals.unique },
+  },
+  savedColors: [],
 };
 
 export const defaultRelationVisual: Pick<

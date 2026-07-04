@@ -79,7 +79,7 @@ export function measureTable(table: TableModel): TableModel {
   return {
     ...table,
     width: Math.max(table.width || 0, TABLE_MIN_WIDTH, longestColumn * 8 + TABLE_PADDING_X * 2 + 70),
-    height: Math.max(table.height || 0, getTableMinHeight(table.columns.length)),
+    height: getTableMinHeight(table.columns.length),
   };
 }
 

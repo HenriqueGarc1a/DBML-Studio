@@ -5,6 +5,15 @@ const source = `// @diagram
 // background=#eef2ff
 // gridColor=#c7d2fe
 // gridSize=12
+// tableBackground=#101827
+// tableBorder=#22c55e
+// tableHeader=#14532d
+// tableText=#f8fafc
+// tableOpacity=0.9
+// uniqueBadgeBackground=#312e81
+// uniqueBadgeBorder=#a5b4fc
+// uniqueBadgeText=#eef2ff
+// savedColors=Principal:#22c55e,Apoio:#a5b4fc
 
 // @table user
 // x=10
@@ -65,13 +74,22 @@ describe("parseDbml", () => {
     expect(diagram.visual.backgroundColor).toBe("#eef2ff");
     expect(diagram.visual.gridColor).toBe("#c7d2fe");
     expect(diagram.visual.gridSize).toBe(12);
+    expect(diagram.visual.defaultTable.borderColor).toBe("#22c55e");
+    expect(diagram.visual.badges.unique.borderColor).toBe("#a5b4fc");
+    expect(diagram.visual.savedColors).toEqual([
+      { name: "Principal", color: "#22c55e" },
+      { name: "Apoio", color: "#a5b4fc" },
+    ]);
 
     const user = diagram.tables.find((table) => table.id === "user");
     expect(user?.x).toBe(10);
+    expect(user?.usesDefaultStyle).toBe(false);
     expect(user?.visual.borderColor).toBe("#2563eb");
     expect(user?.columns[0].primaryKey).toBe(true);
 
     const project = diagram.tables.find((table) => table.id === "project");
+    expect(project?.usesDefaultStyle).toBe(true);
+    expect(project?.visual.borderColor).toBe("#22c55e");
     expect(project?.columns.find((column) => column.name === "user_id")?.foreignKey).toBe(true);
 
     expect(diagram.relations[0]).toMatchObject({

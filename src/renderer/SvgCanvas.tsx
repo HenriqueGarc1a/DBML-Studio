@@ -3,10 +3,11 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import {
   FolderPlus,
   GripVertical,
-  LayoutTemplate,
+  Link2,
   Magnet,
   Maximize2,
   Redo2,
+  Table2,
   Undo2,
   ZoomIn,
   ZoomOut,
@@ -29,7 +30,6 @@ import { buildJumpPath } from "../utils/lineJumps";
 import { distributeRelationEndpoints } from "../utils/relationLayout";
 import {
   fitViewBoxToAspect,
-  getZoom,
   panViewBox,
   unionViewBox,
   zoomViewBox,
@@ -37,8 +37,8 @@ import {
 } from "../utils/viewport";
 import { GroupNode } from "./GroupNode";
 import { RelationPath } from "./RelationPath";
-import type { ResizeCorner } from "./ResizeHandles";
-import { TableNode } from "./TableNode";
+import type { ResizeHandle } from "./ResizeHandles";
+import { TableNode, type RelationFieldEndpoint } from "./TableNode";
 
 interface ResizeOrigin {
   x: number;
@@ -57,7 +57,7 @@ type DragState =
   | {
       kind: "table-resize";
       id: string;
-      corner: ResizeCorner;
+      handle: ResizeHandle;
       start: Point;
       origin: ResizeOrigin;
     }
@@ -70,7 +70,7 @@ type DragState =
   | {
       kind: "group-resize";
       id: string;
-      corner: ResizeCorner;
+      handle: ResizeHandle;
       start: Point;
       origin: ResizeOrigin;
     }
@@ -102,6 +102,8 @@ export function SvgCanvas({ controller, svgRef: externalSvgRef }: SvgCanvasProps
   const [canvasSize, setCanvasSize] = useState({ width: 1200, height: 800 });
   const [zoomPanelPosition, setZoomPanelPosition] = useState<Point>({ x: 12, y: 12 });
   const [zoomPanelDrag, setZoomPanelDrag] = useState<{ pointerStart: Point; origin: Point } | undefined>();
+  const [relationMode, setRelationMode] = useState(false);
+  const [relationSource, setRelationSource] = useState<RelationFieldEndpoint | undefined>();
   const computedBounds = useMemo(
     () => getTableBounds(controller.diagram.tables),
     [controller.diagram.tables],
@@ -120,7 +122,6 @@ export function SvgCanvas({ controller, svgRef: externalSvgRef }: SvgCanvasProps
     () => distributeRelationEndpoints(controller.diagram.relations, tableMap),
     [controller.diagram.relations, tableMap],
   );
-  const zoom = getZoom(computedBounds, viewport);
   const selected = controller.selected;
   const gridSize = controller.diagram.visual.gridSize;
   const paintBounds = useMemo(
@@ -195,6 +196,14 @@ export function SvgCanvas({ controller, svgRef: externalSvgRef }: SvgCanvasProps
     }
   }, [canvasSize.height, canvasSize.width, computedBounds, lastTableSignature, tableSignature]);
 
+  useEffect(() => {
+    if (!relationSource) return;
+    const table = tableMap.get(relationSource.tableId);
+    if (!table?.columns.some((column) => column.id === relationSource.columnId)) {
+      setRelationSource(undefined);
+    }
+  }, [relationSource, tableMap]);
+
   const toSvgPoint = (event: Pick<PointerEvent | MouseEvent, "clientX" | "clientY">): Point => {
     const svg = svgRef.current;
     if (!svg) return { x: event.clientX, y: event.clientY };
@@ -233,9 +242,9 @@ export function SvgCanvas({ controller, svgRef: externalSvgRef }: SvgCanvasProps
     if (drag.kind === "table-resize") {
       const table = tableMap.get(drag.id);
       if (!table) return;
-      const next = resizeBoxFromCorner(
+      const next = resizeTableWidthFromHandle(
         drag.origin,
-        drag.corner,
+        drag.handle,
         drag.start,
         point,
         TABLE_MIN_WIDTH,
@@ -259,7 +268,7 @@ export function SvgCanvas({ controller, svgRef: externalSvgRef }: SvgCanvasProps
     if (drag.kind === "group-resize") {
       const next = resizeBoxFromCorner(
         drag.origin,
-        drag.corner,
+        drag.handle,
         drag.start,
         point,
         GROUP_MIN_WIDTH,
@@ -378,6 +387,30 @@ export function SvgCanvas({ controller, svgRef: externalSvgRef }: SvgCanvasProps
     controller.setSelected({ type: "relation", id: relation.id });
   };
 
+  const selectRelationField = (table: TableModel, column: TableModel["columns"][number]) => {
+    if (!relationMode) return;
+
+    const endpoint: RelationFieldEndpoint = {
+      tableId: table.id,
+      columnId: column.id,
+      columnName: column.name,
+    };
+
+    if (!relationSource) {
+      setRelationSource(endpoint);
+      return;
+    }
+
+    if (relationSource.tableId === endpoint.tableId && relationSource.columnId === endpoint.columnId) {
+      setRelationSource(undefined);
+      return;
+    }
+
+    controller.addRelation(relationSource.tableId, relationSource.columnName, endpoint.tableId, endpoint.columnName);
+    setRelationSource(undefined);
+    setRelationMode(false);
+  };
+
   const beginZoomPanelDrag = (event: PointerEvent<HTMLButtonElement>) => {
     event.preventDefault();
     event.stopPropagation();
@@ -416,7 +449,7 @@ export function SvgCanvas({ controller, svgRef: externalSvgRef }: SvgCanvasProps
     <>
       <svg
         ref={svgRef}
-        className={`diagram-canvas${drag?.kind === "pan" ? " is-panning" : ""}`}
+        className={`diagram-canvas${drag?.kind === "pan" ? " is-panning" : ""}${relationMode ? " is-relation-mode" : ""}`}
         viewBox={`${viewport.x} ${viewport.y} ${viewport.width} ${viewport.height}`}
         data-export-viewbox={`${computedBounds.x} ${computedBounds.y} ${computedBounds.width} ${computedBounds.height}`}
         onPointerMove={onPointerMove}
@@ -468,7 +501,7 @@ export function SvgCanvas({ controller, svgRef: externalSvgRef }: SvgCanvasProps
               beginSvgDrag(event, {
                 kind: "group-resize",
                 id: item.id,
-                corner,
+                handle: corner,
                 start: toSvgPoint(event),
                 origin: { x: item.x, y: item.y, width: item.width, height: item.height },
               });
@@ -506,7 +539,11 @@ export function SvgCanvas({ controller, svgRef: externalSvgRef }: SvgCanvasProps
           <TableNode
             key={table.id}
             table={table}
+            defaultVisual={controller.diagram.visual.defaultTable}
+            badgeVisuals={controller.diagram.visual.badges}
             selected={selected?.type === "table" && selected.id === table.id}
+            relationMode={relationMode}
+            relationSource={relationSource}
             onPointerDown={(event, item) => {
               controller.setSelected({ type: "table", id: item.id });
               beginSvgDrag(event, {
@@ -516,12 +553,17 @@ export function SvgCanvas({ controller, svgRef: externalSvgRef }: SvgCanvasProps
                 origin: { x: item.x, y: item.y },
               });
             }}
+            onColumnPointerDown={(event, item, column) => {
+              event.stopPropagation();
+              event.preventDefault();
+              selectRelationField(item, column);
+            }}
             onResizePointerDown={(event, item, corner) => {
               controller.setSelected({ type: "table", id: item.id });
               beginSvgDrag(event, {
                 kind: "table-resize",
                 id: item.id,
-                corner,
+                handle: corner,
                 start: toSvgPoint(event),
                 origin: { x: item.x, y: item.y, width: item.width, height: item.height },
               });
@@ -545,63 +587,105 @@ export function SvgCanvas({ controller, svgRef: externalSvgRef }: SvgCanvasProps
         >
           <GripVertical size={15} />
         </button>
-        <button
-          type="button"
-          className="icon-button"
-          title="Auto layout"
-          onClick={() => void controller.applyAutoLayout()}
-        >
-          <LayoutTemplate size={16} />
-        </button>
-        <button type="button" className="icon-button" title="Novo grupo" onClick={controller.addGroup}>
-          <FolderPlus size={16} />
-        </button>
-        <button
-          type="button"
-          className={`icon-button${controller.snapToGrid ? " is-toggle-active" : ""}`}
-          title="Snap no grid"
-          aria-pressed={controller.snapToGrid}
-          onClick={() => controller.setSnapToGrid(!controller.snapToGrid)}
-        >
-          <Magnet size={16} />
-        </button>
-        <button
-          type="button"
-          className="icon-button"
-          title="Desfazer"
-          onClick={controller.undo}
-          disabled={!controller.canUndo}
-        >
-          <Undo2 size={16} />
-        </button>
-        <button
-          type="button"
-          className="icon-button"
-          title="Refazer"
-          onClick={controller.redo}
-          disabled={!controller.canRedo}
-        >
-          <Redo2 size={16} />
-        </button>
-        <span className="floating-toolbar-divider" aria-hidden="true" />
-        <button type="button" className="icon-button" title="Diminuir zoom" onClick={() => zoomAt(1 / 1.2)}>
-          <ZoomOut size={16} />
-        </button>
-        <button type="button" className="icon-button" title="Aumentar zoom" onClick={() => zoomAt(1.2)}>
-          <ZoomIn size={16} />
-        </button>
-        <button type="button" className="icon-button" title="Ajustar ao diagrama" onClick={fitDiagram}>
-          <Maximize2 size={16} />
-        </button>
-        <span className="zoom-value">{Math.round(zoom * 100)}%</span>
+        <span className="floating-toolbar-group" aria-label="Historico">
+          <button
+            type="button"
+            className="icon-button"
+            title="Desfazer"
+            onClick={controller.undo}
+            disabled={!controller.canUndo}
+          >
+            <Undo2 size={16} />
+          </button>
+          <button
+            type="button"
+            className="icon-button"
+            title="Refazer"
+            onClick={controller.redo}
+            disabled={!controller.canRedo}
+          >
+            <Redo2 size={16} />
+          </button>
+        </span>
+        <span className="floating-toolbar-group" aria-label="Criacao">
+          <button type="button" className="icon-button" title="Nova tabela" onClick={controller.addTable}>
+            <Table2 size={16} />
+          </button>
+          <button type="button" className="icon-button" title="Novo grupo" onClick={controller.addGroup}>
+            <FolderPlus size={16} />
+          </button>
+        </span>
+        <span className="floating-toolbar-group" aria-label="Ferramentas">
+          <button
+            type="button"
+            className={`icon-button${relationMode ? " is-toggle-active" : ""}`}
+            title={relationSource ? "Campo destino da relacao" : "Nova relacao"}
+            aria-pressed={relationMode}
+            onClick={() => {
+              setRelationMode((active) => !active);
+              setRelationSource(undefined);
+            }}
+          >
+            <Link2 size={16} />
+          </button>
+          <button
+            type="button"
+            className={`icon-button${controller.snapToGrid ? " is-toggle-active" : ""}`}
+            title="Snap no grid"
+            aria-pressed={controller.snapToGrid}
+            onClick={() => controller.setSnapToGrid(!controller.snapToGrid)}
+          >
+            <Magnet size={16} />
+          </button>
+        </span>
+        <span className="floating-toolbar-group" aria-label="Zoom">
+          <button type="button" className="icon-button" title="Diminuir zoom" onClick={() => zoomAt(1 / 1.2)}>
+            <ZoomOut size={16} />
+          </button>
+          <button type="button" className="icon-button" title="Aumentar zoom" onClick={() => zoomAt(1.2)}>
+            <ZoomIn size={16} />
+          </button>
+          <button type="button" className="icon-button" title="Ajustar ao diagrama" onClick={fitDiagram}>
+            <Maximize2 size={16} />
+          </button>
+        </span>
       </div>
     </>
   );
 }
 
+function resizeTableWidthFromHandle(
+  origin: ResizeOrigin,
+  handle: ResizeHandle,
+  start: Point,
+  point: Point,
+  minWidth: number,
+  height: number,
+  snapToGrid: boolean,
+  gridSize: number,
+): ResizeOrigin {
+  const snap = (value: number) => (snapToGrid ? snapValue(value, gridSize) : value);
+  const dx = point.x - start.x;
+  let left = origin.x;
+  let right = origin.x + origin.width;
+
+  if (handle.endsWith("w")) {
+    left = Math.min(snap(origin.x + dx), right - minWidth);
+  } else {
+    right = Math.max(snap(right + dx), left + minWidth);
+  }
+
+  return {
+    x: left,
+    y: origin.y,
+    width: right - left,
+    height,
+  };
+}
+
 function resizeBoxFromCorner(
   origin: ResizeOrigin,
-  corner: ResizeCorner,
+  corner: ResizeHandle,
   start: Point,
   point: Point,
   minWidth: number,

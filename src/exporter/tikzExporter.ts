@@ -5,7 +5,7 @@ import { getRelationGeometry } from "../utils/geometry";
 export function exportTikz(diagram: DiagramModel): string {
   const tableMap = new Map(diagram.tables.map((table) => [table.id, table]));
   const groups = diagram.groups.map(exportGroup).join("\n\n");
-  const tables = diagram.tables.map(exportTable).join("\n\n");
+  const tables = diagram.tables.map((table) => exportTable(table, diagram.visual.defaultTable)).join("\n\n");
   const relations = diagram.relations
     .map((relation) => {
       const fromTable = tableMap.get(relation.fromTable);
@@ -47,7 +47,8 @@ function exportGroup(group: GroupModel): string {
   ].join("\n");
 }
 
-function exportTable(table: TableModel): string {
+function exportTable(table: TableModel, defaultVisual: TableModel["visual"]): string {
+  const visual = table.usesDefaultStyle ? defaultVisual : table.visual;
   const rows = [
     `\\textbf{${escapeLatex(table.name)}}`,
     ...table.columns.map((column) => {
@@ -55,6 +56,7 @@ function exportTable(table: TableModel): string {
         column.primaryKey ? "PK" : "",
         column.foreignKey ? "FK" : "",
         !column.nullable ? "NN" : "",
+        column.unique ? "UQ" : "",
       ]
         .filter(Boolean)
         .join(" ");
@@ -64,10 +66,10 @@ function exportTable(table: TableModel): string {
   ].join("\\\\");
 
   return [
-    `\\node[draw=${tikzColor(table.visual.borderColor)}, fill=${tikzColor(
-      table.visual.backgroundColor,
-    )}, text=${tikzColor(table.visual.textColor)}, fill opacity=${round(
-      table.visual.opacity,
+    `\\node[draw=${tikzColor(visual.borderColor)}, fill=${tikzColor(
+      visual.backgroundColor,
+    )}, text=${tikzColor(visual.textColor)}, fill opacity=${round(
+      visual.opacity,
       2,
     )}, text opacity=1, anchor=north west, minimum width=${round(
       table.width,

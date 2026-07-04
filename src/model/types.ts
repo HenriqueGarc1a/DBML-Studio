@@ -28,10 +28,28 @@ export interface TableVisual {
   opacity: number;
 }
 
+export type BadgeKind = "primaryKey" | "foreignKey" | "notNull" | "unique";
+
+export interface BadgeVisual {
+  backgroundColor: string;
+  borderColor: string;
+  textColor: string;
+}
+
+export type BadgeVisualSet = Record<BadgeKind, BadgeVisual>;
+
+export interface SavedColor {
+  name: string;
+  color: string;
+}
+
 export interface DiagramVisual {
   backgroundColor: string;
   gridColor: string;
   gridSize: number;
+  defaultTable: TableVisual;
+  badges: BadgeVisualSet;
+  savedColors: SavedColor[];
 }
 
 export interface ColumnModel {
@@ -63,6 +81,7 @@ export interface TableModel {
   width: number;
   height: number;
   visual: TableVisual;
+  usesDefaultStyle: boolean;
   indexes: TableIndexModel[];
   note?: string;
   layoutSource: LayoutSource;

@@ -7,6 +7,7 @@ const source = `// @diagram
 // background=#f1f5f9
 // gridColor=#cbd5e1
 // gridSize=10
+// savedColors=Marca:#22c55e
 
 // @table user
 // x=20
@@ -19,6 +20,7 @@ const source = `// @diagram
 
 Table user {
   id int [pk, not null]
+  email varchar [not null, unique]
 }
 
 // @table project
@@ -57,8 +59,12 @@ describe("exporters", () => {
     expect(dbml).toContain("// background=#f1f5f9");
     expect(dbml).toContain("// gridColor=#cbd5e1");
     expect(dbml).toContain("// gridSize=10");
+    expect(dbml).toContain("// tableBackground=#111827");
+    expect(dbml).toContain("// uniqueBadgeBorder=#818cf8");
+    expect(dbml).toContain("// savedColors=Marca:#22c55e");
     expect(dbml).toContain("// @table user");
     expect(dbml).toContain("// x=20");
+    expect(dbml).toContain("// useDefaultStyle=false");
     expect(dbml).toContain("Ref: project.user_id > user.id");
     expect(dbml).toContain("// style=rounded");
     expect(dbml).not.toContain("Cardinality");
@@ -73,6 +79,7 @@ describe("exporters", () => {
     expect(tikz).toContain("\\begin{tikzpicture}");
     expect(tikz).toContain("Backend Core");
     expect(tikz).toContain("\\scriptsize PK NN");
+    expect(tikz).toContain("\\scriptsize NN UQ");
     expect(tikz).toContain("\\scriptsize FK NN");
     expect(tikz).toContain("\\draw[solid");
     expect(tikz).not.toContain("\\draw[->");

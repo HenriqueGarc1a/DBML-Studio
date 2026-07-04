@@ -1,48 +1,73 @@
 import type { PointerEvent } from "react";
 import { TABLE_HEADER_HEIGHT, TABLE_ROW_HEIGHT } from "../model/defaults";
-import type { TableModel } from "../model/types";
-import { ResizeHandles, type ResizeCorner } from "./ResizeHandles";
+import type { BadgeVisual, BadgeVisualSet, ColumnModel, TableModel, TableVisual } from "../model/types";
+import { ResizeHandles, type ResizeHandle } from "./ResizeHandles";
 
-type BadgeTone = "amber" | "teal" | "rose";
+export interface RelationFieldEndpoint {
+  tableId: string;
+  columnId: string;
+  columnName: string;
+}
 
 interface TableNodeProps {
   table: TableModel;
+  defaultVisual: TableVisual;
+  badgeVisuals: BadgeVisualSet;
   selected: boolean;
+  relationMode: boolean;
+  relationSource?: RelationFieldEndpoint;
   onPointerDown: (event: PointerEvent<SVGGElement>, table: TableModel) => void;
-  onResizePointerDown: (event: PointerEvent<SVGRectElement>, table: TableModel, corner: ResizeCorner) => void;
+  onColumnPointerDown: (
+    event: PointerEvent<SVGRectElement>,
+    table: TableModel,
+    column: ColumnModel,
+  ) => void;
+  onResizePointerDown: (event: PointerEvent<SVGRectElement>, table: TableModel, handle: ResizeHandle) => void;
 }
 
-export function TableNode({ table, selected, onPointerDown, onResizePointerDown }: TableNodeProps) {
+export function TableNode({
+  table,
+  defaultVisual,
+  badgeVisuals,
+  selected,
+  relationMode,
+  relationSource,
+  onPointerDown,
+  onColumnPointerDown,
+  onResizePointerDown,
+}: TableNodeProps) {
+  const visual = table.usesDefaultStyle ? defaultVisual : table.visual;
+
   return (
     <g
       className={`table-node${selected ? " is-selected" : ""}`}
       transform={`translate(${table.x} ${table.y})`}
-      opacity={table.visual.opacity}
+      opacity={visual.opacity}
       onPointerDown={(event) => onPointerDown(event, table)}
     >
       <rect
         width={table.width}
         height={table.height}
         rx={6}
-        fill={table.visual.backgroundColor}
-        stroke={selected ? "#2dd4bf" : table.visual.borderColor}
+        fill={visual.backgroundColor}
+        stroke={selected ? "#2dd4bf" : visual.borderColor}
         strokeWidth={selected ? 2.5 : 1.5}
       />
       <rect
         width={table.width}
         height={TABLE_HEADER_HEIGHT}
         rx={6}
-        fill={table.visual.headerColor}
+        fill={visual.headerColor}
       />
       <path
         d={`M 0 ${TABLE_HEADER_HEIGHT} H ${table.width}`}
-        stroke={table.visual.borderColor}
+        stroke={visual.borderColor}
         strokeWidth={1}
       />
       <text
         x={14}
         y={24}
-        fill={table.visual.textColor}
+        fill={visual.textColor}
         className="table-title"
       >
         {table.name}
@@ -50,23 +75,38 @@ export function TableNode({ table, selected, onPointerDown, onResizePointerDown 
       {table.columns.map((column, index) => {
         const y = TABLE_HEADER_HEIGHT + index * TABLE_ROW_HEIGHT;
         const badges = [
-          column.primaryKey ? { label: "PK", tone: "amber" as const } : undefined,
-          column.foreignKey ? { label: "FK", tone: "teal" as const } : undefined,
-          !column.nullable ? { label: "NN", tone: "rose" as const } : undefined,
-        ].filter(Boolean) as Array<{ label: string; tone: BadgeTone }>;
+          column.primaryKey ? { label: "PK", visual: badgeVisuals.primaryKey } : undefined,
+          column.foreignKey ? { label: "FK", visual: badgeVisuals.foreignKey } : undefined,
+          !column.nullable ? { label: "NN", visual: badgeVisuals.notNull } : undefined,
+          column.unique ? { label: "UQ", visual: badgeVisuals.unique } : undefined,
+        ].filter(Boolean) as Array<{ label: string; visual: BadgeVisual }>;
         const badgeGap = 4;
         const badgeWidth = 22;
         const badgeStackWidth = badges.length * badgeWidth + Math.max(0, badges.length - 1) * badgeGap;
         const badgeStartX = table.width - 12 - badgeStackWidth;
         const typeX = badges.length ? badgeStartX - 8 : table.width - 14;
+        const isRelationSource =
+          relationSource?.tableId === table.id && relationSource.columnId === column.id;
+        const isLastColumn = index === table.columns.length - 1;
 
         return (
           <g key={column.id} transform={`translate(0 ${y})`}>
-            <line x1={0} x2={table.width} y1={TABLE_ROW_HEIGHT} y2={TABLE_ROW_HEIGHT} className="row-line" />
-            <text x={14} y={18} fill={table.visual.textColor} className="column-name">
+            {!isLastColumn && (
+              <line x1={0} x2={table.width} y1={TABLE_ROW_HEIGHT} y2={TABLE_ROW_HEIGHT} className="row-line" />
+            )}
+            {isRelationSource && (
+              <rect
+                x={1}
+                y={1}
+                width={Math.max(0, table.width - 2)}
+                height={TABLE_ROW_HEIGHT - 2}
+                className="column-relation-source"
+              />
+            )}
+            <text x={14} y={18} fill={visual.textColor} className="column-name">
               {column.name}
             </text>
-            <text x={typeX} y={18} fill={table.visual.textColor} className="column-type">
+            <text x={typeX} y={18} fill={visual.textColor} className="column-type">
               {column.type}
             </text>
             {badges.map((badge, badgeIndex) => (
@@ -75,34 +115,39 @@ export function TableNode({ table, selected, onPointerDown, onResizePointerDown 
                 x={badgeStartX + badgeIndex * (badgeWidth + badgeGap)}
                 y={6}
                 label={badge.label}
-                tone={badge.tone}
+                visual={badge.visual}
               />
             ))}
+            {relationMode && (
+              <rect
+                x={0}
+                y={0}
+                width={table.width}
+                height={TABLE_ROW_HEIGHT}
+                className="column-hitbox"
+                onPointerDown={(event) => onColumnPointerDown(event, table, column)}
+              />
+            )}
           </g>
         );
       })}
       {selected && (
         <ResizeHandles
+          mode="horizontal"
           width={table.width}
           height={table.height}
-          onPointerDown={(event, corner) => onResizePointerDown(event, table, corner)}
+          onPointerDown={(event, handle) => onResizePointerDown(event, table, handle)}
         />
       )}
     </g>
   );
 }
 
-function Badge({ x, y, label, tone }: { x: number; y: number; label: string; tone: BadgeTone }) {
-  const colors = tone === "amber"
-    ? { fill: "#3f2d12", stroke: "#f59e0b", text: "#fcd34d" }
-    : tone === "teal"
-      ? { fill: "#12312e", stroke: "#2dd4bf", text: "#99f6e4" }
-      : { fill: "#3b1620", stroke: "#fb7185", text: "#fecdd3" };
-
+function Badge({ x, y, label, visual }: { x: number; y: number; label: string; visual: BadgeVisual }) {
   return (
     <g transform={`translate(${x} ${y})`}>
-      <rect width={22} height={16} rx={4} fill={colors.fill} stroke={colors.stroke} />
-      <text x={11} y={11.5} textAnchor="middle" fill={colors.text} className="badge-text">
+      <rect width={22} height={16} rx={4} fill={visual.backgroundColor} stroke={visual.borderColor} />
+      <text x={11} y={11.5} textAnchor="middle" fill={visual.textColor} className="badge-text">
         {label}
       </text>
     </g>

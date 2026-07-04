@@ -5,23 +5,35 @@ import {
   FileDown,
   Plus,
   Save,
-  Trash2,
 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { useDiagramController } from "./editor/useDiagramController";
 import { SvgCanvas } from "./renderer/SvgCanvas";
 import { PropertiesPanel } from "./ui/PropertiesPanel";
 import { downloadText } from "./utils/download";
+import { saveTextFile, type TextFileHandle } from "./utils/fileSave";
 
 export function App() {
   const controller = useDiagramController();
   const svgRef = useRef<SVGSVGElement | null>(null);
+  const dbmlFileHandleRef = useRef<TextFileHandle | undefined>();
   const [dbmlCollapsed, setDbmlCollapsed] = useState(false);
   const [propertiesCollapsed, setPropertiesCollapsed] = useState(false);
 
   const exportPdf = async () => {
     const { exportDiagramPdf } = await import("./utils/pdfExport");
     return exportDiagramPdf(svgRef.current);
+  };
+
+  const saveDiagram = async () => {
+    const dbml = await controller.saveLayoutToEditor();
+    try {
+      const result = await saveTextFile(controller.diagramFilename, dbml, dbmlFileHandleRef.current);
+      dbmlFileHandleRef.current = result.handle ?? dbmlFileHandleRef.current;
+    } catch (error) {
+      console.error("Could not save DBML file.", error);
+      downloadText(controller.diagramFilename, dbml);
+    }
   };
 
   useEffect(() => {
@@ -86,30 +98,11 @@ export function App() {
             <Plus size={16} />
             Novo
           </button>
-          <button
-            type="button"
-            className="danger-button"
-            onClick={() => {
-              if (window.confirm(`Excluir "${controller.diagramName}"?`)) {
-                void controller.deleteDiagram();
-              }
-            }}
-          >
-            <Trash2 size={16} />
-            Excluir
-          </button>
-          <button type="button" onClick={() => void controller.saveLayoutToEditor()}>
+          <button type="button" onClick={() => void saveDiagram()}>
             <Save size={16} />
             Salvar
           </button>
           {controller.saveMessage && <span className="save-status">{controller.saveMessage}</span>}
-          <button
-            type="button"
-            onClick={() => downloadText(`${fileSafeName(controller.diagramName)}.dbml`, controller.exportedDbml || controller.dbmlText)}
-          >
-            <FileDown size={16} />
-            Exportar DBML
-          </button>
           <button type="button" onClick={() => void exportPdf()}>
             <FileDown size={16} />
             Exportar PDF
@@ -162,8 +155,4 @@ function isEditableTarget(target: EventTarget | null): boolean {
   if (!element) return false;
   const tagName = element.tagName.toLowerCase();
   return element.isContentEditable || tagName === "input" || tagName === "textarea" || tagName === "select";
-}
-
-function fileSafeName(value: string): string {
-  return value.trim().replace(/[^a-zA-Z0-9_-]+/g, "-").replace(/^-+|-+$/g, "") || "diagram";
 }

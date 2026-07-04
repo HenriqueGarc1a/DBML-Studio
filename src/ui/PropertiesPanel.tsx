@@ -1,8 +1,19 @@
 import { ChevronLeft, ChevronRight, Minus, Plus, RotateCcw, Trash2 } from "lucide-react";
-import type { ChangeEvent } from "react";
+import { useState, type ChangeEvent } from "react";
 import type { DiagramController } from "../editor/useDiagramController";
-import { DIAGRAM_MAX_GRID_SIZE, DIAGRAM_MIN_GRID_SIZE, getTableMinHeight } from "../model/defaults";
-import type { ColumnModel, Direction, LineRoute, LineStyle, Point, TableModel } from "../model/types";
+import { DIAGRAM_MAX_GRID_SIZE, DIAGRAM_MIN_GRID_SIZE } from "../model/defaults";
+import type {
+  BadgeKind,
+  BadgeVisual,
+  ColumnModel,
+  Direction,
+  LineRoute,
+  LineStyle,
+  Point,
+  SavedColor,
+  TableModel,
+  TableVisual,
+} from "../model/types";
 import { getRelationGeometry } from "../utils/geometry";
 import { snapPoint } from "../utils/grid";
 
@@ -23,6 +34,7 @@ export function PropertiesPanel({ controller, collapsed, onToggle }: PropertiesP
   const group = selection?.type === "group"
     ? controller.diagram.groups.find((item) => item.id === selection.id)
     : undefined;
+  const savedColors = controller.diagram.visual.savedColors;
 
   return (
     <aside className={`properties-pane${collapsed ? " is-collapsed" : ""}`}>
@@ -45,11 +57,13 @@ export function PropertiesPanel({ controller, collapsed, onToggle }: PropertiesP
           <ColorField
             label="Fundo"
             value={controller.diagram.visual.backgroundColor}
+            savedColors={savedColors}
             onChange={(backgroundColor) => controller.updateDiagramVisual({ backgroundColor })}
           />
           <ColorField
             label="Cor grid"
             value={controller.diagram.visual.gridColor}
+            savedColors={savedColors}
             onChange={(gridColor) => controller.updateDiagramVisual({ gridColor })}
           />
           <NumberField
@@ -60,6 +74,12 @@ export function PropertiesPanel({ controller, collapsed, onToggle }: PropertiesP
             step={1}
             onChange={(gridSize) => controller.updateDiagramVisual({ gridSize })}
           />
+          <DefaultTableStyleEditor controller={controller} savedColors={savedColors} />
+          <BadgeColorsEditor controller={controller} savedColors={savedColors} />
+          <SavedColorsEditor
+            colors={savedColors}
+            onChange={(savedColors) => controller.updateDiagramVisual({ savedColors })}
+          />
         </section>
       )}
       {!collapsed && table && (
@@ -68,19 +88,33 @@ export function PropertiesPanel({ controller, collapsed, onToggle }: PropertiesP
           <TextField label="Nome" value={table.name} onChange={(name) => controller.updateTable(table.id, { name })} />
           <NumberField label="X" value={table.x} onChange={(x) => controller.updateTable(table.id, { x })} />
           <NumberField label="Y" value={table.y} onChange={(y) => controller.updateTable(table.id, { y })} />
-          <NumberField label="Largura" value={table.width} onChange={(width) => controller.resizeTable(table.id, width, table.height)} />
-          <NumberField
-            label="Altura"
-            value={table.height}
-            min={getTableMinHeight(table.columns.length)}
-            onChange={(height) => controller.resizeTable(table.id, table.width, height)}
+          <NumberField label="Largura" value={table.width} onChange={(width) => controller.resizeTable(table.id, width)} />
+          <CheckboxField
+            label="Padrao"
+            checked={table.usesDefaultStyle}
+            onChange={(usesDefaultStyle) => {
+              controller.updateTable(table.id, {
+                usesDefaultStyle,
+                visual: usesDefaultStyle
+                  ? table.visual
+                  : { ...getEffectiveTableVisual(table, controller.diagram.visual.defaultTable) },
+              });
+            }}
           />
-          <ColorField label="Fundo" value={table.visual.backgroundColor} onChange={(backgroundColor) => controller.updateTable(table.id, { visual: { ...table.visual, backgroundColor } })} />
-          <ColorField label="Borda" value={table.visual.borderColor} onChange={(borderColor) => controller.updateTable(table.id, { visual: { ...table.visual, borderColor } })} />
-          <ColorField label="Cabecalho" value={table.visual.headerColor} onChange={(headerColor) => controller.updateTable(table.id, { visual: { ...table.visual, headerColor } })} />
-          <ColorField label="Texto" value={table.visual.textColor} onChange={(textColor) => controller.updateTable(table.id, { visual: { ...table.visual, textColor } })} />
-          <RangeField label="Opacidade" value={table.visual.opacity} min={0.1} max={1} step={0.05} onChange={(opacity) => controller.updateTable(table.id, { visual: { ...table.visual, opacity } })} />
+          {!table.usesDefaultStyle && (
+            <TableVisualFields
+              visual={table.visual}
+              savedColors={savedColors}
+              onChange={(visual) => controller.updateTable(table.id, { visual })}
+            />
+          )}
           <TableColumnsEditor controller={controller} table={table} />
+          <div className="button-row">
+            <button type="button" className="secondary-button danger-action" onClick={() => controller.removeTable(table.id)}>
+              <Trash2 size={16} />
+              Excluir tabela
+            </button>
+          </div>
         </section>
       )}
       {!collapsed && relation && (
@@ -94,8 +128,18 @@ export function PropertiesPanel({ controller, collapsed, onToggle }: PropertiesP
           <NumberField label="Y" value={group.y} onChange={(y) => controller.updateGroup(group.id, { y })} />
           <NumberField label="Largura" value={group.width} onChange={(width) => controller.resizeGroup(group.id, width, group.height)} />
           <NumberField label="Altura" value={group.height} onChange={(height) => controller.resizeGroup(group.id, group.width, height)} />
-          <ColorField label="Fundo" value={group.backgroundColor} onChange={(backgroundColor) => controller.updateGroup(group.id, { backgroundColor })} />
-          <ColorField label="Borda" value={group.borderColor} onChange={(borderColor) => controller.updateGroup(group.id, { borderColor })} />
+          <ColorField
+            label="Fundo"
+            value={group.backgroundColor}
+            savedColors={savedColors}
+            onChange={(backgroundColor) => controller.updateGroup(group.id, { backgroundColor })}
+          />
+          <ColorField
+            label="Borda"
+            value={group.borderColor}
+            savedColors={savedColors}
+            onChange={(borderColor) => controller.updateGroup(group.id, { borderColor })}
+          />
           <RangeField label="Opacidade" value={group.opacity} min={0.02} max={0.8} step={0.02} onChange={(opacity) => controller.updateGroup(group.id, { opacity })} />
           <div className="button-row">
             <button type="button" className="secondary-button" onClick={() => controller.sendGroupBackward(group.id)}>
@@ -107,30 +151,253 @@ export function PropertiesPanel({ controller, collapsed, onToggle }: PropertiesP
               Trazer frente
             </button>
           </div>
-          <div className="table-checklist">
-            {controller.diagram.tables.map((tableItem) => {
-              const checked = group.tables.includes(tableItem.id);
-              return (
-                <label key={tableItem.id} className="check-row">
-                  <input
-                    type="checkbox"
-                    checked={checked}
-                    onChange={(event) => {
-                      controller.updateGroup(group.id, {
-                        tables: event.target.checked
-                          ? [...group.tables, tableItem.id]
-                          : group.tables.filter((id) => id !== tableItem.id),
-                      });
-                    }}
-                  />
-                  <span>{tableItem.name}</span>
-                </label>
-              );
-            })}
+          <div className="button-row">
+            <button type="button" className="secondary-button danger-action" onClick={() => controller.removeGroup(group.id)}>
+              <Trash2 size={16} />
+              Excluir grupo
+            </button>
           </div>
         </section>
       )}
     </aside>
+  );
+}
+
+function DefaultTableStyleEditor({
+  controller,
+  savedColors,
+}: {
+  controller: DiagramController;
+  savedColors: SavedColor[];
+}) {
+  const visual = controller.diagram.visual.defaultTable;
+
+  return (
+    <div className="nested-editor">
+      <div className="subsection-heading">
+        <h4>Tabela padrao</h4>
+      </div>
+      <TableVisualFields
+        visual={visual}
+        savedColors={savedColors}
+        onChange={(defaultTable) => controller.updateDiagramVisual({ defaultTable })}
+      />
+    </div>
+  );
+}
+
+function TableVisualFields({
+  visual,
+  savedColors,
+  onChange,
+}: {
+  visual: TableVisual;
+  savedColors: SavedColor[];
+  onChange: (visual: TableVisual) => void;
+}) {
+  return (
+    <>
+      <ColorField
+        label="Fundo"
+        value={visual.backgroundColor}
+        savedColors={savedColors}
+        onChange={(backgroundColor) => onChange({ ...visual, backgroundColor })}
+      />
+      <ColorField
+        label="Borda"
+        value={visual.borderColor}
+        savedColors={savedColors}
+        onChange={(borderColor) => onChange({ ...visual, borderColor })}
+      />
+      <ColorField
+        label="Cabecalho"
+        value={visual.headerColor}
+        savedColors={savedColors}
+        onChange={(headerColor) => onChange({ ...visual, headerColor })}
+      />
+      <ColorField
+        label="Texto"
+        value={visual.textColor}
+        savedColors={savedColors}
+        onChange={(textColor) => onChange({ ...visual, textColor })}
+      />
+      <RangeField
+        label="Opacidade"
+        value={visual.opacity}
+        min={0.1}
+        max={1}
+        step={0.05}
+        onChange={(opacity) => onChange({ ...visual, opacity })}
+      />
+    </>
+  );
+}
+
+function BadgeColorsEditor({
+  controller,
+  savedColors,
+}: {
+  controller: DiagramController;
+  savedColors: SavedColor[];
+}) {
+  const badges = controller.diagram.visual.badges;
+
+  const updateBadge = (kind: BadgeKind, patch: Partial<BadgeVisual>) => {
+    controller.updateDiagramVisual({
+      badges: {
+        ...badges,
+        [kind]: { ...badges[kind], ...patch },
+      },
+    });
+  };
+
+  return (
+    <div className="nested-editor">
+      <div className="subsection-heading">
+        <h4>Badges</h4>
+      </div>
+      <BadgeVisualFields
+        label="PK"
+        visual={badges.primaryKey}
+        savedColors={savedColors}
+        onChange={(patch) => updateBadge("primaryKey", patch)}
+      />
+      <BadgeVisualFields
+        label="FK"
+        visual={badges.foreignKey}
+        savedColors={savedColors}
+        onChange={(patch) => updateBadge("foreignKey", patch)}
+      />
+      <BadgeVisualFields
+        label="NN"
+        visual={badges.notNull}
+        savedColors={savedColors}
+        onChange={(patch) => updateBadge("notNull", patch)}
+      />
+      <BadgeVisualFields
+        label="UQ"
+        visual={badges.unique}
+        savedColors={savedColors}
+        onChange={(patch) => updateBadge("unique", patch)}
+      />
+    </div>
+  );
+}
+
+function BadgeVisualFields({
+  label,
+  visual,
+  savedColors,
+  onChange,
+}: {
+  label: string;
+  visual: BadgeVisual;
+  savedColors: SavedColor[];
+  onChange: (patch: Partial<BadgeVisual>) => void;
+}) {
+  return (
+    <div className="badge-color-editor">
+      <span>{label}</span>
+      <ColorField
+        label="Fundo"
+        value={visual.backgroundColor}
+        savedColors={savedColors}
+        onChange={(backgroundColor) => onChange({ backgroundColor })}
+      />
+      <ColorField
+        label="Borda"
+        value={visual.borderColor}
+        savedColors={savedColors}
+        onChange={(borderColor) => onChange({ borderColor })}
+      />
+      <ColorField
+        label="Texto"
+        value={visual.textColor}
+        savedColors={savedColors}
+        onChange={(textColor) => onChange({ textColor })}
+      />
+    </div>
+  );
+}
+
+function SavedColorsEditor({
+  colors,
+  onChange,
+}: {
+  colors: SavedColor[];
+  onChange: (colors: SavedColor[]) => void;
+}) {
+  const [draftName, setDraftName] = useState("Cor");
+  const [draftColor, setDraftColor] = useState(colors[0]?.color ?? "#2dd4bf");
+
+  const addColor = () => {
+    if (!isHexColor(draftColor)) return;
+    const name = draftName.trim() || `Cor ${colors.length + 1}`;
+    const exists = colors.some(
+      (item) => item.name.toLowerCase() === name.toLowerCase() && item.color.toLowerCase() === draftColor.toLowerCase(),
+    );
+    if (!exists) {
+      onChange([...colors, { name, color: draftColor }]);
+    }
+  };
+
+  return (
+    <div className="nested-editor">
+      <div className="subsection-heading">
+        <h4>Cores salvas</h4>
+        <button type="button" className="icon-button" onClick={addColor} title="Salvar cor">
+          <Plus size={15} />
+        </button>
+      </div>
+      <div className="saved-color-editor">
+        <input
+          type="text"
+          value={draftName}
+          aria-label="Nome da cor"
+          onChange={(event) => setDraftName(event.target.value)}
+        />
+        <span className="color-control">
+          <input type="color" value={isHexColor(draftColor) ? draftColor : "#2dd4bf"} onChange={(event) => setDraftColor(event.target.value)} />
+          <input type="text" value={draftColor} onChange={(event) => setDraftColor(event.target.value)} />
+        </span>
+      </div>
+      <div className="saved-color-list">
+        {colors.map((item, index) => (
+          <div key={`${item.name}-${item.color}-${index}`} className="saved-color-row">
+            <span className="saved-color-chip" style={{ backgroundColor: item.color }} />
+            <input
+              type="text"
+              value={item.name}
+              aria-label="Nome salvo"
+              onChange={(event) => {
+                onChange(colors.map((color, colorIndex) =>
+                  colorIndex === index ? { ...color, name: event.target.value } : color,
+                ));
+              }}
+            />
+            <input
+              type="color"
+              value={isHexColor(item.color) ? item.color : "#000000"}
+              aria-label="Cor salva"
+              title={item.color}
+              onChange={(event) => {
+                onChange(colors.map((color, colorIndex) =>
+                  colorIndex === index ? { ...color, color: event.target.value } : color,
+                ));
+              }}
+            />
+            <button
+              type="button"
+              className="icon-button"
+              title={`Remover ${item.name}`}
+              onClick={() => onChange(colors.filter((_, colorIndex) => colorIndex !== index))}
+            >
+              <Trash2 size={14} />
+            </button>
+          </div>
+        ))}
+      </div>
+    </div>
   );
 }
 
@@ -252,7 +519,12 @@ function RelationProperties({ controller, relationId }: { controller: DiagramCon
     <section className="property-section">
       <h3>Linha</h3>
       <TextField label="Rotulo" value={relation.label} onChange={(label) => controller.updateRelation(relation.id, { label })} />
-      <ColorField label="Cor" value={relation.color} onChange={(color) => controller.updateRelation(relation.id, { color })} />
+      <ColorField
+        label="Cor"
+        value={relation.color}
+        savedColors={controller.diagram.visual.savedColors}
+        onChange={(color) => controller.updateRelation(relation.id, { color })}
+      />
       <NumberField label="Espessura" value={relation.strokeWidth} onChange={(strokeWidth) => controller.updateRelation(relation.id, { strokeWidth })} />
       <RangeField label="Opacidade" value={relation.opacity} min={0.1} max={1} step={0.05} onChange={(opacity) => controller.updateRelation(relation.id, { opacity })} />
       <SelectField<LineStyle>
@@ -310,6 +582,12 @@ function RelationProperties({ controller, relationId }: { controller: DiagramCon
           Reset
         </button>
       </div>
+      <div className="button-row">
+        <button type="button" className="secondary-button danger-action" onClick={() => controller.removeRelation(relation.id)}>
+          <Trash2 size={16} />
+          Excluir relacao
+        </button>
+      </div>
       {relation.viaPoints.map((point, index) => (
         <PointEditor
           key={`${relation.id}-point-${index}`}
@@ -362,13 +640,57 @@ function NumberField({
   );
 }
 
-function ColorField({ label, value, onChange }: { label: string; value: string; onChange: (value: string) => void }) {
+function CheckboxField({
+  label,
+  checked,
+  onChange,
+}: {
+  label: string;
+  checked: boolean;
+  onChange: (checked: boolean) => void;
+}) {
   return (
     <label className="field-row">
       <span>{label}</span>
+      <input type="checkbox" checked={checked} onChange={(event) => onChange(event.target.checked)} />
+    </label>
+  );
+}
+
+function ColorField({
+  label,
+  value,
+  savedColors = [],
+  onChange,
+}: {
+  label: string;
+  value: string;
+  savedColors?: SavedColor[];
+  onChange: (value: string) => void;
+}) {
+  return (
+    <label className="field-row color-field-row">
+      <span>{label}</span>
       <span className="color-control">
-        <input type="color" value={value} onChange={(event) => onChange(event.target.value)} />
+        <input type="color" value={isHexColor(value) ? value : "#000000"} onChange={(event) => onChange(event.target.value)} />
         <input type="text" value={value} onChange={(event) => onChange(event.target.value)} />
+        <select
+          value=""
+          aria-label={`Cores salvas ${label}`}
+          disabled={!savedColors.length}
+          onChange={(event) => {
+            if (event.target.value) {
+              onChange(event.target.value);
+            }
+          }}
+        >
+          <option value="">{savedColors.length ? "Cores salvas" : "Sem cores salvas"}</option>
+          {savedColors.map((item, index) => (
+            <option key={`${item.name}-${item.color}-${index}`} value={item.color}>
+              {item.name} - {item.color}
+            </option>
+          ))}
+        </select>
       </span>
     </label>
   );
@@ -455,4 +777,12 @@ function PointEditor({
       </button>
     </div>
   );
+}
+
+function getEffectiveTableVisual(table: TableModel, defaultVisual: TableVisual): TableVisual {
+  return table.usesDefaultStyle ? defaultVisual : table.visual;
+}
+
+function isHexColor(value: string): boolean {
+  return /^#[0-9a-fA-F]{3}$/.test(value) || /^#[0-9a-fA-F]{6}$/.test(value);
 }

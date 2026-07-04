@@ -1,4 +1,5 @@
 import type {
+  BadgeVisual,
   DiagramVisual,
   Direction,
   Cardinality,
@@ -7,9 +8,12 @@ import type {
   LineStyle,
   Point,
   RelationModel,
+  SavedColor,
   TableModel,
+  TableVisual,
 } from "../model/types";
 import {
+  defaultBadgeVisuals,
   defaultDiagramVisual,
   defaultGroupVisual,
   defaultRelationVisual,
@@ -23,9 +27,13 @@ export interface SpecialLayout {
   diagramProps: {
     visual?: Partial<DiagramVisual>;
   };
-  tableProps: Map<string, Partial<TableModel>>;
+  tableProps: Map<string, TableSpecialProps>;
   lineProps: Array<Partial<RelationModel>>;
   groups: GroupModel[];
+}
+
+export interface TableSpecialProps extends Partial<Omit<TableModel, "visual">> {
+  visual?: Partial<TableVisual>;
 }
 
 interface CommentBlock {
@@ -61,7 +69,7 @@ export function parseSpecialComments(source: string): SpecialLayout {
     }
   }
 
-  const tableProps = new Map<string, Partial<TableModel>>();
+  const tableProps = new Map<string, TableSpecialProps>();
   const lineProps: Array<Partial<RelationModel>> = [];
   const groups: GroupModel[] = [];
   const diagramProps: SpecialLayout["diagramProps"] = {};
@@ -95,26 +103,46 @@ function blockToDiagramProps(block: CommentBlock): SpecialLayout["diagramProps"]
       backgroundColor: normalizeHex(props.background, defaultDiagramVisual.backgroundColor),
       gridColor: normalizeHex(props.gridColor, defaultDiagramVisual.gridColor),
       gridSize: normalizeGridSize(props.gridSize, defaultDiagramVisual.gridSize),
+      defaultTable: {
+        backgroundColor: normalizeHex(props.tableBackground, defaultTableVisual.backgroundColor),
+        borderColor: normalizeHex(props.tableBorder, defaultTableVisual.borderColor),
+        headerColor: normalizeHex(props.tableHeader, defaultTableVisual.headerColor),
+        textColor: normalizeHex(props.tableText, defaultTableVisual.textColor),
+        opacity: clamp(numberOr(props.tableOpacity, defaultTableVisual.opacity), 0, 1),
+      },
+      badges: {
+        primaryKey: readBadgeVisual(props, "pk", defaultBadgeVisuals.primaryKey),
+        foreignKey: readBadgeVisual(props, "fk", defaultBadgeVisuals.foreignKey),
+        notNull: readBadgeVisual(props, "notNull", defaultBadgeVisuals.notNull),
+        unique: readBadgeVisual(props, "unique", defaultBadgeVisuals.unique),
+      },
+      savedColors: parseSavedColors(props.savedColors),
     },
   };
 }
 
-function tableBlockToTableProps(block: CommentBlock): Partial<TableModel> {
+function tableBlockToTableProps(block: CommentBlock): TableSpecialProps {
   const props = block.props;
-  return {
-    x: numberOr(props.x, 0),
-    y: numberOr(props.y, 0),
-    width: numberOr(props.width, 0),
-    height: numberOr(props.height, 0),
+  const visual: Partial<TableVisual> = {};
+  const result: TableSpecialProps = {
     layoutSource: "comment",
-    visual: {
-      backgroundColor: normalizeHex(props.background, defaultTableVisual.backgroundColor),
-      borderColor: normalizeHex(props.border, defaultTableVisual.borderColor),
-      headerColor: normalizeHex(props.header, defaultTableVisual.headerColor),
-      textColor: normalizeHex(props.text, defaultTableVisual.textColor),
-      opacity: clamp(numberOr(props.opacity, defaultTableVisual.opacity), 0, 1),
-    },
   };
+
+  if ("x" in props) result.x = numberOr(props.x, 0);
+  if ("y" in props) result.y = numberOr(props.y, 0);
+  if ("width" in props) result.width = numberOr(props.width, 0);
+  if ("height" in props) result.height = numberOr(props.height, 0);
+  if ("background" in props) visual.backgroundColor = normalizeHex(props.background, defaultTableVisual.backgroundColor);
+  if ("border" in props) visual.borderColor = normalizeHex(props.border, defaultTableVisual.borderColor);
+  if ("header" in props) visual.headerColor = normalizeHex(props.header, defaultTableVisual.headerColor);
+  if ("text" in props) visual.textColor = normalizeHex(props.text, defaultTableVisual.textColor);
+  if ("opacity" in props) visual.opacity = clamp(numberOr(props.opacity, defaultTableVisual.opacity), 0, 1);
+
+  const hasOwnVisual = Object.keys(visual).length > 0;
+  result.usesDefaultStyle = parseBoolean(props.useDefaultStyle, !hasOwnVisual);
+  if (hasOwnVisual) result.visual = visual;
+
+  return result;
 }
 
 function blockToLineProps(block: CommentBlock): Partial<RelationModel> {
@@ -175,6 +203,52 @@ function parseViaPoints(value: string | undefined): Point[] {
   }
 
   return points;
+}
+
+function readBadgeVisual(
+  props: Record<string, string>,
+  prefix: "pk" | "fk" | "notNull" | "unique",
+  fallback: BadgeVisual,
+): BadgeVisual {
+  return {
+    backgroundColor: normalizeHex(props[`${prefix}BadgeBackground`], fallback.backgroundColor),
+    borderColor: normalizeHex(props[`${prefix}BadgeBorder`], fallback.borderColor),
+    textColor: normalizeHex(props[`${prefix}BadgeText`], fallback.textColor),
+  };
+}
+
+function parseSavedColors(value: string | undefined): SavedColor[] {
+  if (!value) return [];
+  const colors: SavedColor[] = [];
+  const seen = new Set<string>();
+
+  for (const [index, item] of value.split(",").entries()) {
+    const [rawName, rawColor] = item.includes(":")
+      ? item.split(/:(.+)/)
+      : [`Cor ${index + 1}`, item];
+    const color = normalizeHex(rawColor, "");
+    if (!color || seen.has(color.toLowerCase())) continue;
+    seen.add(color.toLowerCase());
+    colors.push({
+      name: decodeSavedColorName(rawName) || `Cor ${index + 1}`,
+      color,
+    });
+  }
+
+  return colors;
+}
+
+function decodeSavedColorName(value: string): string {
+  try {
+    return decodeURIComponent(value).trim();
+  } catch {
+    return value.trim();
+  }
+}
+
+function parseBoolean(value: string | undefined, fallback: boolean): boolean {
+  if (value === undefined) return fallback;
+  return value === "true" || value === "1" || value === "yes";
 }
 
 function parseDirection(value: string | undefined, fallback: Direction): Direction {

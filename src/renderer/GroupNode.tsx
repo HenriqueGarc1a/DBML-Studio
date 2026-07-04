@@ -1,12 +1,12 @@
 import type { PointerEvent } from "react";
 import type { GroupModel } from "../model/types";
-import { ResizeHandles, type ResizeCorner } from "./ResizeHandles";
+import { ResizeHandles, type ResizeHandle } from "./ResizeHandles";
 
 interface GroupNodeProps {
   group: GroupModel;
   selected: boolean;
   onPointerDown: (event: PointerEvent<SVGGElement>, group: GroupModel) => void;
-  onResizePointerDown: (event: PointerEvent<SVGRectElement>, group: GroupModel, corner: ResizeCorner) => void;
+  onResizePointerDown: (event: PointerEvent<SVGRectElement>, group: GroupModel, handle: ResizeHandle) => void;
 }
 
 export function GroupNode({ group, selected, onPointerDown, onResizePointerDown }: GroupNodeProps) {
