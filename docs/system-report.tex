@@ -1,0 +1,114 @@
+\documentclass[11pt,a4paper]{article}
+
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[brazil]{babel}
+\usepackage{geometry}
+\usepackage{longtable}
+\usepackage{hyperref}
+\usepackage{xcolor}
+
+\geometry{margin=2.2cm}
+\hypersetup{colorlinks=true, linkcolor=blue, urlcolor=blue}
+
+\title{Relatório Técnico do DBML Studio}
+\author{DBML Studio}
+\date{\today}
+
+\begin{document}
+
+\maketitle
+
+\section{Visão geral}
+
+O DBML Studio é uma ferramenta local para editar, visualizar e organizar diagramas de banco de dados a partir de DBML. O usuário pode editar o texto DBML, manipular tabelas no canvas SVG, criar relações visualmente, configurar estilos do diagrama, salvar diagramas em arquivos \texttt{.dbml} e exportar o resultado.
+
+O sistema trabalha com dois modelos sincronizados: o texto DBML lateral e o modelo renderizado em React/SVG. O parser transforma DBML em \texttt{DiagramModel}; o editor visual altera esse modelo; o exportador grava o modelo de volta como DBML com comentários especiais de layout e estilo.
+
+\section{Funcionalidades principais}
+
+\begin{itemize}
+  \item Edição textual de DBML com parsing automático.
+  \item Renderização visual de tabelas, colunas, grupos e relações.
+  \item Criação de tabelas, campos, grupos e relações pela interface.
+  \item Importação de novo esquema a partir de SQL DDL.
+  \item Estilos por diagrama e por tabela, com cores salvas e badges configuráveis.
+  \item Persistência em \texttt{localStorage} e salvamento automático na pasta \texttt{dbml/}.
+  \item Exportação para PDF e TikZ, além do DBML persistido.
+  \item Undo/redo, zoom, centralização, snap no grid e organização automática de relações.
+\end{itemize}
+
+\section{Arquitetura}
+
+\begin{longtable}{p{0.28\linewidth} p{0.64\linewidth}}
+\textbf{Área} & \textbf{Responsabilidade} \\
+\hline
+\texttt{src/App.tsx} & Shell da aplicação, header, painéis laterais, modal de importação SQL, atalhos globais e ações de salvar/exportar. \\
+\texttt{src/editor/useDiagramController.ts} & Estado central do diagrama, histórico, persistência, criação de diagramas, comandos de tabela/campo/relação/grupo e sincronização DBML. \\
+\texttt{src/parser/dbmlParser.ts} & Parser DBML para \texttt{DiagramModel}. Lê tabelas, colunas, enums, relações e metadados. \\
+\texttt{src/parser/specialComments.ts} & Comentários especiais usados para layout, estilo, cores salvas, grupos e aparência das relações. \\
+\texttt{src/exporter/dbmlExporter.ts} & Exporta o modelo atual para DBML, preservando metadados via comentários. \\
+\texttt{src/importer/sqlToDbml.ts} & Traduz SQL DDL comum para DBML. Suporta \texttt{CREATE TABLE}, \texttt{PRIMARY KEY}, \texttt{UNIQUE}, \texttt{FOREIGN KEY}, \texttt{REFERENCES}, \texttt{NOT NULL} e \texttt{DEFAULT}. \\
+\texttt{src/renderer/SvgCanvas.tsx} & Canvas SVG, pan/zoom, toolbar flutuante, drag de tabelas/grupos, criação visual de relações e manipulação de pontos. \\
+\texttt{src/renderer/TableNode.tsx} & Desenho de tabela, campos, badges, hitboxes de relação e resize horizontal. \\
+\texttt{src/renderer/RelationPath.tsx} & Desenho e interação das linhas de relação, endpoints e pontos intermediários. \\
+\texttt{src/utils/relationRouting.ts} & Calcula rotas ortogonais para organizar relações desviando das tabelas do diagrama. \\
+\texttt{src/ui/PropertiesPanel.tsx} & Painel de propriedades colapsável para diagrama, tabela, grupo e relação. \\
+\texttt{src/layout/autoLayout.ts} & Layout automático com ELK para posicionar tabelas quando o DBML não tem coordenadas manuais. \\
+\texttt{src/utils/fileSave.ts} & Salvamento e listagem dos arquivos DBML do workspace. \\
+\texttt{src/styles.css} & Estilo visual da aplicação, painéis, modal, canvas, toolbar e propriedades. \\
+\end{longtable}
+
+\section{Como as features são implementadas}
+
+\subsection{Novo esquema via SQL}
+
+A entrada visual fica em \texttt{src/App.tsx}, no botão \texttt{SQL} do header. O modal coleta o SQL e chama \texttt{controller.createDiagramFromSql}. O controlador usa \texttt{sqlToDbml} em \texttt{src/importer/sqlToDbml.ts}, cria um novo registro de diagrama e reaproveita o fluxo normal de importação DBML para parsear, aplicar layout e salvar.
+
+Para mudar a tradução de tipos, constraints ou suporte a novos comandos SQL, altere \texttt{src/importer/sqlToDbml.ts} e adicione casos em \texttt{src/importer/sqlToDbml.test.ts}.
+
+\subsection{Tabelas e campos}
+
+As operações ficam no controlador: \texttt{addTable}, \texttt{updateTable}, \texttt{removeTable}, \texttt{addColumn}, \texttt{updateColumn} e \texttt{removeColumn}. A renderização está em \texttt{TableNode.tsx}. A altura da tabela é derivada da quantidade de campos em \texttt{getTableMinHeight}.
+
+Para mudar aparência da tabela, edite \texttt{TableNode.tsx} e \texttt{src/styles.css}. Para mudar dados ou regras de coluna, edite \texttt{useDiagramController.ts}, \texttt{dbmlParser.ts} e \texttt{dbmlExporter.ts}.
+
+\subsection{Relações e linhas}
+
+As relações vivem em \texttt{RelationModel}. A geometria básica é calculada em \texttt{src/utils/geometry.ts}; a distribuição de endpoints compartilhados fica em \texttt{src/utils/relationLayout.ts}; o roteamento de organização que desvia de tabelas fica em \texttt{src/utils/relationRouting.ts}; e o desenho final é feito por \texttt{RelationPath.tsx}. A toolbar flutuante em \texttt{SvgCanvas.tsx} tem a ação \texttt{Organizar relações}, que chama \texttt{tidyRelations}. No painel de propriedades, \texttt{Auto rota} chama \texttt{tidyRelation}. O roteador procura primeiro as laterais esquerda/direita das tabelas, testa combinações de lados e escolhe uma rota ortogonal curta que não cruza as tabelas.
+
+Para melhorar o estilo das linhas, comece por \texttt{RelationPath.tsx}. Para mudar regras de rota automática que evitam tabelas, mexa em \texttt{relationRouting.ts}. Para mudar comandos de limpeza/autoajuste, mexa em \texttt{tidyRelationGeometry} dentro de \texttt{useDiagramController.ts}.
+
+\subsection{Cores, badges e estilos}
+
+Os defaults ficam em \texttt{src/model/defaults.ts}. O modelo visual fica em \texttt{src/model/types.ts}. A UI de edição está em \texttt{PropertiesPanel.tsx}. As cores salvas ficam dentro de \texttt{diagram.visual.savedColors} e aparecem nos dropdowns dos campos de cor.
+
+Ao adicionar uma nova cor configurável, atualize o tipo em \texttt{types.ts}, o default em \texttt{defaults.ts}, o parser/exportador de comentários especiais e o painel de propriedades.
+
+\subsection{Persistência}
+
+O app mantém uma biblioteca local em \texttt{localStorage} e salva DBML em arquivos por \texttt{fileSave.ts}. O controlador agenda salvamento automático quando o modelo muda e também salva no fechamento da página.
+
+Para alterar regras de nome, arquivo ativo ou frequência de autosave, edite \texttt{useDiagramController.ts}. Para alterar a API HTTP/local de salvamento, edite \texttt{fileSave.ts}.
+
+\section{Regra de manutenção deste relatório}
+
+Sempre que uma funcionalidade for adicionada ou alterada, este arquivo deve ser atualizado no mesmo conjunto de mudanças. A atualização mínima esperada é:
+
+\begin{itemize}
+  \item adicionar a feature na seção de funcionalidades principais, se ela for nova;
+  \item atualizar a tabela de arquitetura, se novos arquivos importantes forem criados;
+  \item atualizar a seção ``Como as features são implementadas'' com os arquivos que devem ser editados para dar manutenção.
+\end{itemize}
+
+\section{Validação recomendada}
+
+Antes de considerar uma mudança pronta, rode:
+
+\begin{itemize}
+  \item \texttt{npm run typecheck}
+  \item \texttt{npm test}
+  \item \texttt{npm run build}
+\end{itemize}
+
+\end{document}

@@ -1,4 +1,4 @@
-import { ChevronDown, ChevronLeft, ChevronRight, Minus, Plus, RotateCcw, Trash2 } from "lucide-react";
+import { ChevronDown, ChevronLeft, ChevronRight, Minus, Plus, RotateCcw, Route, Trash2 } from "lucide-react";
 import { useEffect, useState, type ChangeEvent, type ReactNode } from "react";
 import type { DiagramController } from "../editor/useDiagramController";
 import { DIAGRAM_MAX_GRID_SIZE, DIAGRAM_MIN_GRID_SIZE } from "../model/defaults";
@@ -603,18 +603,21 @@ function RelationProperties({ controller, relationId }: { controller: DiagramCon
           label="Estilo"
           value={relation.style}
           options={["solid", "dashed", "dotted", "rounded"]}
+          labels={{ solid: "Sólida", dashed: "Tracejada", dotted: "Pontilhada", rounded: "Arredondada" }}
           onChange={(style) => controller.updateRelation(relation.id, { style })}
         />
         <SelectField<LineRoute>
           label="Rota"
           value={relation.route}
           options={["straight", "orthogonal", "curve"]}
+          labels={{ straight: "Reta", orthogonal: "Ortogonal", curve: "Curva" }}
           onChange={(route) => controller.updateRelation(relation.id, { route })}
         />
         <SelectField<Direction>
           label="Origem"
           value={relation.fromSide}
           options={["north", "south", "east", "west"]}
+          labels={{ north: "Cima", south: "Baixo", east: "Direita", west: "Esquerda" }}
           onChange={(fromSide) => controller.updateRelation(relation.id, {
             fromSide,
             startOffsetX: 0,
@@ -625,12 +628,19 @@ function RelationProperties({ controller, relationId }: { controller: DiagramCon
           label="Destino"
           value={relation.toSide}
           options={["north", "south", "east", "west"]}
+          labels={{ north: "Cima", south: "Baixo", east: "Direita", west: "Esquerda" }}
           onChange={(toSide) => controller.updateRelation(relation.id, {
             toSide,
             endOffsetX: 0,
             endOffsetY: 0,
           })}
         />
+        <div className="button-row">
+          <button type="button" className="secondary-button" onClick={() => controller.tidyRelation(relation.id)}>
+            <Route size={16} />
+            Auto rota
+          </button>
+        </div>
       </CollapsibleGroup>
       <CollapsibleGroup id="relation.points" title="Pontos" defaultOpen={false}>
         <div className="button-row">

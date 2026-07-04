@@ -2,9 +2,11 @@ import {
   Boxes,
   ChevronLeft,
   ChevronRight,
+  Database,
   FileDown,
   Plus,
   Save,
+  X,
 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { useDiagramController } from "./editor/useDiagramController";
@@ -24,6 +26,9 @@ export function App() {
   const [propertiesCollapsed, setPropertiesCollapsed] = useState(() =>
     readStoredBoolean(PROPERTIES_COLLAPSED_STORAGE_KEY, false),
   );
+  const [sqlImportOpen, setSqlImportOpen] = useState(false);
+  const [sqlDraft, setSqlDraft] = useState("");
+  const [sqlImportError, setSqlImportError] = useState("");
 
   const exportPdf = async () => {
     const { exportDiagramPdf } = await import("./utils/pdfExport");
@@ -38,6 +43,17 @@ export function App() {
     } catch (error) {
       console.error("Could not save DBML file.", error);
       downloadText(controller.diagramFilename, dbml);
+    }
+  };
+
+  const importSql = async () => {
+    setSqlImportError("");
+    try {
+      await controller.createDiagramFromSql(sqlDraft);
+      setSqlImportOpen(false);
+      setSqlDraft("");
+    } catch (error) {
+      setSqlImportError(error instanceof Error ? error.message : "Não foi possível traduzir o SQL.");
     }
   };
 
@@ -111,6 +127,10 @@ export function App() {
             <Plus size={16} />
             Novo
           </button>
+          <button type="button" onClick={() => setSqlImportOpen(true)}>
+            <Database size={16} />
+            SQL
+          </button>
           <button type="button" onClick={() => void saveDiagram()}>
             <Save size={16} />
             Salvar
@@ -158,6 +178,46 @@ export function App() {
           onToggle={() => setPropertiesCollapsed((collapsed) => !collapsed)}
         />
       </main>
+      {sqlImportOpen && (
+        <div className="modal-backdrop" role="presentation" onMouseDown={() => setSqlImportOpen(false)}>
+          <section
+            className="modal-panel"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="sql-import-title"
+            onMouseDown={(event) => event.stopPropagation()}
+          >
+            <div className="modal-heading">
+              <h2 id="sql-import-title">Novo esquema via SQL</h2>
+              <button type="button" className="icon-button" title="Fechar" onClick={() => setSqlImportOpen(false)}>
+                <X size={16} />
+              </button>
+            </div>
+            {sqlImportError && (
+              <div className="modal-error" role="status">
+                {sqlImportError}
+              </div>
+            )}
+            <textarea
+              className="sql-import-textarea"
+              value={sqlDraft}
+              onChange={(event) => setSqlDraft(event.target.value)}
+              spellCheck={false}
+              autoFocus
+              placeholder={`CREATE TABLE users (\n  id SERIAL PRIMARY KEY,\n  email VARCHAR(255) NOT NULL UNIQUE\n);`}
+            />
+            <div className="modal-actions">
+              <button type="button" className="secondary-button" onClick={() => setSqlImportOpen(false)}>
+                Cancelar
+              </button>
+              <button type="button" onClick={() => void importSql()} disabled={!sqlDraft.trim()}>
+                <Database size={16} />
+                Criar esquema
+              </button>
+            </div>
+          </section>
+        </div>
+      )}
     </div>
   );
 }

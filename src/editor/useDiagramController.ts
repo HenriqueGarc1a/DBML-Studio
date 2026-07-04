@@ -22,9 +22,11 @@ import type {
   TableModel,
 } from "../model/types";
 import { exportDbml } from "../exporter/dbmlExporter";
+import { sqlToDbml } from "../importer/sqlToDbml";
 import { parseDbml } from "../parser/dbmlParser";
 import { listWorkspaceDbml, saveWorkspaceDbml, sendWorkspaceDbmlBeacon } from "../utils/fileSave";
 import { makeId, slugify, uniqueId } from "../utils/id";
+import { organizeRelationRoute } from "../utils/relationRouting";
 import { demoDbml } from "./demoDbml";
 
 export interface DiagramController {
@@ -51,6 +53,7 @@ export interface DiagramController {
   endHistoryBatch: () => void;
   setDiagramName: (value: string) => void;
   createDiagram: () => Promise<void>;
+  createDiagramFromSql: (sql: string) => Promise<void>;
   openDiagram: (id: string) => Promise<void>;
   applyAutoLayout: () => Promise<void>;
   saveLayoutToEditor: () => Promise<string>;
@@ -66,6 +69,8 @@ export interface DiagramController {
   addRelation: (fromTableId: string, fromColumn: string, toTableId: string, toColumn: string) => void;
   removeRelation: (id: string) => void;
   updateRelation: (id: string, patch: Partial<RelationModel>) => void;
+  tidyRelation: (id: string) => void;
+  tidyRelations: () => void;
   resetRelation: (id: string) => void;
   addViaPoint: (id: string, point: Point) => void;
   updateViaPoint: (id: string, index: number, point: Point) => void;
@@ -459,6 +464,34 @@ export function useDiagramController(): DiagramController {
     await importDbmlText(dbml, { resetHistory: true });
   }, [commitDiagramLibrary, importDbmlText, persistCurrentDiagram]);
 
+  const createDiagramFromSql = useCallback(async (sql: string) => {
+    const dbml = sqlToDbml(sql);
+    const snapshot = persistCurrentDiagram({ silent: true });
+    void saveWorkspaceDbml(currentDbmlFilename(diagramsRef.current, activeDiagramIdRef.current, snapshot.name), snapshot.dbml, {
+      keepalive: true,
+    });
+
+    const id = uniqueId("diagram");
+    const name = nextNamedDiagramName(diagramsRef.current, "Esquema SQL");
+    const now = Date.now();
+    const record: SavedDiagram = { id, name, dbml, updatedAt: now, filename: dbmlFilename(name) };
+    const nextDiagrams = [...diagramsRef.current, record];
+
+    diagramNameRef.current = name;
+    setDiagramNameState(name);
+    setDbmlText(dbml);
+    lastValidDbmlRef.current = dbml;
+    setDbmlError(undefined);
+    setSaveMessage(`Novo ${name}`);
+    commitDiagramLibrary(nextDiagrams, id);
+    void saveWorkspaceDbml(record.filename ?? dbmlFilename(name), dbml, { keepalive: true });
+
+    const loaded = await importDbmlText(dbml, { resetHistory: true });
+    if (!loaded) {
+      throw new Error("SQL convertido, mas o DBML gerado não pôde ser carregado.");
+    }
+  }, [commitDiagramLibrary, importDbmlText, persistCurrentDiagram]);
+
   useEffect(() => {
     const intervalId = window.setInterval(() => {
       const snapshot = persistCurrentDiagram({ silent: true });
@@ -811,6 +844,22 @@ export function useDiagramController(): DiagramController {
     }));
   }, [updateDiagramState]);
 
+  const tidyRelation = useCallback((id: string) => {
+    updateDiagramState((current) => ({
+      ...current,
+      relations: current.relations.map((relation) =>
+        relation.id === id ? tidyRelationGeometry(relation, current.tables) : relation,
+      ),
+    }));
+  }, [updateDiagramState]);
+
+  const tidyRelations = useCallback(() => {
+    updateDiagramState((current) => ({
+      ...current,
+      relations: current.relations.map((relation) => tidyRelationGeometry(relation, current.tables)),
+    }));
+  }, [updateDiagramState]);
+
   const resetRelation = useCallback((id: string) => {
     updateDiagramState((current) => ({
       ...current,
@@ -1014,6 +1063,7 @@ export function useDiagramController(): DiagramController {
     endHistoryBatch,
     setDiagramName: renameDiagram,
     createDiagram,
+    createDiagramFromSql,
     openDiagram,
     applyAutoLayout,
     saveLayoutToEditor,
@@ -1029,6 +1079,8 @@ export function useDiagramController(): DiagramController {
     addRelation,
     removeRelation,
     updateRelation,
+    tidyRelation,
+    tidyRelations,
     resetRelation,
     addViaPoint,
     updateViaPoint,
@@ -1119,6 +1171,27 @@ function inferRelationSides(fromTable: TableModel, toTable: TableModel): [Direct
   }
 
   return dy >= 0 ? ["south", "north"] : ["north", "south"];
+}
+
+function tidyRelationGeometry(relation: RelationModel, tables: TableModel[]): RelationModel {
+  const fromTable = tables.find((table) => table.id === relation.fromTable);
+  const toTable = tables.find((table) => table.id === relation.toTable);
+  if (!fromTable || !toTable) return relation;
+
+  const [fromSide, toSide] = inferRelationSides(fromTable, toTable);
+  const route = organizeRelationRoute(relation, fromTable, toTable, tables, fromSide, toSide);
+
+  return {
+    ...relation,
+    fromSide: route.fromSide,
+    toSide: route.toSide,
+    route: "orthogonal",
+    startOffsetX: 0,
+    startOffsetY: 0,
+    endOffsetX: 0,
+    endOffsetY: 0,
+    viaPoints: route.viaPoints,
+  };
 }
 
 function normalizeSavedColors(colors: DiagramModel["visual"]["savedColors"]): DiagramModel["visual"]["savedColors"] {
@@ -1237,14 +1310,18 @@ function normalizeDiagramName(value: string): string {
 }
 
 function nextDiagramName(diagrams: SavedDiagram[]): string {
+  return nextNamedDiagramName(diagrams, "Diagrama");
+}
+
+function nextNamedDiagramName(diagrams: SavedDiagram[], prefix: string): string {
   let index = diagrams.length + 1;
   const names = new Set(diagrams.map((item) => item.name));
 
-  while (names.has(`Diagrama ${index}`)) {
+  while (names.has(`${prefix} ${index}`)) {
     index += 1;
   }
 
-  return `Diagrama ${index}`;
+  return `${prefix} ${index}`;
 }
 
 function createBlankDiagramDbml(): string {

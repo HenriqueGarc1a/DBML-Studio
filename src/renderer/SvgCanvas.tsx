@@ -7,6 +7,7 @@ import {
   Magnet,
   Maximize2,
   Redo2,
+  Route,
   Table2,
   Undo2,
   ZoomIn,
@@ -623,6 +624,15 @@ export function SvgCanvas({ controller, svgRef: externalSvgRef }: SvgCanvasProps
             }}
           >
             <Link2 size={16} />
+          </button>
+          <button
+            type="button"
+            className="icon-button"
+            title="Organizar relações"
+            onClick={controller.tidyRelations}
+            disabled={!controller.diagram.relations.length}
+          >
+            <Route size={16} />
           </button>
           <button
             type="button"
