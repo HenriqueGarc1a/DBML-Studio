@@ -114,6 +114,18 @@ Table audit_log {
     expect(diagram.tables[0].height).toBe(150);
   });
 
+  it("parses manual fk markers on columns", () => {
+    const diagram = parseDbml(`Table invoice {
+  id int [pk]
+  customer_id int [fk, not null]
+}`);
+
+    const column = diagram.tables[0].columns.find((item) => item.name === "customer_id");
+
+    expect(column?.foreignKey).toBe(true);
+    expect(column?.nullable).toBe(false);
+  });
+
   it("rejects unfinished DBML blocks", () => {
     expect(() => parseDbml(`Table broken {
   id int [pk]

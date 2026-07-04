@@ -1,11 +1,12 @@
 import type { PointerEvent } from "react";
 import type { GroupModel } from "../model/types";
+import { ResizeHandles, type ResizeCorner } from "./ResizeHandles";
 
 interface GroupNodeProps {
   group: GroupModel;
   selected: boolean;
   onPointerDown: (event: PointerEvent<SVGGElement>, group: GroupModel) => void;
-  onResizePointerDown: (event: PointerEvent<SVGRectElement>, group: GroupModel) => void;
+  onResizePointerDown: (event: PointerEvent<SVGRectElement>, group: GroupModel, corner: ResizeCorner) => void;
 }
 
 export function GroupNode({ group, selected, onPointerDown, onResizePointerDown }: GroupNodeProps) {
@@ -21,7 +22,7 @@ export function GroupNode({ group, selected, onPointerDown, onResizePointerDown 
         rx={8}
         fill={group.backgroundColor}
         fillOpacity={group.opacity}
-        stroke={selected ? "#111827" : group.borderColor}
+        stroke={selected ? "#5eead4" : group.borderColor}
         strokeWidth={selected ? 2 : 1.4}
         strokeDasharray={selected ? "8 5" : undefined}
       />
@@ -29,14 +30,10 @@ export function GroupNode({ group, selected, onPointerDown, onResizePointerDown 
         {group.label}
       </text>
       {selected && (
-        <rect
-          className="resize-handle"
-          x={group.width - 10}
-          y={group.height - 10}
-          width={10}
-          height={10}
-          rx={2}
-          onPointerDown={(event) => onResizePointerDown(event, group)}
+        <ResizeHandles
+          width={group.width}
+          height={group.height}
+          onPointerDown={(event, corner) => onResizePointerDown(event, group, corner)}
         />
       )}
     </g>

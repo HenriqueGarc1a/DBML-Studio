@@ -1,16 +1,16 @@
 export const demoDbml = `// @diagram
-// background=#f8fafc
-// gridColor=#d7dee8
+// background=#0f172a
+// gridColor=#1f2a3a
 // gridSize=4
 
 // @table user
 // x=80
 // y=80
 // width=260
-// background=#ffffff
-// border=#2563eb
-// header=#dbeafe
-// text=#111827
+// background=#111827
+// border=#60a5fa
+// header=#1e3a5f
+// text=#e5edf7
 
 Table user {
   id int [pk, not null]
@@ -23,10 +23,10 @@ Table user {
 // x=480
 // y=80
 // width=260
-// background=#ffffff
-// border=#64748b
-// header=#e0f2fe
-// text=#111827
+// background=#111827
+// border=#4b5f78
+// header=#253142
+// text=#e5edf7
 
 Table project {
   id int [pk, not null]
@@ -43,10 +43,10 @@ Table project {
 // x=480
 // y=260
 // width=260
-// background=#ffffff
-// border=#64748b
-// header=#ccfbf1
-// text=#111827
+// background=#111827
+// border=#4b5f78
+// header=#12312e
+// text=#e5edf7
 
 Table technology {
   id int [pk, not null]

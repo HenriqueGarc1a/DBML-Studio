@@ -51,7 +51,11 @@ function exportTable(table: TableModel): string {
   const rows = [
     `\\textbf{${escapeLatex(table.name)}}`,
     ...table.columns.map((column) => {
-      const tags = [column.primaryKey ? "PK" : "", column.foreignKey ? "FK" : ""]
+      const tags = [
+        column.primaryKey ? "PK" : "",
+        column.foreignKey ? "FK" : "",
+        !column.nullable ? "NN" : "",
+      ]
         .filter(Boolean)
         .join(" ");
       const suffix = tags ? `\\hfill {\\scriptsize ${tags}}` : "";

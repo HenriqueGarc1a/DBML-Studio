@@ -26,8 +26,9 @@ export function zoomViewBox(
 ): ViewBox {
   const currentZoom = getZoom(bounds, viewport);
   const nextZoom = clamp(currentZoom * factor, MIN_ZOOM, MAX_ZOOM);
-  const width = bounds.width / nextZoom;
-  const height = bounds.height / nextZoom;
+  const scale = currentZoom / nextZoom;
+  const width = viewport.width * scale;
+  const height = viewport.height * scale;
   const relativeX = viewport.width > 0 ? (center.x - viewport.x) / viewport.width : 0.5;
   const relativeY = viewport.height > 0 ? (center.y - viewport.y) / viewport.height : 0.5;
 
@@ -44,6 +45,35 @@ export function panViewBox(viewport: ViewBox, dx: number, dy: number): ViewBox {
     ...viewport,
     x: viewport.x - dx,
     y: viewport.y - dy,
+  };
+}
+
+export function fitViewBoxToAspect(viewport: ViewBox, width: number, height: number): ViewBox {
+  if (viewport.width <= 0 || viewport.height <= 0 || width <= 0 || height <= 0) {
+    return viewport;
+  }
+
+  const viewportAspect = viewport.width / viewport.height;
+  const targetAspect = width / height;
+
+  if (Math.abs(viewportAspect - targetAspect) < 0.001) {
+    return viewport;
+  }
+
+  if (viewportAspect < targetAspect) {
+    const nextWidth = viewport.height * targetAspect;
+    return {
+      ...viewport,
+      x: viewport.x - (nextWidth - viewport.width) / 2,
+      width: nextWidth,
+    };
+  }
+
+  const nextHeight = viewport.width / targetAspect;
+  return {
+    ...viewport,
+    y: viewport.y - (nextHeight - viewport.height) / 2,
+    height: nextHeight,
   };
 }
 

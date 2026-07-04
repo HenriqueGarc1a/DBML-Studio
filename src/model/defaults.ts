@@ -5,6 +5,8 @@ export const TABLE_ROW_HEIGHT = 28;
 export const TABLE_MIN_HEIGHT = 80;
 export const TABLE_MIN_WIDTH = 220;
 export const TABLE_PADDING_X = 18;
+export const GROUP_MIN_WIDTH = 120;
+export const GROUP_MIN_HEIGHT = 90;
 export const DIAGRAM_DEFAULT_GRID_SIZE = 4;
 export const DIAGRAM_MIN_GRID_SIZE = 2;
 export const DIAGRAM_MAX_GRID_SIZE = 128;
@@ -20,16 +22,16 @@ export function normalizeGridSize(value: unknown, fallback = DIAGRAM_DEFAULT_GRI
 }
 
 export const defaultTableVisual: TableVisual = {
-  backgroundColor: "#ffffff",
-  borderColor: "#64748b",
-  textColor: "#172033",
-  headerColor: "#dbeafe",
+  backgroundColor: "#111827",
+  borderColor: "#4b5f78",
+  textColor: "#e5edf7",
+  headerColor: "#253142",
   opacity: 1,
 };
 
 export const defaultDiagramVisual: DiagramVisual = {
-  backgroundColor: "#f8fafc",
-  gridColor: "#d7dee8",
+  backgroundColor: "#0f172a",
+  gridColor: "#1f2a3a",
   gridSize: DIAGRAM_DEFAULT_GRID_SIZE,
 };
 
@@ -60,11 +62,11 @@ export const defaultRelationVisual: Pick<
   endOffsetY: 0,
   route: "orthogonal",
   viaPoints: [],
-  color: "#475569",
+  color: "#94a3b8",
   opacity: 0.9,
   strokeWidth: 2,
   style: "solid",
-  arrowColor: "#475569",
+  arrowColor: "#94a3b8",
   fromCardinality: "many",
   toCardinality: "one",
   label: "",

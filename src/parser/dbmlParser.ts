@@ -7,6 +7,7 @@ import {
   getTableMinHeight,
 } from "../model/defaults";
 import type {
+  Cardinality,
   ColumnModel,
   DiagramModel,
   EnumModel,
@@ -32,6 +33,8 @@ interface ParsedRelation {
   fromColumn: string;
   toTable: string;
   toColumn: string;
+  fromCardinality?: Cardinality;
+  toCardinality?: Cardinality;
 }
 
 export function parseDbml(source: string): DiagramModel {
@@ -50,10 +53,10 @@ export function parseDbml(source: string): DiagramModel {
       `${relation.fromTable}-${relation.fromColumn}-${relation.toTable}-${relation.toColumn}`,
       index,
     ),
+    ...defaultRelationVisual,
     ...relation,
     fromTable: slugify(relation.fromTable),
     toTable: slugify(relation.toTable),
-    ...defaultRelationVisual,
     ...(special.lineProps[index] ?? {}),
   }));
   const foreignKeys = new Set(relations.map((relation) => `${relation.fromTable}.${relation.fromColumn}`));
@@ -163,7 +166,7 @@ function parseColumn(tableName: string, line: string, index: number): ColumnMode
     type,
     nullable: !settingsText.some((item) => item === "not null" || item === "not_null"),
     primaryKey: settingsText.some((item) => item === "pk" || item === "primary key"),
-    foreignKey: settingsText.some((item) => item.startsWith("ref:")),
+    foreignKey: settingsText.some((item) => item.startsWith("ref:") || item === "fk" || item === "foreign key"),
     unique: settingsText.includes("unique"),
     defaultValue: extractSetting(settings, "default"),
     note: extractSetting(settings, "note"),
@@ -264,6 +267,8 @@ function parseRelationExpression(expression: string): ParsedRelation | undefined
       fromColumn: right.column,
       toTable: left.table,
       toColumn: left.column,
+      fromCardinality: "many",
+      toCardinality: "one",
     };
   }
 
@@ -272,6 +277,8 @@ function parseRelationExpression(expression: string): ParsedRelation | undefined
     fromColumn: left.column,
     toTable: right.table,
     toColumn: right.column,
+    fromCardinality: match[2] === "-" ? "one" : "many",
+    toCardinality: "one",
   };
 }
 

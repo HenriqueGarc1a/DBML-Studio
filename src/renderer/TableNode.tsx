@@ -1,12 +1,15 @@
 import type { PointerEvent } from "react";
 import { TABLE_HEADER_HEIGHT, TABLE_ROW_HEIGHT } from "../model/defaults";
 import type { TableModel } from "../model/types";
+import { ResizeHandles, type ResizeCorner } from "./ResizeHandles";
+
+type BadgeTone = "amber" | "teal" | "rose";
 
 interface TableNodeProps {
   table: TableModel;
   selected: boolean;
   onPointerDown: (event: PointerEvent<SVGGElement>, table: TableModel) => void;
-  onResizePointerDown: (event: PointerEvent<SVGRectElement>, table: TableModel) => void;
+  onResizePointerDown: (event: PointerEvent<SVGRectElement>, table: TableModel, corner: ResizeCorner) => void;
 }
 
 export function TableNode({ table, selected, onPointerDown, onResizePointerDown }: TableNodeProps) {
@@ -22,7 +25,7 @@ export function TableNode({ table, selected, onPointerDown, onResizePointerDown 
         height={table.height}
         rx={6}
         fill={table.visual.backgroundColor}
-        stroke={selected ? "#0f766e" : table.visual.borderColor}
+        stroke={selected ? "#2dd4bf" : table.visual.borderColor}
         strokeWidth={selected ? 2.5 : 1.5}
       />
       <rect
@@ -49,7 +52,8 @@ export function TableNode({ table, selected, onPointerDown, onResizePointerDown 
         const badges = [
           column.primaryKey ? { label: "PK", tone: "amber" as const } : undefined,
           column.foreignKey ? { label: "FK", tone: "teal" as const } : undefined,
-        ].filter(Boolean) as Array<{ label: string; tone: "amber" | "teal" }>;
+          !column.nullable ? { label: "NN", tone: "rose" as const } : undefined,
+        ].filter(Boolean) as Array<{ label: string; tone: BadgeTone }>;
         const badgeGap = 4;
         const badgeWidth = 22;
         const badgeStackWidth = badges.length * badgeWidth + Math.max(0, badges.length - 1) * badgeGap;
@@ -78,24 +82,22 @@ export function TableNode({ table, selected, onPointerDown, onResizePointerDown 
         );
       })}
       {selected && (
-        <rect
-          className="resize-handle"
-          x={table.width - 10}
-          y={table.height - 10}
-          width={10}
-          height={10}
-          rx={2}
-          onPointerDown={(event) => onResizePointerDown(event, table)}
+        <ResizeHandles
+          width={table.width}
+          height={table.height}
+          onPointerDown={(event, corner) => onResizePointerDown(event, table, corner)}
         />
       )}
     </g>
   );
 }
 
-function Badge({ x, y, label, tone }: { x: number; y: number; label: string; tone: "amber" | "teal" }) {
+function Badge({ x, y, label, tone }: { x: number; y: number; label: string; tone: BadgeTone }) {
   const colors = tone === "amber"
-    ? { fill: "#fef3c7", stroke: "#d97706", text: "#92400e" }
-    : { fill: "#ccfbf1", stroke: "#0f766e", text: "#115e59" };
+    ? { fill: "#3f2d12", stroke: "#f59e0b", text: "#fcd34d" }
+    : tone === "teal"
+      ? { fill: "#12312e", stroke: "#2dd4bf", text: "#99f6e4" }
+      : { fill: "#3b1620", stroke: "#fb7185", text: "#fecdd3" };
 
   return (
     <g transform={`translate(${x} ${y})`}>

@@ -72,6 +72,8 @@ describe("exporters", () => {
     expect(tikz).toContain("\\documentclass");
     expect(tikz).toContain("\\begin{tikzpicture}");
     expect(tikz).toContain("Backend Core");
+    expect(tikz).toContain("\\scriptsize PK NN");
+    expect(tikz).toContain("\\scriptsize FK NN");
     expect(tikz).toContain("\\draw[solid");
     expect(tikz).not.toContain("\\draw[->");
     expect(tikz).toContain("\\end{document}");

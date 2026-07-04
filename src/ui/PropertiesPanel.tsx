@@ -1,16 +1,18 @@
-import { Minus, Plus, RotateCcw, Trash2 } from "lucide-react";
+import { ChevronLeft, ChevronRight, Minus, Plus, RotateCcw, Trash2 } from "lucide-react";
 import type { ChangeEvent } from "react";
 import type { DiagramController } from "../editor/useDiagramController";
 import { DIAGRAM_MAX_GRID_SIZE, DIAGRAM_MIN_GRID_SIZE, getTableMinHeight } from "../model/defaults";
-import type { Direction, LineRoute, LineStyle, Point } from "../model/types";
+import type { ColumnModel, Direction, LineRoute, LineStyle, Point, TableModel } from "../model/types";
 import { getRelationGeometry } from "../utils/geometry";
 import { snapPoint } from "../utils/grid";
 
 interface PropertiesPanelProps {
   controller: DiagramController;
+  collapsed: boolean;
+  onToggle: () => void;
 }
 
-export function PropertiesPanel({ controller }: PropertiesPanelProps) {
+export function PropertiesPanel({ controller, collapsed, onToggle }: PropertiesPanelProps) {
   const selection = controller.selected;
   const table = selection?.type === "table"
     ? controller.diagram.tables.find((item) => item.id === selection.id)
@@ -23,11 +25,21 @@ export function PropertiesPanel({ controller }: PropertiesPanelProps) {
     : undefined;
 
   return (
-    <aside className="properties-pane">
+    <aside className={`properties-pane${collapsed ? " is-collapsed" : ""}`}>
       <div className="pane-heading">
-        <h2>Propriedades</h2>
+        {!collapsed && <h2>Propriedades</h2>}
+        <button
+          type="button"
+          className="pane-toggle icon-button"
+          onClick={onToggle}
+          aria-expanded={!collapsed}
+          aria-label={collapsed ? "Mostrar propriedades" : "Recolher propriedades"}
+          title={collapsed ? "Mostrar propriedades" : "Recolher propriedades"}
+        >
+          {collapsed ? <ChevronLeft size={16} /> : <ChevronRight size={16} />}
+        </button>
       </div>
-      {!selection && (
+      {!collapsed && !selection && (
         <section className="property-section">
           <h3>Diagrama</h3>
           <ColorField
@@ -50,7 +62,7 @@ export function PropertiesPanel({ controller }: PropertiesPanelProps) {
           />
         </section>
       )}
-      {table && (
+      {!collapsed && table && (
         <section className="property-section">
           <h3>Tabela</h3>
           <TextField label="Nome" value={table.name} onChange={(name) => controller.updateTable(table.id, { name })} />
@@ -68,12 +80,13 @@ export function PropertiesPanel({ controller }: PropertiesPanelProps) {
           <ColorField label="Cabecalho" value={table.visual.headerColor} onChange={(headerColor) => controller.updateTable(table.id, { visual: { ...table.visual, headerColor } })} />
           <ColorField label="Texto" value={table.visual.textColor} onChange={(textColor) => controller.updateTable(table.id, { visual: { ...table.visual, textColor } })} />
           <RangeField label="Opacidade" value={table.visual.opacity} min={0.1} max={1} step={0.05} onChange={(opacity) => controller.updateTable(table.id, { visual: { ...table.visual, opacity } })} />
+          <TableColumnsEditor controller={controller} table={table} />
         </section>
       )}
-      {relation && (
+      {!collapsed && relation && (
         <RelationProperties controller={controller} relationId={relation.id} />
       )}
-      {group && (
+      {!collapsed && group && (
         <section className="property-section">
           <h3>Grupo</h3>
           <TextField label="Titulo" value={group.label} onChange={(label) => controller.updateGroup(group.id, { label })} />
@@ -118,6 +131,101 @@ export function PropertiesPanel({ controller }: PropertiesPanelProps) {
         </section>
       )}
     </aside>
+  );
+}
+
+function TableColumnsEditor({ controller, table }: { controller: DiagramController; table: TableModel }) {
+  const relationBackedForeignKeys = new Set(
+    controller.diagram.relations
+      .filter((relation) => relation.fromTable === table.id)
+      .map((relation) => relation.fromColumn),
+  );
+
+  return (
+    <div className="columns-editor">
+      <div className="subsection-heading">
+        <h4>Campos</h4>
+        <button type="button" className="icon-button" onClick={() => controller.addColumn(table.id)} title="Adicionar campo">
+          <Plus size={15} />
+        </button>
+      </div>
+      <div className="columns-list">
+        {table.columns.map((column) => (
+          <ColumnEditor
+            key={column.id}
+            column={column}
+            relationBackedFk={relationBackedForeignKeys.has(column.name)}
+            onChange={(patch) => controller.updateColumn(table.id, column.id, patch)}
+            onRemove={() => controller.removeColumn(table.id, column.id)}
+          />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function ColumnEditor({
+  column,
+  relationBackedFk,
+  onChange,
+  onRemove,
+}: {
+  column: ColumnModel;
+  relationBackedFk: boolean;
+  onChange: (patch: Partial<ColumnModel>) => void;
+  onRemove: () => void;
+}) {
+  return (
+    <div className="column-editor">
+      <input
+        type="text"
+        value={column.name}
+        aria-label="Nome do campo"
+        onChange={(event) => onChange({ name: event.target.value })}
+      />
+      <input
+        type="text"
+        value={column.type}
+        aria-label="Tipo do campo"
+        onChange={(event) => onChange({ type: event.target.value })}
+      />
+      <label className="mini-check" title="Primary key">
+        <input
+          type="checkbox"
+          checked={column.primaryKey}
+          onChange={(event) => onChange({ primaryKey: event.target.checked })}
+        />
+        <span>PK</span>
+      </label>
+      <label className="mini-check" title={relationBackedFk ? "FK definido por uma relacao" : "Foreign key"}>
+        <input
+          type="checkbox"
+          checked={column.foreignKey}
+          disabled={relationBackedFk}
+          onChange={(event) => onChange({ foreignKey: event.target.checked })}
+        />
+        <span>FK</span>
+      </label>
+      <label className="mini-check" title="Not null">
+        <input
+          type="checkbox"
+          checked={!column.nullable}
+          onChange={(event) => onChange({ nullable: !event.target.checked })}
+        />
+        <span>NN</span>
+      </label>
+      <label className="mini-check" title="Unique">
+        <input
+          type="checkbox"
+          checked={Boolean(column.unique)}
+          onChange={(event) => onChange({ unique: event.target.checked })}
+        />
+        <span>UQ</span>
+      </label>
+      <button type="button" className="icon-button" onClick={onRemove} title="Remover campo">
+        <Trash2 size={14} />
+      </button>
+    </div>
   );
 }
 

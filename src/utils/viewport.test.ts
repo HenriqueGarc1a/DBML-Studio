@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { MAX_ZOOM, getZoom, panViewBox, unionViewBox, zoomViewBox } from "./viewport";
+import { MAX_ZOOM, fitViewBoxToAspect, getZoom, panViewBox, unionViewBox, zoomViewBox } from "./viewport";
 
 const bounds = { x: 0, y: 0, width: 1000, height: 800 };
 
@@ -23,6 +23,22 @@ describe("viewport", () => {
     expect(getZoom(bounds, viewport)).toBe(12);
   });
 
+  it("zooms the current visible view box without changing its aspect ratio", () => {
+    const viewport = zoomViewBox(
+      bounds,
+      { x: -300, y: 0, width: 1600, height: 800 },
+      2,
+      { x: 500, y: 400 },
+    );
+
+    expect(viewport).toEqual({
+      x: 100,
+      y: 200,
+      width: 800,
+      height: 400,
+    });
+  });
+
   it("pans by SVG-space deltas", () => {
     expect(panViewBox(bounds, 20, -10)).toEqual({
       x: -20,
@@ -38,6 +54,22 @@ describe("viewport", () => {
       y: 0,
       width: 1100,
       height: 920,
+    });
+  });
+
+  it("expands a view box to match the canvas aspect ratio", () => {
+    expect(fitViewBoxToAspect(bounds, 1600, 800)).toEqual({
+      x: -300,
+      y: 0,
+      width: 1600,
+      height: 800,
+    });
+
+    expect(fitViewBoxToAspect(bounds, 1000, 1000)).toEqual({
+      x: 0,
+      y: -100,
+      width: 1000,
+      height: 1000,
     });
   });
 });

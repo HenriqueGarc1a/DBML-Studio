@@ -1,7 +1,23 @@
 import type { MouseEvent, MutableRefObject, PointerEvent, WheelEvent } from "react";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Maximize2, ZoomIn, ZoomOut } from "lucide-react";
+import {
+  FolderPlus,
+  GripVertical,
+  LayoutTemplate,
+  Magnet,
+  Maximize2,
+  Redo2,
+  Undo2,
+  ZoomIn,
+  ZoomOut,
+} from "lucide-react";
 import type { DiagramController } from "../editor/useDiagramController";
+import {
+  GROUP_MIN_HEIGHT,
+  GROUP_MIN_WIDTH,
+  getTableMinHeight,
+  TABLE_MIN_WIDTH,
+} from "../model/defaults";
 import type { GroupModel, Point, RelationModel, TableModel } from "../model/types";
 import {
   getRelationGeometry,
@@ -10,7 +26,9 @@ import {
 } from "../utils/geometry";
 import { snapPoint, snapValue } from "../utils/grid";
 import { buildJumpPath } from "../utils/lineJumps";
+import { distributeRelationEndpoints } from "../utils/relationLayout";
 import {
+  fitViewBoxToAspect,
   getZoom,
   panViewBox,
   unionViewBox,
@@ -19,7 +37,15 @@ import {
 } from "../utils/viewport";
 import { GroupNode } from "./GroupNode";
 import { RelationPath } from "./RelationPath";
+import type { ResizeCorner } from "./ResizeHandles";
 import { TableNode } from "./TableNode";
+
+interface ResizeOrigin {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+}
 
 type DragState =
   | {
@@ -31,9 +57,9 @@ type DragState =
   | {
       kind: "table-resize";
       id: string;
+      corner: ResizeCorner;
       start: Point;
-      width: number;
-      height: number;
+      origin: ResizeOrigin;
     }
   | {
       kind: "group";
@@ -44,9 +70,9 @@ type DragState =
   | {
       kind: "group-resize";
       id: string;
+      corner: ResizeCorner;
       start: Point;
-      width: number;
-      height: number;
+      origin: ResizeOrigin;
     }
   | {
       kind: "via";
@@ -73,6 +99,9 @@ export function SvgCanvas({ controller, svgRef: externalSvgRef }: SvgCanvasProps
   const internalSvgRef = useRef<SVGSVGElement | null>(null);
   const svgRef = externalSvgRef ?? internalSvgRef;
   const [drag, setDrag] = useState<DragState | undefined>();
+  const [canvasSize, setCanvasSize] = useState({ width: 1200, height: 800 });
+  const [zoomPanelPosition, setZoomPanelPosition] = useState<Point>({ x: 12, y: 12 });
+  const [zoomPanelDrag, setZoomPanelDrag] = useState<{ pointerStart: Point; origin: Point } | undefined>();
   const computedBounds = useMemo(
     () => getTableBounds(controller.diagram.tables),
     [controller.diagram.tables],
@@ -87,15 +116,23 @@ export function SvgCanvas({ controller, svgRef: externalSvgRef }: SvgCanvasProps
     () => controller.diagram.tables.map((table) => table.id).join("|"),
     [controller.diagram.tables],
   );
-  const paintBounds = unionViewBox(computedBounds, viewport);
+  const displayRelations = useMemo(
+    () => distributeRelationEndpoints(controller.diagram.relations, tableMap),
+    [controller.diagram.relations, tableMap],
+  );
   const zoom = getZoom(computedBounds, viewport);
   const selected = controller.selected;
   const gridSize = controller.diagram.visual.gridSize;
+  const paintBounds = useMemo(
+    () => expandPaintBounds(unionViewBox(computedBounds, viewport), gridSize),
+    [computedBounds, gridSize, viewport],
+  );
   const relationPaths = useMemo(() => {
     const paths = new Map<string, string>();
     const previousPolylines: Point[][] = [];
 
-    for (const relation of controller.diagram.relations) {
+    for (const sourceRelation of controller.diagram.relations) {
+      const relation = displayRelations.get(sourceRelation.id) ?? sourceRelation;
       const fromTable = tableMap.get(relation.fromTable);
       const toTable = tableMap.get(relation.toTable);
       if (!fromTable || !toTable) continue;
@@ -114,19 +151,49 @@ export function SvgCanvas({ controller, svgRef: externalSvgRef }: SvgCanvasProps
     }
 
     return paths;
-  }, [controller.diagram.relations, tableMap]);
+  }, [controller.diagram.relations, displayRelations, tableMap]);
+
+  useEffect(() => {
+    const svg = svgRef.current;
+    if (!svg) return;
+
+    const updateCanvasSize = () => {
+      const rect = svg.getBoundingClientRect();
+      if (rect.width <= 0 || rect.height <= 0) return;
+
+      setCanvasSize((current) => {
+        if (Math.abs(current.width - rect.width) < 0.5 && Math.abs(current.height - rect.height) < 0.5) {
+          return current;
+        }
+
+        return { width: rect.width, height: rect.height };
+      });
+    };
+
+    updateCanvasSize();
+
+    const observer = new ResizeObserver(updateCanvasSize);
+    observer.observe(svg);
+
+    return () => observer.disconnect();
+  }, [svgRef]);
+
+  useEffect(() => {
+    setZoomPanelPosition((current) =>
+      clampOverlayPosition(current, svgRef.current?.parentElement, undefined, canvasSize),
+    );
+  }, [canvasSize, svgRef]);
+
+  useEffect(() => {
+    setViewport((current) => fitViewBoxToAspect(current, canvasSize.width, canvasSize.height));
+  }, [canvasSize.height, canvasSize.width]);
 
   useEffect(() => {
     if (tableSignature !== lastTableSignature) {
-      setViewport(computedBounds);
+      setViewport(fitViewBoxToAspect(computedBounds, canvasSize.width, canvasSize.height));
       setLastTableSignature(tableSignature);
-      return;
     }
-
-    if (!drag && Math.abs(zoom - 1) < 0.01) {
-      setViewport(computedBounds);
-    }
-  }, [computedBounds, drag, lastTableSignature, tableSignature, zoom]);
+  }, [canvasSize.height, canvasSize.width, computedBounds, lastTableSignature, tableSignature]);
 
   const toSvgPoint = (event: Pick<PointerEvent | MouseEvent, "clientX" | "clientY">): Point => {
     const svg = svgRef.current;
@@ -140,6 +207,7 @@ export function SvgCanvas({ controller, svgRef: externalSvgRef }: SvgCanvasProps
 
   const onPointerMove = (event: PointerEvent<SVGSVGElement>) => {
     if (!drag) return;
+    event.preventDefault();
 
     if (drag.kind === "pan") {
       const svg = svgRef.current;
@@ -163,13 +231,20 @@ export function SvgCanvas({ controller, svgRef: externalSvgRef }: SvgCanvasProps
     }
 
     if (drag.kind === "table-resize") {
-      const width = drag.width + point.x - drag.start.x;
-      const height = drag.height + point.y - drag.start.y;
-      controller.resizeTable(
-        drag.id,
-        controller.snapToGrid ? snapValue(width, gridSize) : width,
-        controller.snapToGrid ? snapValue(height, gridSize) : height,
+      const table = tableMap.get(drag.id);
+      if (!table) return;
+      const next = resizeBoxFromCorner(
+        drag.origin,
+        drag.corner,
+        drag.start,
+        point,
+        TABLE_MIN_WIDTH,
+        getTableMinHeight(table.columns.length),
+        controller.snapToGrid,
+        gridSize,
       );
+
+      controller.updateTable(drag.id, { ...next, layoutSource: "manual" });
     }
 
     if (drag.kind === "group") {
@@ -182,13 +257,18 @@ export function SvgCanvas({ controller, svgRef: externalSvgRef }: SvgCanvasProps
     }
 
     if (drag.kind === "group-resize") {
-      const width = drag.width + point.x - drag.start.x;
-      const height = drag.height + point.y - drag.start.y;
-      controller.resizeGroup(
-        drag.id,
-        controller.snapToGrid ? snapValue(width, gridSize) : width,
-        controller.snapToGrid ? snapValue(height, gridSize) : height,
+      const next = resizeBoxFromCorner(
+        drag.origin,
+        drag.corner,
+        drag.start,
+        point,
+        GROUP_MIN_WIDTH,
+        GROUP_MIN_HEIGHT,
+        controller.snapToGrid,
+        gridSize,
       );
+
+      controller.updateGroup(drag.id, next);
     }
 
     if (drag.kind === "via") {
@@ -233,13 +313,17 @@ export function SvgCanvas({ controller, svgRef: externalSvgRef }: SvgCanvasProps
   };
 
   const beginSvgDrag = (event: PointerEvent<SVGElement>, state: DragState) => {
+    if (!event.isPrimary || event.button !== 0) return;
     event.stopPropagation();
+    event.preventDefault();
     svgRef.current?.setPointerCapture(event.pointerId);
     controller.beginHistoryBatch();
     setDrag(state);
   };
 
   const beginPan = (event: PointerEvent<SVGSVGElement>) => {
+    if (!event.isPrimary || event.button !== 0) return;
+    event.preventDefault();
     controller.setSelected(undefined);
     event.currentTarget.setPointerCapture(event.pointerId);
     setDrag({
@@ -250,22 +334,82 @@ export function SvgCanvas({ controller, svgRef: externalSvgRef }: SvgCanvasProps
   };
 
   const zoomAt = (factor: number, center?: Point) => {
-    setViewport((current) => zoomViewBox(computedBounds, current, factor, center));
+    setViewport((current) =>
+      zoomViewBox(
+        computedBounds,
+        fitViewBoxToAspect(current, canvasSize.width, canvasSize.height),
+        factor,
+        center,
+      ),
+    );
   };
 
   const fitDiagram = () => {
-    setViewport(computedBounds);
+    setViewport(fitViewBoxToAspect(computedBounds, canvasSize.width, canvasSize.height));
   };
 
   const onWheel = (event: WheelEvent<SVGSVGElement>) => {
     event.preventDefault();
-    zoomAt(event.deltaY < 0 ? 1.12 : 1 / 1.12, toSvgPoint(event));
+    const deltaScale = event.deltaMode === 1
+      ? 16
+      : event.deltaMode === 2
+        ? canvasSize.height
+        : 1;
+
+    if (!event.shiftKey) {
+      const deltaY = event.deltaY * deltaScale;
+      zoomAt(Math.exp(-deltaY * 0.0015), toSvgPoint(event));
+      return;
+    }
+
+    const svg = svgRef.current;
+    const deltaX = (event.deltaX || event.deltaY) * deltaScale;
+    const width = svg?.clientWidth || canvasSize.width || 1;
+
+    setViewport((current) => ({
+      ...current,
+      x: current.x + deltaX * (current.width / width),
+    }));
   };
 
   const addViaPoint = (relation: RelationModel, event: MouseEvent<SVGPathElement>) => {
     event.stopPropagation();
     controller.addViaPoint(relation.id, snapPoint(toSvgPoint(event), controller.snapToGrid, gridSize));
     controller.setSelected({ type: "relation", id: relation.id });
+  };
+
+  const beginZoomPanelDrag = (event: PointerEvent<HTMLButtonElement>) => {
+    event.preventDefault();
+    event.stopPropagation();
+    event.currentTarget.setPointerCapture(event.pointerId);
+    setZoomPanelDrag({
+      pointerStart: { x: event.clientX, y: event.clientY },
+      origin: zoomPanelPosition,
+    });
+  };
+
+  const moveZoomPanel = (event: PointerEvent<HTMLButtonElement>) => {
+    if (!zoomPanelDrag) return;
+    event.preventDefault();
+    event.stopPropagation();
+
+    const panel = event.currentTarget.closest(".zoom-controls");
+    const nextPosition = {
+      x: zoomPanelDrag.origin.x + event.clientX - zoomPanelDrag.pointerStart.x,
+      y: zoomPanelDrag.origin.y + event.clientY - zoomPanelDrag.pointerStart.y,
+    };
+
+    setZoomPanelPosition(clampOverlayPosition(nextPosition, svgRef.current?.parentElement, panel, canvasSize));
+  };
+
+  const stopZoomPanelDrag = (event: PointerEvent<HTMLButtonElement>) => {
+    if (!zoomPanelDrag) return;
+    event.preventDefault();
+    event.stopPropagation();
+    if (event.currentTarget.hasPointerCapture(event.pointerId)) {
+      event.currentTarget.releasePointerCapture(event.pointerId);
+    }
+    setZoomPanelDrag(undefined);
   };
 
   return (
@@ -319,31 +463,32 @@ export function SvgCanvas({ controller, svgRef: externalSvgRef }: SvgCanvasProps
                 origin: { x: item.x, y: item.y },
               });
             }}
-            onResizePointerDown={(event, item) => {
+            onResizePointerDown={(event, item, corner) => {
               controller.setSelected({ type: "group", id: item.id });
               beginSvgDrag(event, {
                 kind: "group-resize",
                 id: item.id,
+                corner,
                 start: toSvgPoint(event),
-                width: item.width,
-                height: item.height,
+                origin: { x: item.x, y: item.y, width: item.width, height: item.height },
               });
             }}
           />
         ))}
-        {controller.diagram.relations.map((relation) => {
-          const fromTable = tableMap.get(relation.fromTable);
-          const toTable = tableMap.get(relation.toTable);
+        {controller.diagram.relations.map((sourceRelation) => {
+          const relation = displayRelations.get(sourceRelation.id) ?? sourceRelation;
+          const fromTable = tableMap.get(sourceRelation.fromTable);
+          const toTable = tableMap.get(sourceRelation.toTable);
           if (!fromTable || !toTable) return null;
 
           return (
             <RelationPath
-              key={relation.id}
+              key={sourceRelation.id}
               relation={relation}
               fromTable={fromTable}
               toTable={toTable}
-              selected={selected?.type === "relation" && selected.id === relation.id}
-              renderedPath={relationPaths.get(relation.id)}
+              selected={selected?.type === "relation" && selected.id === sourceRelation.id}
+              renderedPath={relationPaths.get(sourceRelation.id)}
               onSelect={(item) => controller.setSelected({ type: "relation", id: item.id })}
               onAddViaPoint={addViaPoint}
               onViaPointerDown={(event, item, index) => {
@@ -371,20 +516,74 @@ export function SvgCanvas({ controller, svgRef: externalSvgRef }: SvgCanvasProps
                 origin: { x: item.x, y: item.y },
               });
             }}
-            onResizePointerDown={(event, item) => {
+            onResizePointerDown={(event, item, corner) => {
               controller.setSelected({ type: "table", id: item.id });
               beginSvgDrag(event, {
                 kind: "table-resize",
                 id: item.id,
+                corner,
                 start: toSvgPoint(event),
-                width: item.width,
-                height: item.height,
+                origin: { x: item.x, y: item.y, width: item.width, height: item.height },
               });
             }}
           />
         ))}
       </svg>
-      <div className="zoom-controls" aria-label="Zoom">
+      <div
+        className={`zoom-controls${zoomPanelDrag ? " is-dragging" : ""}`}
+        style={{ left: zoomPanelPosition.x, top: zoomPanelPosition.y }}
+        aria-label="Zoom"
+      >
+        <button
+          type="button"
+          className="zoom-drag-handle icon-button"
+          title="Mover controles de zoom"
+          onPointerDown={beginZoomPanelDrag}
+          onPointerMove={moveZoomPanel}
+          onPointerUp={stopZoomPanelDrag}
+          onPointerCancel={stopZoomPanelDrag}
+        >
+          <GripVertical size={15} />
+        </button>
+        <button
+          type="button"
+          className="icon-button"
+          title="Auto layout"
+          onClick={() => void controller.applyAutoLayout()}
+        >
+          <LayoutTemplate size={16} />
+        </button>
+        <button type="button" className="icon-button" title="Novo grupo" onClick={controller.addGroup}>
+          <FolderPlus size={16} />
+        </button>
+        <button
+          type="button"
+          className={`icon-button${controller.snapToGrid ? " is-toggle-active" : ""}`}
+          title="Snap no grid"
+          aria-pressed={controller.snapToGrid}
+          onClick={() => controller.setSnapToGrid(!controller.snapToGrid)}
+        >
+          <Magnet size={16} />
+        </button>
+        <button
+          type="button"
+          className="icon-button"
+          title="Desfazer"
+          onClick={controller.undo}
+          disabled={!controller.canUndo}
+        >
+          <Undo2 size={16} />
+        </button>
+        <button
+          type="button"
+          className="icon-button"
+          title="Refazer"
+          onClick={controller.redo}
+          disabled={!controller.canRedo}
+        >
+          <Redo2 size={16} />
+        </button>
+        <span className="floating-toolbar-divider" aria-hidden="true" />
         <button type="button" className="icon-button" title="Diminuir zoom" onClick={() => zoomAt(1 / 1.2)}>
           <ZoomOut size={16} />
         </button>
@@ -398,4 +597,82 @@ export function SvgCanvas({ controller, svgRef: externalSvgRef }: SvgCanvasProps
       </div>
     </>
   );
+}
+
+function resizeBoxFromCorner(
+  origin: ResizeOrigin,
+  corner: ResizeCorner,
+  start: Point,
+  point: Point,
+  minWidth: number,
+  minHeight: number,
+  snapToGrid: boolean,
+  gridSize: number,
+): ResizeOrigin {
+  const snap = (value: number) => (snapToGrid ? snapValue(value, gridSize) : value);
+  const dx = point.x - start.x;
+  const dy = point.y - start.y;
+  let left = origin.x;
+  let top = origin.y;
+  let right = origin.x + origin.width;
+  let bottom = origin.y + origin.height;
+
+  if (corner.endsWith("w")) {
+    left = Math.min(snap(origin.x + dx), right - minWidth);
+  } else {
+    right = Math.max(snap(right + dx), left + minWidth);
+  }
+
+  if (corner.startsWith("n")) {
+    top = Math.min(snap(origin.y + dy), bottom - minHeight);
+  } else {
+    bottom = Math.max(snap(bottom + dy), top + minHeight);
+  }
+
+  return {
+    x: left,
+    y: top,
+    width: right - left,
+    height: bottom - top,
+  };
+}
+
+function expandPaintBounds(bounds: ViewBox, gridSize: number): ViewBox {
+  const padding = Math.max(256, gridSize * 24);
+  const step = Math.max(1, gridSize);
+  const x = Math.floor((bounds.x - padding) / step) * step;
+  const y = Math.floor((bounds.y - padding) / step) * step;
+  const right = Math.ceil((bounds.x + bounds.width + padding) / step) * step;
+  const bottom = Math.ceil((bounds.y + bounds.height + padding) / step) * step;
+
+  return {
+    x,
+    y,
+    width: right - x,
+    height: bottom - y,
+  };
+}
+
+function clampOverlayPosition(
+  position: Point,
+  container: Element | null | undefined,
+  overlay: Element | null | undefined,
+  fallbackSize: { width: number; height: number },
+): Point {
+  const inset = 8;
+  const containerRect = container?.getBoundingClientRect();
+  const overlayRect = overlay?.getBoundingClientRect();
+  const containerWidth = containerRect?.width ?? fallbackSize.width;
+  const containerHeight = containerRect?.height ?? fallbackSize.height;
+  const overlayWidth = overlayRect?.width ?? 190;
+  const overlayHeight = overlayRect?.height ?? 44;
+
+  return {
+    x: clamp(position.x, inset, Math.max(inset, containerWidth - overlayWidth - inset)),
+    y: clamp(position.y, inset, Math.max(inset, containerHeight - overlayHeight - inset)),
+  };
+}
+
+function clamp(value: number, min: number, max: number): number {
+  return Math.min(max, Math.max(min, value));
 }
