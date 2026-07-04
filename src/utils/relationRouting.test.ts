@@ -88,6 +88,7 @@ function makeTable(id: string, x: number, y: number, width = 220, height = 120):
     height,
     visual: defaultTableVisual,
     usesDefaultStyle: true,
+    usesGroupStyle: false,
     indexes: [],
     layoutSource: "manual",
   };

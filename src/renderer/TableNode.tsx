@@ -12,6 +12,7 @@ export interface RelationFieldEndpoint {
 interface TableNodeProps {
   table: TableModel;
   defaultVisual: TableVisual;
+  groupVisual?: TableVisual;
   badgeVisuals: BadgeVisualSet;
   selected: boolean;
   relationMode: boolean;
@@ -28,6 +29,7 @@ interface TableNodeProps {
 export function TableNode({
   table,
   defaultVisual,
+  groupVisual,
   badgeVisuals,
   selected,
   relationMode,
@@ -36,7 +38,7 @@ export function TableNode({
   onColumnPointerDown,
   onResizePointerDown,
 }: TableNodeProps) {
-  const visual = table.usesDefaultStyle ? defaultVisual : table.visual;
+  const visual = groupVisual ?? (table.usesDefaultStyle ? defaultVisual : table.visual);
 
   return (
     <g

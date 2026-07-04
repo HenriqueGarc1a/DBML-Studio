@@ -1,4 +1,5 @@
 import type { ColumnModel, DiagramModel, GroupModel, RelationModel, TableModel } from "../model/types";
+import { normalizeRelationSide } from "../utils/geometry";
 
 export function exportDbml(diagram: DiagramModel): string {
   const sections: string[] = [exportDiagram(diagram)];
@@ -55,6 +56,7 @@ function exportTable(table: TableModel): string {
     `// width=${round(table.width)}`,
     `// height=${round(table.height)}`,
     `// useDefaultStyle=${table.usesDefaultStyle}`,
+    `// useGroupStyle=${table.usesGroupStyle}`,
     ...(!table.usesDefaultStyle
       ? [
           `// background=${table.visual.backgroundColor}`,
@@ -145,12 +147,12 @@ function exportRelation(relation: RelationModel, tableMap: Map<string, TableMode
     `// opacity=${round(relation.opacity, 2)}`,
     `// style=${relation.style}`,
     `// route=${relation.route}`,
-    `// from=${relation.fromSide}`,
-    `// to=${relation.toSide}`,
-    `// startOffsetX=${round(relation.startOffsetX, 2)}`,
-    `// startOffsetY=${round(relation.startOffsetY, 2)}`,
-    `// endOffsetX=${round(relation.endOffsetX, 2)}`,
-    `// endOffsetY=${round(relation.endOffsetY, 2)}`,
+    `// from=${normalizeRelationSide(relation.fromSide)}`,
+    `// to=${normalizeRelationSide(relation.toSide)}`,
+    `// startOffsetX=0`,
+    `// startOffsetY=0`,
+    `// endOffsetX=0`,
+    `// endOffsetY=0`,
     relation.label ? `// label=${relation.label}` : "",
     relation.viaPoints.length
       ? `// via=${relation.viaPoints.map((point) => `(${round(point.x)},${round(point.y)})`).join(",")}`
@@ -173,6 +175,11 @@ function exportGroup(group: GroupModel): string {
     `// background=${group.backgroundColor}`,
     `// border=${group.borderColor}`,
     `// opacity=${round(group.opacity, 2)}`,
+    `// tableBackground=${group.tableVisual.backgroundColor}`,
+    `// tableBorder=${group.tableVisual.borderColor}`,
+    `// tableHeader=${group.tableVisual.headerColor}`,
+    `// tableText=${group.tableVisual.textColor}`,
+    `// tableOpacity=${round(group.tableVisual.opacity, 2)}`,
   ].join("\n");
 }
 

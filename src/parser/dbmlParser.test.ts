@@ -19,6 +19,7 @@ const source = `// @diagram
 // x=10
 // y=20
 // width=280
+// useGroupStyle=true
 // background=#ffffff
 // border=#2563eb
 // header=#dbeafe
@@ -60,6 +61,11 @@ Ref: project.user_id > user.id
 // background=#0f766e
 // border=#0f766e
 // opacity=0.14
+// tableBackground=#052e2b
+// tableBorder=#14b8a6
+// tableHeader=#115e59
+// tableText=#ccfbf1
+// tableOpacity=0.88
 // tables=user,project
 `;
 
@@ -84,6 +90,7 @@ describe("parseDbml", () => {
     const user = diagram.tables.find((table) => table.id === "user");
     expect(user?.x).toBe(10);
     expect(user?.usesDefaultStyle).toBe(false);
+    expect(user?.usesGroupStyle).toBe(true);
     expect(user?.visual.borderColor).toBe("#2563eb");
     expect(user?.columns[0].primaryKey).toBe(true);
 
@@ -114,6 +121,13 @@ describe("parseDbml", () => {
     expect(diagram.groups[0]).toMatchObject({
       label: "Backend Core",
       opacity: 0.14,
+      tableVisual: {
+        backgroundColor: "#052e2b",
+        borderColor: "#14b8a6",
+        headerColor: "#115e59",
+        textColor: "#ccfbf1",
+        opacity: 0.88,
+      },
       tables: ["user", "project"],
     });
   });

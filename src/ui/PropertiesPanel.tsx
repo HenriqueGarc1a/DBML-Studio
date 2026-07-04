@@ -7,7 +7,6 @@ import type {
   BadgeVisual,
   ColumnModel,
   Direction,
-  LineRoute,
   LineStyle,
   Point,
   SavedColor,
@@ -104,13 +103,24 @@ export function PropertiesPanel({ controller, collapsed, onToggle }: PropertiesP
               onChange={(usesDefaultStyle) => {
                 controller.updateTable(table.id, {
                   usesDefaultStyle,
+                  usesGroupStyle: usesDefaultStyle ? false : table.usesGroupStyle,
                   visual: usesDefaultStyle
                     ? table.visual
                     : { ...getEffectiveTableVisual(table, controller.diagram.visual.defaultTable) },
                 });
               }}
             />
-            {!table.usesDefaultStyle && (
+            <CheckboxField
+              label="Grupo"
+              checked={table.usesGroupStyle}
+              onChange={(usesGroupStyle) => {
+                controller.updateTable(table.id, {
+                  usesGroupStyle,
+                  usesDefaultStyle: usesGroupStyle ? false : table.usesDefaultStyle,
+                });
+              }}
+            />
+            {!table.usesDefaultStyle && !table.usesGroupStyle && (
               <TableVisualFields
                 visual={table.visual}
                 savedColors={savedColors}
@@ -158,6 +168,14 @@ export function PropertiesPanel({ controller, collapsed, onToggle }: PropertiesP
               onChange={(borderColor) => controller.updateGroup(group.id, { borderColor })}
             />
             <RangeField label="Opacidade" value={group.opacity} min={0.02} max={0.8} step={0.02} onChange={(opacity) => controller.updateGroup(group.id, { opacity })} />
+            <div className="subsection-heading compact-heading">
+              <h4>Estilo das tabelas</h4>
+            </div>
+            <TableVisualFields
+              visual={group.tableVisual}
+              savedColors={savedColors}
+              onChange={(tableVisual) => controller.updateGroup(group.id, { tableVisual })}
+            />
           </CollapsibleGroup>
           <CollapsibleGroup id="group.actions" title="Ações" defaultOpen={false}>
             <div className="button-row">
@@ -602,22 +620,15 @@ function RelationProperties({ controller, relationId }: { controller: DiagramCon
         <SelectField<LineStyle>
           label="Estilo"
           value={relation.style}
-          options={["solid", "dashed", "dotted", "rounded"]}
-          labels={{ solid: "Sólida", dashed: "Tracejada", dotted: "Pontilhada", rounded: "Arredondada" }}
+          options={["solid", "dashed", "dotted"]}
+          labels={{ solid: "Sólida", dashed: "Tracejada", dotted: "Pontilhada" }}
           onChange={(style) => controller.updateRelation(relation.id, { style })}
-        />
-        <SelectField<LineRoute>
-          label="Rota"
-          value={relation.route}
-          options={["straight", "orthogonal", "curve"]}
-          labels={{ straight: "Reta", orthogonal: "Ortogonal", curve: "Curva" }}
-          onChange={(route) => controller.updateRelation(relation.id, { route })}
         />
         <SelectField<Direction>
           label="Origem"
-          value={relation.fromSide}
-          options={["north", "south", "east", "west"]}
-          labels={{ north: "Cima", south: "Baixo", east: "Direita", west: "Esquerda" }}
+          value={relation.fromSide === "west" ? "west" : "east"}
+          options={["west", "east"]}
+          labels={{ east: "Direita", west: "Esquerda" }}
           onChange={(fromSide) => controller.updateRelation(relation.id, {
             fromSide,
             startOffsetX: 0,
@@ -626,9 +637,9 @@ function RelationProperties({ controller, relationId }: { controller: DiagramCon
         />
         <SelectField<Direction>
           label="Destino"
-          value={relation.toSide}
-          options={["north", "south", "east", "west"]}
-          labels={{ north: "Cima", south: "Baixo", east: "Direita", west: "Esquerda" }}
+          value={relation.toSide === "west" ? "west" : "east"}
+          options={["west", "east"]}
+          labels={{ east: "Direita", west: "Esquerda" }}
           onChange={(toSide) => controller.updateRelation(relation.id, {
             toSide,
             endOffsetX: 0,
@@ -639,6 +650,14 @@ function RelationProperties({ controller, relationId }: { controller: DiagramCon
           <button type="button" className="secondary-button" onClick={() => controller.tidyRelation(relation.id)}>
             <Route size={16} />
             Auto rota
+          </button>
+          <button
+            type="button"
+            className="secondary-button"
+            onClick={() => controller.resetRelation(relation.id)}
+          >
+            <RotateCcw size={16} />
+            Reset
           </button>
         </div>
       </CollapsibleGroup>
@@ -656,14 +675,6 @@ function RelationProperties({ controller, relationId }: { controller: DiagramCon
           >
             <Trash2 size={16} />
             Último
-          </button>
-          <button
-            type="button"
-            className="secondary-button"
-            onClick={() => controller.resetRelation(relation.id)}
-          >
-            <RotateCcw size={16} />
-            Reset
           </button>
         </div>
         {relation.viaPoints.map((point, index) => (

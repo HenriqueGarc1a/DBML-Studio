@@ -107,6 +107,7 @@ function parseTables(
       height: measuredHeight,
       visual,
       usesDefaultStyle,
+      usesGroupStyle: special?.usesGroupStyle ?? false,
       indexes: parsed.indexes,
       note: parsed.note,
       layoutSource: special?.layoutSource ?? "auto",

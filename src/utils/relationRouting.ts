@@ -1,5 +1,5 @@
 import type { Direction, Point, RelationModel, TableModel } from "../model/types";
-import { getColumnPoint } from "./geometry";
+import { getColumnPoint, normalizeRelationSide } from "./geometry";
 
 interface Obstacle {
   left: number;
@@ -14,7 +14,6 @@ const OUTER_RAIL_PADDING = 56;
 const BEND_PENALTY = 90;
 const SIDE_PREFERENCE_PENALTY = 45;
 const LATERAL_SIDES: Direction[] = ["east", "west"];
-const ALL_SIDES: Direction[] = ["east", "west", "south", "north"];
 
 export interface OrganizedRelationRoute {
   fromSide: Direction;
@@ -39,10 +38,12 @@ export function organizeRelationRoute(
   );
   const candidates = lateralCandidates.length
     ? lateralCandidates
-    : rankSidePairs(
+      : rankSidePairs(
         [
           [preferredFromSide, preferredToSide],
-          ...ALL_SIDES.flatMap((fromSide) => ALL_SIDES.map((toSide): [Direction, Direction] => [fromSide, toSide])),
+          ...LATERAL_SIDES.flatMap((fromSide) =>
+            LATERAL_SIDES.map((toSide): [Direction, Direction] => [fromSide, toSide]),
+          ),
         ],
         relation,
         fromTable,
@@ -58,10 +59,13 @@ export function organizeRelationRoute(
     };
   }
 
+  const normalizedFromSide = normalizeRelationSide(preferredFromSide);
+  const normalizedToSide = normalizeRelationSide(preferredToSide);
+
   return {
-    fromSide: preferredFromSide,
-    toSide: preferredToSide,
-    viaPoints: routeRelationAroundTables(relation, fromTable, toTable, tables, preferredFromSide, preferredToSide),
+    fromSide: normalizedFromSide,
+    toSide: normalizedToSide,
+    viaPoints: routeRelationAroundTables(relation, fromTable, toTable, tables, normalizedFromSide, normalizedToSide),
   };
 }
 
@@ -74,16 +78,18 @@ function rankSidePairs(
 ): Array<OrganizedRelationRoute & { score: number }> {
   return uniqueSidePairs(sidePairs)
     .map(([fromSide, toSide], index) => {
-      const viaPoints = routeRelationAroundTables(relation, fromTable, toTable, tables, fromSide, toSide);
+      const normalizedFromSide = normalizeRelationSide(fromSide);
+      const normalizedToSide = normalizeRelationSide(toSide);
+      const viaPoints = routeRelationAroundTables(relation, fromTable, toTable, tables, normalizedFromSide, normalizedToSide);
       const points = [
-        getColumnPoint(fromTable, relation.fromColumn, fromSide),
+        getColumnPoint(fromTable, relation.fromColumn, normalizedFromSide),
         ...viaPoints,
-        getColumnPoint(toTable, relation.toColumn, toSide),
+        getColumnPoint(toTable, relation.toColumn, normalizedToSide),
       ];
 
       return {
-        fromSide,
-        toSide,
+        fromSide: normalizedFromSide,
+        toSide: normalizedToSide,
         viaPoints,
         clear: !pathCrossesTables(points, tables),
         score: routeScore(points, points[0], points[points.length - 1]) + index * SIDE_PREFERENCE_PENALTY,
@@ -114,10 +120,12 @@ export function routeRelationAroundTables(
   fromSide: Direction,
   toSide: Direction,
 ): Point[] {
-  const start = getColumnPoint(fromTable, relation.fromColumn, fromSide);
-  const end = getColumnPoint(toTable, relation.toColumn, toSide);
-  const startExit = offsetFromSide(start, fromSide, EXIT_DISTANCE);
-  const endExit = offsetFromSide(end, toSide, EXIT_DISTANCE);
+  const normalizedFromSide = normalizeRelationSide(fromSide);
+  const normalizedToSide = normalizeRelationSide(toSide);
+  const start = getColumnPoint(fromTable, relation.fromColumn, normalizedFromSide);
+  const end = getColumnPoint(toTable, relation.toColumn, normalizedToSide);
+  const startExit = offsetFromSide(start, normalizedFromSide, EXIT_DISTANCE);
+  const endExit = offsetFromSide(end, normalizedToSide, EXIT_DISTANCE);
   const obstacles = tables.map((table) => tableToObstacle(table, OBSTACLE_PADDING));
   const route = pickBestRoute(startExit, endExit, obstacles);
 
@@ -238,8 +246,6 @@ function distanceFromBox(point: Point, a: Point, b: Point): number {
 }
 
 function offsetFromSide(point: Point, side: Direction, distance: number): Point {
-  if (side === "north") return { x: point.x, y: point.y - distance };
-  if (side === "south") return { x: point.x, y: point.y + distance };
   if (side === "west") return { x: point.x - distance, y: point.y };
   return { x: point.x + distance, y: point.y };
 }

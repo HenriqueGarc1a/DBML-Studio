@@ -1,6 +1,5 @@
 import { TABLE_HEADER_HEIGHT, TABLE_ROW_HEIGHT } from "../model/defaults";
 import type { Direction, Point, RelationModel, TableModel } from "../model/types";
-import { snapValue } from "./grid";
 
 export interface RelationGeometry {
   points: Point[];
@@ -33,8 +32,6 @@ export function getColumnPoint(table: TableModel, columnName: string, side: Dire
   );
   const columnY = table.y + TABLE_HEADER_HEIGHT + columnIndex * TABLE_ROW_HEIGHT + TABLE_ROW_HEIGHT / 2;
 
-  if (side === "north") return { x: table.x + table.width / 2, y: table.y };
-  if (side === "south") return { x: table.x + table.width / 2, y: table.y + table.height };
   if (side === "west") return { x: table.x, y: columnY };
   return { x: table.x + table.width, y: columnY };
 }
@@ -44,41 +41,22 @@ export function getRelationGeometry(
   fromTable: TableModel,
   toTable: TableModel,
 ): RelationGeometry {
-  const start = applyOffset(
-    getColumnPoint(fromTable, relation.fromColumn, relation.fromSide),
-    relation.startOffsetX,
-    relation.startOffsetY,
-  );
-  const end = applyOffset(
-    getColumnPoint(toTable, relation.toColumn, relation.toSide),
-    relation.endOffsetX,
-    relation.endOffsetY,
-  );
+  const fromSide = normalizeRelationSide(relation.fromSide);
+  const toSide = normalizeRelationSide(relation.toSide);
+  const start = getColumnPoint(fromTable, relation.fromColumn, fromSide);
+  const end = getColumnPoint(toTable, relation.toColumn, toSide);
 
-  const points = relation.route === "orthogonal" && relation.viaPoints.length === 0
-    ? orthogonalPoints(start, end, relation.fromSide, relation.toSide)
-    : [start, ...relation.viaPoints, end];
-
-  const path = relation.route === "curve"
-    ? curvePath(start, end, relation.viaPoints)
-    : polylinePath(points);
+  const points = relation.viaPoints.length
+    ? orthogonalizePoints([start, ...relation.viaPoints, end])
+    : orthogonalPoints(start, end);
+  const path = polylinePath(points);
   const labelPoint = midpoint(points);
 
   return { points, path, labelPoint };
 }
 
 export function sideForPoint(table: TableModel, point: Point): Direction {
-  const right = table.x + table.width;
-  const bottom = table.y + table.height;
-  const distances: Array<[Direction, number]> = [
-    ["north", distanceToSegment(point, { x: table.x, y: table.y }, { x: right, y: table.y })],
-    ["south", distanceToSegment(point, { x: table.x, y: bottom }, { x: right, y: bottom })],
-    ["west", distanceToSegment(point, { x: table.x, y: table.y }, { x: table.x, y: bottom })],
-    ["east", distanceToSegment(point, { x: right, y: table.y }, { x: right, y: bottom })],
-  ];
-
-  distances.sort((a, b) => a[1] - b[1]);
-  return distances[0][0];
+  return point.x < table.x + table.width / 2 ? "west" : "east";
 }
 
 export function snapRelationEndpoint(
@@ -94,97 +72,59 @@ export function snapRelationEndpoint(
   offsetY: number;
 } {
   const side = sideForPoint(table, point);
-  const projected = projectPointToTableSide(table, point, side, snapToGrid, gridSize);
   const anchor = getColumnPoint(table, columnName, side);
 
   return {
     side,
-    point: projected,
-    offsetX: projected.x - anchor.x,
-    offsetY: projected.y - anchor.y,
+    point: anchor,
+    offsetX: 0,
+    offsetY: 0,
   };
 }
 
-export function pointOffsetForSide(table: TableModel, point: Point, side: Direction): Point {
-  const anchor = side === "north"
-    ? { x: table.x + table.width / 2, y: table.y }
-    : side === "south"
-      ? { x: table.x + table.width / 2, y: table.y + table.height }
-      : side === "west"
-        ? { x: table.x, y: point.y }
-        : { x: table.x + table.width, y: point.y };
-
-  return { x: point.x - anchor.x, y: point.y - anchor.y };
+export function normalizeRelationSide(side: Direction): Direction {
+  return side === "west" ? "west" : "east";
 }
 
-function projectPointToTableSide(
-  table: TableModel,
-  point: Point,
-  side: Direction,
-  shouldSnap: boolean,
-  gridSize?: number,
-): Point {
-  if (side === "north" || side === "south") {
-    const x = shouldSnap ? snapValue(point.x, gridSize) : point.x;
-    return {
-      x: clamp(x, table.x, table.x + table.width),
-      y: side === "north" ? table.y : table.y + table.height,
-    };
-  }
-
-  const y = shouldSnap ? snapValue(point.y, gridSize) : point.y;
-  return {
-    x: side === "west" ? table.x : table.x + table.width,
-    y: clamp(y, table.y, table.y + table.height),
-  };
-}
-
-function applyOffset(point: Point, offsetX: number, offsetY: number): Point {
-  return { x: point.x + offsetX, y: point.y + offsetY };
-}
-
-function clamp(value: number, min: number, max: number): number {
-  return Math.min(max, Math.max(min, value));
-}
-
-function distanceToSegment(point: Point, start: Point, end: Point): number {
-  const dx = end.x - start.x;
-  const dy = end.y - start.y;
-  const lengthSquared = dx * dx + dy * dy;
-  const t = lengthSquared === 0
-    ? 0
-    : clamp(((point.x - start.x) * dx + (point.y - start.y) * dy) / lengthSquared, 0, 1);
-  const projected = {
-    x: start.x + t * dx,
-    y: start.y + t * dy,
-  };
-
-  return Math.hypot(point.x - projected.x, point.y - projected.y);
-}
-
-function orthogonalPoints(start: Point, end: Point, fromSide: Direction, toSide: Direction): Point[] {
-  if ((fromSide === "east" || fromSide === "west") && (toSide === "east" || toSide === "west")) {
-    const midX = (start.x + end.x) / 2;
-    return [start, { x: midX, y: start.y }, { x: midX, y: end.y }, end];
-  }
-
-  const midY = (start.y + end.y) / 2;
-  return [start, { x: start.x, y: midY }, { x: end.x, y: midY }, end];
+function orthogonalPoints(start: Point, end: Point): Point[] {
+  const midX = (start.x + end.x) / 2;
+  return simplifyPoints([start, { x: midX, y: start.y }, { x: midX, y: end.y }, end]);
 }
 
 function polylinePath(points: Point[]): string {
   return points.map((point, index) => `${index === 0 ? "M" : "L"} ${point.x} ${point.y}`).join(" ");
 }
 
-function curvePath(start: Point, end: Point, viaPoints: Point[]): string {
-  if (viaPoints.length) {
-    return polylinePath([start, ...viaPoints, end]);
+function orthogonalizePoints(points: Point[]): Point[] {
+  if (points.length <= 1) return points;
+
+  const result: Point[] = [points[0]];
+
+  for (const next of points.slice(1)) {
+    const current = result[result.length - 1];
+
+    if (current.x !== next.x && current.y !== next.y) {
+      result.push({ x: next.x, y: current.y });
+    }
+
+    result.push(next);
   }
 
-  const dx = Math.max(80, Math.abs(end.x - start.x) * 0.5);
-  const c1 = { x: start.x + dx, y: start.y };
-  const c2 = { x: end.x - dx, y: end.y };
-  return `M ${start.x} ${start.y} C ${c1.x} ${c1.y}, ${c2.x} ${c2.y}, ${end.x} ${end.y}`;
+  return simplifyPoints(result);
+}
+
+function simplifyPoints(points: Point[]): Point[] {
+  return points.filter((point, index) => {
+    const previous = points[index - 1];
+    const next = points[index + 1];
+
+    if (previous && previous.x === point.x && previous.y === point.y) return false;
+    if (!previous || !next) return true;
+
+    const horizontal = previous.y === point.y && point.y === next.y;
+    const vertical = previous.x === point.x && point.x === next.x;
+    return !horizontal && !vertical;
+  });
 }
 
 function midpoint(points: Point[]): Point {

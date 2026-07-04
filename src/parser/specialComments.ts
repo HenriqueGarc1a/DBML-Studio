@@ -16,6 +16,7 @@ import {
   defaultBadgeVisuals,
   defaultDiagramVisual,
   defaultGroupVisual,
+  defaultGroupTableVisual,
   defaultRelationVisual,
   defaultTableVisual,
   normalizeGridSize,
@@ -140,6 +141,7 @@ function tableBlockToTableProps(block: CommentBlock): TableSpecialProps {
 
   const hasOwnVisual = Object.keys(visual).length > 0;
   result.usesDefaultStyle = parseBoolean(props.useDefaultStyle, !hasOwnVisual);
+  result.usesGroupStyle = parseBoolean(props.useGroupStyle, false);
   if (hasOwnVisual) result.visual = visual;
 
   return result;
@@ -158,12 +160,12 @@ function blockToLineProps(block: CommentBlock): Partial<RelationModel> {
     opacity: clamp(numberOr(props.opacity, defaultRelationVisual.opacity), 0, 1),
     style: parseLineStyle(props.style, defaultRelationVisual.style),
     route: parseLineRoute(props.route, defaultRelationVisual.route),
-    fromSide: parseDirection(props.from, defaultRelationVisual.fromSide),
-    toSide: parseDirection(props.to, defaultRelationVisual.toSide),
-    startOffsetX: numberOr(props.startOffsetX, defaultRelationVisual.startOffsetX),
-    startOffsetY: numberOr(props.startOffsetY, defaultRelationVisual.startOffsetY),
-    endOffsetX: numberOr(props.endOffsetX, defaultRelationVisual.endOffsetX),
-    endOffsetY: numberOr(props.endOffsetY, defaultRelationVisual.endOffsetY),
+    fromSide: parseRelationSide(props.from, defaultRelationVisual.fromSide),
+    toSide: parseRelationSide(props.to, defaultRelationVisual.toSide),
+    startOffsetX: 0,
+    startOffsetY: 0,
+    endOffsetX: 0,
+    endOffsetY: 0,
     label: props.label ?? defaultRelationVisual.label,
     viaPoints: parseViaPoints(props.via),
   };
@@ -184,6 +186,13 @@ function blockToGroup(block: CommentBlock): GroupModel {
     backgroundColor: normalizeHex(props.background, defaultGroupVisual.backgroundColor),
     borderColor: normalizeHex(props.border, defaultGroupVisual.borderColor),
     opacity: clamp(numberOr(props.opacity, defaultGroupVisual.opacity), 0, 1),
+    tableVisual: {
+      backgroundColor: normalizeHex(props.tableBackground, defaultGroupTableVisual.backgroundColor),
+      borderColor: normalizeHex(props.tableBorder, defaultGroupTableVisual.borderColor),
+      headerColor: normalizeHex(props.tableHeader, defaultGroupTableVisual.headerColor),
+      textColor: normalizeHex(props.tableText, defaultGroupTableVisual.textColor),
+      opacity: clamp(numberOr(props.tableOpacity, defaultGroupTableVisual.opacity), 0, 1),
+    },
     tables: (props.tables || "")
       .split(",")
       .map((item) => item.trim())
@@ -251,20 +260,16 @@ function parseBoolean(value: string | undefined, fallback: boolean): boolean {
   return value === "true" || value === "1" || value === "yes";
 }
 
-function parseDirection(value: string | undefined, fallback: Direction): Direction {
-  return value === "north" || value === "south" || value === "east" || value === "west"
-    ? value
-    : fallback;
+function parseRelationSide(value: string | undefined, fallback: Direction): Direction {
+  return value === "west" || value === "east" ? value : fallback;
 }
 
 function parseLineRoute(value: string | undefined, fallback: LineRoute): LineRoute {
-  return value === "straight" || value === "orthogonal" || value === "curve" ? value : fallback;
+  return value === "orthogonal" ? value : fallback;
 }
 
 function parseLineStyle(value: string | undefined, fallback: LineStyle): LineStyle {
-  return value === "solid" || value === "dashed" || value === "dotted" || value === "rounded"
-    ? value
-    : fallback;
+  return value === "solid" || value === "dashed" || value === "dotted" ? value : fallback;
 }
 
 function parseCardinality(value: string | undefined, fallback: Cardinality): Cardinality {

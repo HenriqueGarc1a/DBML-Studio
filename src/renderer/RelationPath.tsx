@@ -36,8 +36,7 @@ export function RelationPath({
   const geometry = getRelationGeometry(relation, fromTable, toTable);
   const path = renderedPath ?? geometry.path;
   const dash = relation.style === "dashed" ? "9 7" : relation.style === "dotted" ? "1 7" : undefined;
-  const lineCap = relation.style === "rounded" || relation.style === "dotted" ? "round" : "butt";
-  const lineJoin = relation.style === "rounded" ? "round" : "miter";
+  const lineCap = relation.style === "dotted" ? "round" : "butt";
   const start = geometry.points[0];
   const end = geometry.points[geometry.points.length - 1];
   const strokeColor = selected ? "#0f766e" : relation.color;
@@ -64,7 +63,7 @@ export function RelationPath({
         strokeOpacity={relation.opacity}
         strokeDasharray={dash}
         strokeLinecap={lineCap}
-        strokeLinejoin={lineJoin}
+        strokeLinejoin="miter"
         pointerEvents="none"
       />
       {relation.label && (

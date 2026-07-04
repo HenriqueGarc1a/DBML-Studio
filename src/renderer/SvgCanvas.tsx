@@ -20,7 +20,7 @@ import {
   getTableMinHeight,
   TABLE_MIN_WIDTH,
 } from "../model/defaults";
-import type { GroupModel, Point, RelationModel, TableModel } from "../model/types";
+import type { GroupModel, Point, TableModel, TableVisual } from "../model/types";
 import {
   getRelationGeometry,
   getTableBounds,
@@ -28,7 +28,6 @@ import {
 } from "../utils/geometry";
 import { snapPoint, snapValue } from "../utils/grid";
 import { buildJumpPath } from "../utils/lineJumps";
-import { distributeRelationEndpoints } from "../utils/relationLayout";
 import {
   fitViewBoxToAspect,
   panViewBox,
@@ -119,10 +118,6 @@ export function SvgCanvas({ controller, svgRef: externalSvgRef }: SvgCanvasProps
     () => controller.diagram.tables.map((table) => table.id).join("|"),
     [controller.diagram.tables],
   );
-  const displayRelations = useMemo(
-    () => distributeRelationEndpoints(controller.diagram.relations, tableMap),
-    [controller.diagram.relations, tableMap],
-  );
   const selected = controller.selected;
   const gridSize = controller.diagram.visual.gridSize;
   const paintBounds = useMemo(
@@ -133,28 +128,18 @@ export function SvgCanvas({ controller, svgRef: externalSvgRef }: SvgCanvasProps
     const paths = new Map<string, string>();
     const previousPolylines: Point[][] = [];
 
-    for (const sourceRelation of controller.diagram.relations) {
-      const relation = displayRelations.get(sourceRelation.id) ?? sourceRelation;
+    for (const relation of controller.diagram.relations) {
       const fromTable = tableMap.get(relation.fromTable);
       const toTable = tableMap.get(relation.toTable);
       if (!fromTable || !toTable) continue;
 
       const geometry = getRelationGeometry(relation, fromTable, toTable);
-      const canJump = relation.route !== "curve" || relation.viaPoints.length > 0;
-
-      paths.set(
-        relation.id,
-        canJump ? buildJumpPath(geometry.points, previousPolylines) : geometry.path,
-      );
-
-      if (canJump) {
-        previousPolylines.push(geometry.points);
-      }
+      paths.set(relation.id, buildJumpPath(geometry.points, previousPolylines));
+      previousPolylines.push(geometry.points);
     }
 
     return paths;
-  }, [controller.diagram.relations, displayRelations, tableMap]);
-
+  }, [controller.diagram.relations, tableMap]);
   useEffect(() => {
     const svg = svgRef.current;
     if (!svg) return;
@@ -382,10 +367,10 @@ export function SvgCanvas({ controller, svgRef: externalSvgRef }: SvgCanvasProps
     }));
   };
 
-  const addViaPoint = (relation: RelationModel, event: MouseEvent<SVGPathElement>) => {
+  const addRelationViaPoint = (relationId: string, event: MouseEvent<SVGPathElement>) => {
     event.stopPropagation();
-    controller.addViaPoint(relation.id, snapPoint(toSvgPoint(event), controller.snapToGrid, gridSize));
-    controller.setSelected({ type: "relation", id: relation.id });
+    controller.addViaPoint(relationId, snapPoint(toSvgPoint(event), controller.snapToGrid, gridSize));
+    controller.setSelected({ type: "relation", id: relationId });
   };
 
   const selectRelationField = (table: TableModel, column: TableModel["columns"][number]) => {
@@ -510,7 +495,7 @@ export function SvgCanvas({ controller, svgRef: externalSvgRef }: SvgCanvasProps
           />
         ))}
         {controller.diagram.relations.map((sourceRelation) => {
-          const relation = displayRelations.get(sourceRelation.id) ?? sourceRelation;
+          const relation = sourceRelation;
           const fromTable = tableMap.get(sourceRelation.fromTable);
           const toTable = tableMap.get(sourceRelation.toTable);
           if (!fromTable || !toTable) return null;
@@ -524,7 +509,7 @@ export function SvgCanvas({ controller, svgRef: externalSvgRef }: SvgCanvasProps
               selected={selected?.type === "relation" && selected.id === sourceRelation.id}
               renderedPath={relationPaths.get(sourceRelation.id)}
               onSelect={(item) => controller.setSelected({ type: "relation", id: item.id })}
-              onAddViaPoint={addViaPoint}
+              onAddViaPoint={(item, event) => addRelationViaPoint(item.id, event)}
               onViaPointerDown={(event, item, index) => {
                 controller.setSelected({ type: "relation", id: item.id });
                 beginSvgDrag(event, { kind: "via", id: item.id, index });
@@ -541,6 +526,7 @@ export function SvgCanvas({ controller, svgRef: externalSvgRef }: SvgCanvasProps
             key={table.id}
             table={table}
             defaultVisual={controller.diagram.visual.defaultTable}
+            groupVisual={getTableGroupVisual(table, controller.diagram.groups)}
             badgeVisuals={controller.diagram.visual.badges}
             selected={selected?.type === "table" && selected.id === table.id}
             relationMode={relationMode}
@@ -685,6 +671,21 @@ function resizeTableWidthFromHandle(
     width: right - left,
     height,
   };
+}
+
+function getTableGroupVisual(table: TableModel, groups: GroupModel[]): TableVisual | undefined {
+  if (!table.usesGroupStyle) return undefined;
+  const center = {
+    x: table.x + table.width / 2,
+    y: table.y + table.height / 2,
+  };
+
+  return [...groups].reverse().find((group) =>
+    center.x >= group.x &&
+    center.x <= group.x + group.width &&
+    center.y >= group.y &&
+    center.y <= group.y + group.height,
+  )?.tableVisual;
 }
 
 function resizeBoxFromCorner(

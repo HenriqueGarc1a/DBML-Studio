@@ -1,11 +1,13 @@
-import type { DiagramModel, GroupModel, RelationModel, TableModel } from "../model/types";
+import type { DiagramModel, GroupModel, RelationModel, TableModel, TableVisual } from "../model/types";
 import { hexToRgb } from "../utils/color";
 import { getRelationGeometry } from "../utils/geometry";
 
 export function exportTikz(diagram: DiagramModel): string {
   const tableMap = new Map(diagram.tables.map((table) => [table.id, table]));
   const groups = diagram.groups.map(exportGroup).join("\n\n");
-  const tables = diagram.tables.map((table) => exportTable(table, diagram.visual.defaultTable)).join("\n\n");
+  const tables = diagram.tables
+    .map((table) => exportTable(table, diagram.visual.defaultTable, getTableGroupVisual(table, diagram.groups)))
+    .join("\n\n");
   const relations = diagram.relations
     .map((relation) => {
       const fromTable = tableMap.get(relation.fromTable);
@@ -47,8 +49,8 @@ function exportGroup(group: GroupModel): string {
   ].join("\n");
 }
 
-function exportTable(table: TableModel, defaultVisual: TableModel["visual"]): string {
-  const visual = table.usesDefaultStyle ? defaultVisual : table.visual;
+function exportTable(table: TableModel, defaultVisual: TableModel["visual"], groupVisual?: TableVisual): string {
+  const visual = groupVisual ?? (table.usesDefaultStyle ? defaultVisual : table.visual);
   const rows = [
     `\\textbf{${escapeLatex(table.name)}}`,
     ...table.columns.map((column) => {
@@ -79,10 +81,24 @@ function exportTable(table: TableModel, defaultVisual: TableModel["visual"]): st
   ].join("\n");
 }
 
+function getTableGroupVisual(table: TableModel, groups: GroupModel[]): TableVisual | undefined {
+  if (!table.usesGroupStyle) return undefined;
+  const center = {
+    x: table.x + table.width / 2,
+    y: table.y + table.height / 2,
+  };
+
+  return [...groups].reverse().find((group) =>
+    center.x >= group.x &&
+    center.x <= group.x + group.width &&
+    center.y >= group.y &&
+    center.y <= group.y + group.height,
+  )?.tableVisual;
+}
+
 function exportRelation(relation: RelationModel, fromTable: TableModel, toTable: TableModel): string {
   const geometry = getRelationGeometry(relation, fromTable, toTable);
   const dash = relation.style === "dashed" ? "dashed" : relation.style === "dotted" ? "dotted" : "solid";
-  const rounded = relation.style === "rounded" ? ", rounded corners=8pt" : "";
   const path = geometry.points
     .map((point, index) => `${index === 0 ? "" : " -- "}(${round(point.x)},${round(point.y)})`)
     .join("");
@@ -90,7 +106,7 @@ function exportRelation(relation: RelationModel, fromTable: TableModel, toTable:
     ? ` node[midway, fill=white, inner sep=2pt] {${escapeLatex(relation.label)}}`
     : "";
 
-  return `\\draw[${dash}${rounded}, line width=${round(
+  return `\\draw[${dash}, line width=${round(
     relation.strokeWidth,
   2,
 )}pt, draw=${tikzColor(relation.color)}, opacity=${round(relation.opacity, 2)}] ${path}${label};`;

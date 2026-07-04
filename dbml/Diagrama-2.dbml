@@ -26,6 +26,7 @@
 // width=242
 // height=94
 // useDefaultStyle=true
+// useGroupStyle=false
 Table User {
   id UUID [pk]
   Nome varchar(200) [unique]
@@ -37,6 +38,7 @@ Table User {
 // width=220
 // height=122
 // useDefaultStyle=true
+// useGroupStyle=false
 Table Carro {
   id UUID [pk]
   Modelo varchar [not null]
@@ -66,3 +68,8 @@ Ref: User.Nome > Carro.User_id
 // background=#000000
 // border=#e25a6f
 // opacity=0.02
+// tableBackground=#10231f
+// tableBorder=#2dd4bf
+// tableHeader=#134e4a
+// tableText=#dffcf7
+// tableOpacity=1

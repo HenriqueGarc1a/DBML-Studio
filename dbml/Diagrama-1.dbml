@@ -27,6 +27,7 @@
 // width=256
 // height=94
 // useDefaultStyle=false
+// useGroupStyle=false
 // background=#111827
 // border=#64748b
 // header=#1e3a5f
@@ -43,6 +44,7 @@ Table technology {
 // width=256
 // height=206
 // useDefaultStyle=false
+// useGroupStyle=false
 // background=#111827
 // border=#64748b
 // header=#1e3a5f
@@ -63,6 +65,7 @@ Table class {
 // width=282
 // height=262
 // useDefaultStyle=false
+// useGroupStyle=false
 // background=#111827
 // border=#64748b
 // header=#1e3a5f
@@ -85,6 +88,7 @@ Table user {
 // width=250
 // height=178
 // useDefaultStyle=false
+// useGroupStyle=false
 // background=#111827
 // border=#64748b
 // header=#1e3a5f
@@ -104,6 +108,7 @@ Table examining_board {
 // width=304
 // height=122
 // useDefaultStyle=false
+// useGroupStyle=false
 // background=#111827
 // border=#64748b
 // header=#1e3a5f
@@ -121,6 +126,7 @@ Table lesson {
 // width=274
 // height=178
 // useDefaultStyle=false
+// useGroupStyle=false
 // background=#111827
 // border=#64748b
 // header=#1e3a5f
@@ -140,6 +146,7 @@ Table otp {
 // width=330
 // height=290
 // useDefaultStyle=false
+// useGroupStyle=false
 // background=#111827
 // border=#64748b
 // header=#1e3a5f
@@ -163,6 +170,7 @@ Table project {
 // width=290
 // height=206
 // useDefaultStyle=false
+// useGroupStyle=false
 // background=#111827
 // border=#64748b
 // header=#1e3a5f
@@ -183,6 +191,7 @@ Table schedule {
 // width=256
 // height=122
 // useDefaultStyle=false
+// useGroupStyle=false
 // background=#111827
 // border=#64748b
 // header=#1e3a5f
@@ -200,6 +209,7 @@ Table project_stack {
 // width=304
 // height=234
 // useDefaultStyle=false
+// useGroupStyle=false
 // background=#111827
 // border=#64748b
 // header=#1e3a5f
@@ -221,6 +231,7 @@ Table report {
 // width=258
 // height=234
 // useDefaultStyle=false
+// useGroupStyle=false
 // background=#111827
 // border=#64748b
 // header=#1e3a5f
@@ -242,6 +253,7 @@ Table semester_profile {
 // width=290
 // height=122
 // useDefaultStyle=false
+// useGroupStyle=false
 // background=#111827
 // border=#64748b
 // header=#1e3a5f
@@ -259,6 +271,7 @@ Table examining_board_member {
 // width=256
 // height=122
 // useDefaultStyle=false
+// useGroupStyle=false
 // background=#111827
 // border=#64748b
 // header=#1e3a5f
@@ -276,6 +289,7 @@ Table team {
 // width=256
 // height=122
 // useDefaultStyle=false
+// useGroupStyle=false
 // background=#111827
 // border=#64748b
 // header=#1e3a5f
@@ -293,6 +307,7 @@ Table attendance {
 // width=322
 // height=178
 // useDefaultStyle=false
+// useGroupStyle=false
 // background=#111827
 // border=#64748b
 // header=#1e3a5f
@@ -312,6 +327,7 @@ Table report_review {
 // width=370
 // height=262
 // useDefaultStyle=false
+// useGroupStyle=false
 // background=#111827
 // border=#64748b
 // header=#1e3a5f
@@ -334,6 +350,7 @@ Table sprint_report {
 // width=394
 // height=262
 // useDefaultStyle=true
+// useGroupStyle=false
 Table hours_report {
   id UUID [not null, pk]
   activities varchar(1250)
@@ -654,6 +671,11 @@ Ref: examining_board.student_id > semester_profile.id
 // background=#0f766e
 // border=#0f766e
 // opacity=0.12
+// tableBackground=#10231f
+// tableBorder=#2dd4bf
+// tableHeader=#134e4a
+// tableText=#dffcf7
+// tableOpacity=1
 
 // @group eunofs1
 // label=Projetos
@@ -664,6 +686,11 @@ Ref: examining_board.student_id > semester_profile.id
 // background=#0f766e
 // border=#0f766e
 // opacity=0.12
+// tableBackground=#10231f
+// tableBorder=#2dd4bf
+// tableHeader=#134e4a
+// tableText=#dffcf7
+// tableOpacity=1
 
 // @group qgmmw3i
 // label=Bancas
@@ -674,6 +701,11 @@ Ref: examining_board.student_id > semester_profile.id
 // background=#0f766e
 // border=#0f766e
 // opacity=0.12
+// tableBackground=#10231f
+// tableBorder=#2dd4bf
+// tableHeader=#134e4a
+// tableText=#dffcf7
+// tableOpacity=1
 
 // @group 1t0m8jg
 // label=Relatorios
@@ -684,3 +716,8 @@ Ref: examining_board.student_id > semester_profile.id
 // background=#0f766e
 // border=#0f766e
 // opacity=0.12
+// tableBackground=#10231f
+// tableBorder=#2dd4bf
+// tableHeader=#134e4a
+// tableText=#dffcf7
+// tableOpacity=1

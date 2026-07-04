@@ -1,8 +1,8 @@
 export type Direction = "north" | "south" | "east" | "west";
 
-export type LineRoute = "straight" | "orthogonal" | "curve";
+export type LineRoute = "orthogonal";
 
-export type LineStyle = "solid" | "dashed" | "dotted" | "rounded";
+export type LineStyle = "solid" | "dashed" | "dotted";
 
 export type Cardinality = "one" | "many";
 
@@ -82,6 +82,7 @@ export interface TableModel {
   height: number;
   visual: TableVisual;
   usesDefaultStyle: boolean;
+  usesGroupStyle: boolean;
   indexes: TableIndexModel[];
   note?: string;
   layoutSource: LayoutSource;
@@ -127,6 +128,7 @@ export interface GroupModel {
   backgroundColor: string;
   borderColor: string;
   opacity: number;
+  tableVisual: TableVisual;
   tables: string[];
 }
 

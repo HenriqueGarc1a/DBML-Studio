@@ -13,6 +13,7 @@ const source = `// @diagram
 // x=20
 // y=30
 // width=240
+// useGroupStyle=true
 // background=#ffffff
 // border=#2563eb
 // header=#dbeafe
@@ -36,7 +37,7 @@ Ref: project.user_id > user.id
 // @line
 // color=#dc2626
 // strokeWidth=2
-// style=rounded
+// style=dashed
 // via=(300,60)
 
 // @group backend
@@ -48,6 +49,11 @@ Ref: project.user_id > user.id
 // background=#0f766e
 // border=#0f766e
 // opacity=0.12
+// tableBackground=#052e2b
+// tableBorder=#14b8a6
+// tableHeader=#115e59
+// tableText=#ccfbf1
+// tableOpacity=0.88
 // tables=user,project
 `;
 
@@ -65,11 +71,13 @@ describe("exporters", () => {
     expect(dbml).toContain("// @table user");
     expect(dbml).toContain("// x=20");
     expect(dbml).toContain("// useDefaultStyle=false");
+    expect(dbml).toContain("// useGroupStyle=true");
     expect(dbml).toContain("Ref: project.user_id > user.id");
-    expect(dbml).toContain("// style=rounded");
+    expect(dbml).toContain("// style=dashed");
     expect(dbml).not.toContain("Cardinality");
     expect(dbml).toContain("// via=(300,60)");
     expect(dbml).toContain("// @group backend");
+    expect(dbml).toContain("// tableBorder=#14b8a6");
   });
 
   it("exports a complete TikZ document with groups, tables and relations", () => {
@@ -81,7 +89,7 @@ describe("exporters", () => {
     expect(tikz).toContain("\\scriptsize PK NN");
     expect(tikz).toContain("\\scriptsize NN UQ");
     expect(tikz).toContain("\\scriptsize FK NN");
-    expect(tikz).toContain("\\draw[solid");
+    expect(tikz).toContain("\\draw[dashed");
     expect(tikz).not.toContain("\\draw[->");
     expect(tikz).toContain("\\end{document}");
   });

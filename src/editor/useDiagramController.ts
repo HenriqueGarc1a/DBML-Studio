@@ -575,6 +575,7 @@ export function useDiagramController(): DiagramController {
         height: getTableMinHeight(columns.length),
         visual: { ...current.visual.defaultTable },
         usesDefaultStyle: true,
+        usesGroupStyle: false,
         indexes: [],
         layoutSource: "manual",
       };
@@ -888,7 +889,9 @@ export function useDiagramController(): DiagramController {
     updateDiagramState((current) => ({
       ...current,
       relations: current.relations.map((relation) =>
-        relation.id === id ? { ...relation, viaPoints: [...relation.viaPoints, point] } : relation,
+        relation.id === id
+          ? { ...relation, route: "orthogonal", viaPoints: [...relation.viaPoints, point] }
+          : relation,
       ),
     }));
   }, [updateDiagramState]);
@@ -900,6 +903,7 @@ export function useDiagramController(): DiagramController {
         relation.id === id
           ? {
               ...relation,
+              route: "orthogonal",
               viaPoints: relation.viaPoints.map((viaPoint, viaIndex) =>
                 viaIndex === index ? point : viaPoint,
               ),
@@ -914,7 +918,11 @@ export function useDiagramController(): DiagramController {
       ...current,
       relations: current.relations.map((relation) =>
         relation.id === id
-          ? { ...relation, viaPoints: relation.viaPoints.filter((_, viaIndex) => viaIndex !== index) }
+          ? {
+              ...relation,
+              route: "orthogonal",
+              viaPoints: relation.viaPoints.filter((_, viaIndex) => viaIndex !== index),
+            }
           : relation,
       ),
     }));
@@ -957,6 +965,7 @@ export function useDiagramController(): DiagramController {
       width: selectedTable ? selectedTable.width + 56 : 420,
       height: selectedTable ? selectedTable.height + 80 : 260,
       ...defaultGroupVisual,
+      tableVisual: { ...defaultGroupVisual.tableVisual },
       tables: [],
     };
 
@@ -1155,22 +1164,9 @@ function nextTableName(tables: TableModel[]): string {
 }
 
 function inferRelationSides(fromTable: TableModel, toTable: TableModel): [Direction, Direction] {
-  const fromCenter = {
-    x: fromTable.x + fromTable.width / 2,
-    y: fromTable.y + fromTable.height / 2,
-  };
-  const toCenter = {
-    x: toTable.x + toTable.width / 2,
-    y: toTable.y + toTable.height / 2,
-  };
-  const dx = toCenter.x - fromCenter.x;
-  const dy = toCenter.y - fromCenter.y;
-
-  if (Math.abs(dx) >= Math.abs(dy)) {
-    return dx >= 0 ? ["east", "west"] : ["west", "east"];
-  }
-
-  return dy >= 0 ? ["south", "north"] : ["north", "south"];
+  const fromCenterX = fromTable.x + fromTable.width / 2;
+  const toCenterX = toTable.x + toTable.width / 2;
+  return toCenterX >= fromCenterX ? ["east", "west"] : ["west", "east"];
 }
 
 function tidyRelationGeometry(relation: RelationModel, tables: TableModel[]): RelationModel {

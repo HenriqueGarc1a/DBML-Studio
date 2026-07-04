@@ -76,7 +76,7 @@ Ref: technology.project_id > project.id
 // color=#0f766e
 // strokeWidth=2
 // opacity=0.9
-// style=rounded
+// style=solid
 // route=orthogonal
 // from=west
 // to=east

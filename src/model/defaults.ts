@@ -29,6 +29,14 @@ export const defaultTableVisual: TableVisual = {
   opacity: 1,
 };
 
+export const defaultGroupTableVisual: TableVisual = {
+  backgroundColor: "#10231f",
+  borderColor: "#2dd4bf",
+  textColor: "#dffcf7",
+  headerColor: "#134e4a",
+  opacity: 1,
+};
+
 export const defaultBadgeVisuals: BadgeVisualSet = {
   primaryKey: {
     backgroundColor: "#3f2d12",
@@ -110,4 +118,5 @@ export const defaultGroupVisual: Omit<
   backgroundColor: "#0f766e",
   borderColor: "#0f766e",
   opacity: 0.12,
+  tableVisual: { ...defaultGroupTableVisual },
 };

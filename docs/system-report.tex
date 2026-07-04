@@ -33,6 +33,8 @@ O sistema trabalha com dois modelos sincronizados: o texto DBML lateral e o mode
   \item Criação de tabelas, campos, grupos e relações pela interface.
   \item Importação de novo esquema a partir de SQL DDL.
   \item Estilos por diagrama e por tabela, com cores salvas e badges configuráveis.
+  \item Estilo de grupo para tabelas: tabelas marcadas como ``Grupo'' usam o estilo do grupo cuja área contém seu centro.
+  \item Relações com linhas ortogonais, pontos intermediários editáveis e jumps visuais em cruzamentos.
   \item Persistência em \texttt{localStorage} e salvamento automático na pasta \texttt{dbml/}.
   \item Exportação para PDF e TikZ, além do DBML persistido.
   \item Undo/redo, zoom, centralização, snap no grid e organização automática de relações.
@@ -49,9 +51,10 @@ O sistema trabalha com dois modelos sincronizados: o texto DBML lateral e o mode
 \texttt{src/parser/specialComments.ts} & Comentários especiais usados para layout, estilo, cores salvas, grupos e aparência das relações. \\
 \texttt{src/exporter/dbmlExporter.ts} & Exporta o modelo atual para DBML, preservando metadados via comentários. \\
 \texttt{src/importer/sqlToDbml.ts} & Traduz SQL DDL comum para DBML. Suporta \texttt{CREATE TABLE}, \texttt{PRIMARY KEY}, \texttt{UNIQUE}, \texttt{FOREIGN KEY}, \texttt{REFERENCES}, \texttt{NOT NULL} e \texttt{DEFAULT}. \\
-\texttt{src/renderer/SvgCanvas.tsx} & Canvas SVG, pan/zoom, toolbar flutuante, drag de tabelas/grupos, criação visual de relações e manipulação de pontos. \\
+\texttt{src/renderer/SvgCanvas.tsx} & Canvas SVG, pan/zoom, toolbar flutuante, drag de tabelas/grupos, criação visual de relações e ajuste de endpoints/pontos. \\
 \texttt{src/renderer/TableNode.tsx} & Desenho de tabela, campos, badges, hitboxes de relação e resize horizontal. \\
 \texttt{src/renderer/RelationPath.tsx} & Desenho e interação das linhas de relação, endpoints e pontos intermediários. \\
+\texttt{src/utils/lineJumps.ts} & Detecta cruzamentos entre linhas e desenha pequenos jumps visuais sobre a linha anterior. \\
 \texttt{src/utils/relationRouting.ts} & Calcula rotas ortogonais para organizar relações desviando das tabelas do diagrama. \\
 \texttt{src/ui/PropertiesPanel.tsx} & Painel de propriedades colapsável para diagrama, tabela, grupo e relação. \\
 \texttt{src/layout/autoLayout.ts} & Layout automático com ELK para posicionar tabelas quando o DBML não tem coordenadas manuais. \\
@@ -63,7 +66,7 @@ O sistema trabalha com dois modelos sincronizados: o texto DBML lateral e o mode
 
 \subsection{Novo esquema via SQL}
 
-A entrada visual fica em \texttt{src/App.tsx}, no botão \texttt{SQL} do header. O modal coleta o SQL e chama \texttt{controller.createDiagramFromSql}. O controlador usa \texttt{sqlToDbml} em \texttt{src/importer/sqlToDbml.ts}, cria um novo registro de diagrama e reaproveita o fluxo normal de importação DBML para parsear, aplicar layout e salvar.
+A entrada visual fica em \texttt{src/App.tsx}, no botão \texttt{SQL} do header. O modal coleta o SQL em uma área fixa que ocupa o corpo do modal e chama \texttt{controller.createDiagramFromSql}. O controlador usa \texttt{sqlToDbml} em \texttt{src/importer/sqlToDbml.ts}, cria um novo registro de diagrama e reaproveita o fluxo normal de importação DBML para parsear, aplicar layout e salvar.
 
 Para mudar a tradução de tipos, constraints ou suporte a novos comandos SQL, altere \texttt{src/importer/sqlToDbml.ts} e adicione casos em \texttt{src/importer/sqlToDbml.test.ts}.
 
@@ -75,15 +78,19 @@ Para mudar aparência da tabela, edite \texttt{TableNode.tsx} e \texttt{src/styl
 
 \subsection{Relações e linhas}
 
-As relações vivem em \texttt{RelationModel}. A geometria básica é calculada em \texttt{src/utils/geometry.ts}; a distribuição de endpoints compartilhados fica em \texttt{src/utils/relationLayout.ts}; o roteamento de organização que desvia de tabelas fica em \texttt{src/utils/relationRouting.ts}; e o desenho final é feito por \texttt{RelationPath.tsx}. A toolbar flutuante em \texttt{SvgCanvas.tsx} tem a ação \texttt{Organizar relações}, que chama \texttt{tidyRelations}. No painel de propriedades, \texttt{Auto rota} chama \texttt{tidyRelation}. O roteador procura primeiro as laterais esquerda/direita das tabelas, testa combinações de lados e escolhe uma rota ortogonal curta que não cruza as tabelas.
+As relações vivem em \texttt{RelationModel}. A geometria básica é calculada em \texttt{src/utils/geometry.ts}; o roteamento de organização que desvia de tabelas fica em \texttt{src/utils/relationRouting.ts}; os jumps de cruzamento ficam em \texttt{src/utils/lineJumps.ts}; e o desenho final é feito por \texttt{RelationPath.tsx}. A toolbar flutuante em \texttt{SvgCanvas.tsx} tem a ação \texttt{Organizar relações}, que chama \texttt{tidyRelations}. No painel de propriedades, \texttt{Auto rota} chama \texttt{tidyRelation}. O roteador procura apenas as laterais esquerda/direita das tabelas, testa combinações de lados e escolhe uma rota ortogonal curta que não cruza as tabelas.
 
-Para melhorar o estilo das linhas, comece por \texttt{RelationPath.tsx}. Para mudar regras de rota automática que evitam tabelas, mexa em \texttt{relationRouting.ts}. Para mudar comandos de limpeza/autoajuste, mexa em \texttt{tidyRelationGeometry} dentro de \texttt{useDiagramController.ts}.
+Para melhorar o estilo das linhas, comece por \texttt{RelationPath.tsx}. Para mudar regras de rota automática que evitam tabelas, mexa em \texttt{relationRouting.ts}. As âncoras de relação são laterais esquerda/direita no centro da linha da coluna relacionada; múltiplas relações podem compartilhar exatamente o mesmo ponto de entrada/saída; offsets antigos são zerados por compatibilidade; e \texttt{geometry.ts} ortogonaliza pontos salvos para impedir segmentos diagonais. Os pontos intermediários são editáveis no canvas e no painel de propriedades; as ações ficam em \texttt{addViaPoint}, \texttt{updateViaPoint} e \texttt{removeViaPoint} no controlador. Para mudar comandos de limpeza/autoajuste, mexa em \texttt{tidyRelationGeometry} dentro de \texttt{useDiagramController.ts}.
 
 \subsection{Cores, badges e estilos}
 
 Os defaults ficam em \texttt{src/model/defaults.ts}. O modelo visual fica em \texttt{src/model/types.ts}. A UI de edição está em \texttt{PropertiesPanel.tsx}. As cores salvas ficam dentro de \texttt{diagram.visual.savedColors} e aparecem nos dropdowns dos campos de cor.
 
 Ao adicionar uma nova cor configurável, atualize o tipo em \texttt{types.ts}, o default em \texttt{defaults.ts}, o parser/exportador de comentários especiais e o painel de propriedades.
+
+\subsection{Estilo de grupo}
+
+Cada grupo possui \texttt{tableVisual}, um estilo padrão para tabelas. Cada tabela possui \texttt{usesGroupStyle}; quando esse flag está ativo, a renderização em \texttt{SvgCanvas.tsx} procura o grupo mais acima na pilha cuja área contém o centro da tabela e passa o \texttt{tableVisual} para \texttt{TableNode.tsx}. A configuração é editada em \texttt{PropertiesPanel.tsx}, persistida em comentários \texttt{// useGroupStyle=} nas tabelas e \texttt{// tableBackground=}, \texttt{// tableBorder=}, \texttt{// tableHeader=}, \texttt{// tableText=} e \texttt{// tableOpacity=} nos grupos.
 
 \subsection{Persistência}
 
