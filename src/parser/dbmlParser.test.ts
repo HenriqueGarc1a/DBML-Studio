@@ -3,6 +3,8 @@ import { parseDbml } from "./dbmlParser";
 
 const source = `// @diagram
 // background=#eef2ff
+// gridColor=#c7d2fe
+// gridSize=12
 
 // @table user
 // x=10
@@ -61,6 +63,8 @@ describe("parseDbml", () => {
     expect(diagram.relations).toHaveLength(1);
     expect(diagram.groups).toHaveLength(1);
     expect(diagram.visual.backgroundColor).toBe("#eef2ff");
+    expect(diagram.visual.gridColor).toBe("#c7d2fe");
+    expect(diagram.visual.gridSize).toBe(12);
 
     const user = diagram.tables.find((table) => table.id === "user");
     expect(user?.x).toBe(10);
@@ -108,5 +112,11 @@ Table audit_log {
 }`);
 
     expect(diagram.tables[0].height).toBe(150);
+  });
+
+  it("rejects unfinished DBML blocks", () => {
+    expect(() => parseDbml(`Table broken {
+  id int [pk]
+`)).toThrow(/nao foi fechada/);
   });
 });

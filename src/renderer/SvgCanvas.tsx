@@ -8,7 +8,7 @@ import {
   getTableBounds,
   snapRelationEndpoint,
 } from "../utils/geometry";
-import { GRID_SIZE, snapPoint, snapValue } from "../utils/grid";
+import { snapPoint, snapValue } from "../utils/grid";
 import { buildJumpPath } from "../utils/lineJumps";
 import {
   getZoom,
@@ -90,6 +90,7 @@ export function SvgCanvas({ controller, svgRef: externalSvgRef }: SvgCanvasProps
   const paintBounds = unionViewBox(computedBounds, viewport);
   const zoom = getZoom(computedBounds, viewport);
   const selected = controller.selected;
+  const gridSize = controller.diagram.visual.gridSize;
   const relationPaths = useMemo(() => {
     const paths = new Map<string, string>();
     const previousPolylines: Point[][] = [];
@@ -155,8 +156,8 @@ export function SvgCanvas({ controller, svgRef: externalSvgRef }: SvgCanvasProps
       const nextX = drag.origin.x + point.x - drag.start.x;
       const nextY = drag.origin.y + point.y - drag.start.y;
       controller.updateTable(drag.id, {
-        x: controller.snapToGrid ? snapValue(nextX) : nextX,
-        y: controller.snapToGrid ? snapValue(nextY) : nextY,
+        x: controller.snapToGrid ? snapValue(nextX, gridSize) : nextX,
+        y: controller.snapToGrid ? snapValue(nextY, gridSize) : nextY,
         layoutSource: "manual",
       });
     }
@@ -166,8 +167,8 @@ export function SvgCanvas({ controller, svgRef: externalSvgRef }: SvgCanvasProps
       const height = drag.height + point.y - drag.start.y;
       controller.resizeTable(
         drag.id,
-        controller.snapToGrid ? snapValue(width) : width,
-        controller.snapToGrid ? snapValue(height) : height,
+        controller.snapToGrid ? snapValue(width, gridSize) : width,
+        controller.snapToGrid ? snapValue(height, gridSize) : height,
       );
     }
 
@@ -175,8 +176,8 @@ export function SvgCanvas({ controller, svgRef: externalSvgRef }: SvgCanvasProps
       const nextX = drag.origin.x + point.x - drag.start.x;
       const nextY = drag.origin.y + point.y - drag.start.y;
       controller.updateGroup(drag.id, {
-        x: controller.snapToGrid ? snapValue(nextX) : nextX,
-        y: controller.snapToGrid ? snapValue(nextY) : nextY,
+        x: controller.snapToGrid ? snapValue(nextX, gridSize) : nextX,
+        y: controller.snapToGrid ? snapValue(nextY, gridSize) : nextY,
       });
     }
 
@@ -185,13 +186,13 @@ export function SvgCanvas({ controller, svgRef: externalSvgRef }: SvgCanvasProps
       const height = drag.height + point.y - drag.start.y;
       controller.resizeGroup(
         drag.id,
-        controller.snapToGrid ? snapValue(width) : width,
-        controller.snapToGrid ? snapValue(height) : height,
+        controller.snapToGrid ? snapValue(width, gridSize) : width,
+        controller.snapToGrid ? snapValue(height, gridSize) : height,
       );
     }
 
     if (drag.kind === "via") {
-      controller.updateViaPoint(drag.id, drag.index, snapPoint(point, controller.snapToGrid));
+      controller.updateViaPoint(drag.id, drag.index, snapPoint(point, controller.snapToGrid, gridSize));
     }
 
     if (drag.kind === "endpoint") {
@@ -204,6 +205,7 @@ export function SvgCanvas({ controller, svgRef: externalSvgRef }: SvgCanvasProps
         drag.endpoint === "start" ? relation.fromColumn : relation.toColumn,
         point,
         controller.snapToGrid,
+        gridSize,
       );
       controller.updateRelation(relation.id, drag.endpoint === "start"
         ? {
@@ -224,12 +226,16 @@ export function SvgCanvas({ controller, svgRef: externalSvgRef }: SvgCanvasProps
     if (event.currentTarget.hasPointerCapture(event.pointerId)) {
       event.currentTarget.releasePointerCapture(event.pointerId);
     }
+    if (drag.kind !== "pan") {
+      controller.endHistoryBatch();
+    }
     setDrag(undefined);
   };
 
   const beginSvgDrag = (event: PointerEvent<SVGElement>, state: DragState) => {
     event.stopPropagation();
     svgRef.current?.setPointerCapture(event.pointerId);
+    controller.beginHistoryBatch();
     setDrag(state);
   };
 
@@ -258,7 +264,7 @@ export function SvgCanvas({ controller, svgRef: externalSvgRef }: SvgCanvasProps
 
   const addViaPoint = (relation: RelationModel, event: MouseEvent<SVGPathElement>) => {
     event.stopPropagation();
-    controller.addViaPoint(relation.id, snapPoint(toSvgPoint(event), controller.snapToGrid));
+    controller.addViaPoint(relation.id, snapPoint(toSvgPoint(event), controller.snapToGrid, gridSize));
     controller.setSelected({ type: "relation", id: relation.id });
   };
 
@@ -276,11 +282,11 @@ export function SvgCanvas({ controller, svgRef: externalSvgRef }: SvgCanvasProps
         onWheel={onWheel}
       >
         <defs>
-          <pattern id="grid" width={GRID_SIZE} height={GRID_SIZE} patternUnits="userSpaceOnUse">
+          <pattern id="grid" width={gridSize} height={gridSize} patternUnits="userSpaceOnUse">
             <path
-              d={`M ${GRID_SIZE} 0 L 0 0 0 ${GRID_SIZE}`}
+              d={`M ${gridSize} 0 L 0 0 0 ${gridSize}`}
               fill="none"
-              stroke="var(--grid-line)"
+              stroke={controller.diagram.visual.gridColor}
               strokeWidth="0.55"
             />
           </pattern>

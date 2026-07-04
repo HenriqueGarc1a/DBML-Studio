@@ -5,6 +5,8 @@ import { parseDbml } from "../parser/dbmlParser";
 
 const source = `// @diagram
 // background=#f1f5f9
+// gridColor=#cbd5e1
+// gridSize=10
 
 // @table user
 // x=20
@@ -53,6 +55,8 @@ describe("exporters", () => {
 
     expect(dbml).toContain("// @diagram");
     expect(dbml).toContain("// background=#f1f5f9");
+    expect(dbml).toContain("// gridColor=#cbd5e1");
+    expect(dbml).toContain("// gridSize=10");
     expect(dbml).toContain("// @table user");
     expect(dbml).toContain("// x=20");
     expect(dbml).toContain("Ref: project.user_id > user.id");

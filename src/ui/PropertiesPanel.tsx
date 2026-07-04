@@ -1,7 +1,7 @@
 import { Minus, Plus, RotateCcw, Trash2 } from "lucide-react";
 import type { ChangeEvent } from "react";
 import type { DiagramController } from "../editor/useDiagramController";
-import { getTableMinHeight } from "../model/defaults";
+import { DIAGRAM_MAX_GRID_SIZE, DIAGRAM_MIN_GRID_SIZE, getTableMinHeight } from "../model/defaults";
 import type { Direction, LineRoute, LineStyle, Point } from "../model/types";
 import { getRelationGeometry } from "../utils/geometry";
 import { snapPoint } from "../utils/grid";
@@ -34,6 +34,19 @@ export function PropertiesPanel({ controller }: PropertiesPanelProps) {
             label="Fundo"
             value={controller.diagram.visual.backgroundColor}
             onChange={(backgroundColor) => controller.updateDiagramVisual({ backgroundColor })}
+          />
+          <ColorField
+            label="Cor grid"
+            value={controller.diagram.visual.gridColor}
+            onChange={(gridColor) => controller.updateDiagramVisual({ gridColor })}
+          />
+          <NumberField
+            label="Grid"
+            value={controller.diagram.visual.gridSize}
+            min={DIAGRAM_MIN_GRID_SIZE}
+            max={DIAGRAM_MAX_GRID_SIZE}
+            step={1}
+            onChange={(gridSize) => controller.updateDiagramVisual({ gridSize })}
           />
         </section>
       )}
@@ -119,7 +132,11 @@ function RelationProperties({ controller, relationId }: { controller: DiagramCon
     if (!fromTable || !toTable) return;
     controller.addViaPoint(
       relation.id,
-      snapPoint(getRelationGeometry(relation, fromTable, toTable).labelPoint, controller.snapToGrid),
+      snapPoint(
+        getRelationGeometry(relation, fromTable, toTable).labelPoint,
+        controller.snapToGrid,
+        controller.diagram.visual.gridSize,
+      ),
     );
   };
 
@@ -211,11 +228,15 @@ function NumberField({
   label,
   value,
   min,
+  max,
+  step,
   onChange,
 }: {
   label: string;
   value: number;
   min?: number;
+  max?: number;
+  step?: number;
   onChange: (value: number) => void;
 }) {
   return (
@@ -224,6 +245,8 @@ function NumberField({
       <input
         type="number"
         min={min}
+        max={max}
+        step={step}
         value={Number(value.toFixed(1))}
         onChange={(event) => onChange(Number(event.target.value))}
       />

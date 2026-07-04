@@ -2,18 +2,18 @@ import {
   Boxes,
   FileDown,
   FolderPlus,
-  Import,
   LayoutTemplate,
   Moon,
   RefreshCcw,
   Save,
   Sun,
   Magnet,
+  Redo2,
+  Undo2,
 } from "lucide-react";
-import { useRef } from "react";
+import { useEffect, useRef } from "react";
 import { useDiagramController } from "./editor/useDiagramController";
 import { SvgCanvas } from "./renderer/SvgCanvas";
-import { ExportPanel } from "./ui/ExportPanel";
 import { PropertiesPanel } from "./ui/PropertiesPanel";
 import { useThemeMode } from "./ui/useThemeMode";
 import { downloadText } from "./utils/download";
@@ -29,6 +29,33 @@ export function App() {
     return exportDiagramPdf(svgRef.current);
   };
 
+  useEffect(() => {
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (!(event.ctrlKey || event.metaKey) || event.altKey || isEditableTarget(event.target)) return;
+
+      const key = event.key.toLowerCase();
+      if (key === "z" && event.shiftKey) {
+        event.preventDefault();
+        controller.redo();
+        return;
+      }
+
+      if (key === "z") {
+        event.preventDefault();
+        controller.undo();
+        return;
+      }
+
+      if (key === "y") {
+        event.preventDefault();
+        controller.redo();
+      }
+    };
+
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [controller]);
+
   return (
     <div className="app-shell">
       <header className="topbar">
@@ -40,10 +67,6 @@ export function App() {
           </div>
         </div>
         <div className="toolbar">
-          <button type="button" onClick={() => void controller.importFromEditor()}>
-            <Import size={16} />
-            Importar
-          </button>
           <button type="button" onClick={() => void controller.applyAutoLayout()}>
             <LayoutTemplate size={16} />
             Auto layout
@@ -56,6 +79,14 @@ export function App() {
           >
             <Magnet size={16} />
             Snap
+          </button>
+          <button type="button" onClick={controller.undo} disabled={!controller.canUndo} title="Desfazer">
+            <Undo2 size={16} />
+            Desfazer
+          </button>
+          <button type="button" onClick={controller.redo} disabled={!controller.canRedo} title="Refazer">
+            <Redo2 size={16} />
+            Refazer
           </button>
           <button type="button" onClick={controller.addGroup}>
             <FolderPlus size={16} />
@@ -88,10 +119,15 @@ export function App() {
         </div>
       </header>
       <main className="workspace">
-        <aside className="dbml-pane">
+        <aside className={`dbml-pane${controller.dbmlError ? " has-error" : ""}`}>
           <div className="pane-heading">
             <h2>DBML</h2>
           </div>
+          {controller.dbmlError && (
+            <div className="dbml-error" role="status">
+              {controller.dbmlError}
+            </div>
+          )}
           <textarea
             value={controller.dbmlText}
             onChange={(event) => controller.setDbmlText(event.target.value)}
@@ -103,9 +139,13 @@ export function App() {
         </section>
         <PropertiesPanel controller={controller} />
       </main>
-      <div id="exports">
-        <ExportPanel dbml={controller.exportedDbml} tikz={controller.exportedTikz} onExportPdf={exportPdf} />
-      </div>
     </div>
   );
+}
+
+function isEditableTarget(target: EventTarget | null): boolean {
+  const element = target instanceof HTMLElement ? target : undefined;
+  if (!element) return false;
+  const tagName = element.tagName.toLowerCase();
+  return element.isContentEditable || tagName === "input" || tagName === "textarea" || tagName === "select";
 }

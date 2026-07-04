@@ -14,6 +14,7 @@ import {
   defaultGroupVisual,
   defaultRelationVisual,
   defaultTableVisual,
+  normalizeGridSize,
 } from "../model/defaults";
 import { clamp, normalizeHex, numberOr } from "../utils/color";
 import { makeId, slugify } from "../utils/id";
@@ -92,6 +93,8 @@ function blockToDiagramProps(block: CommentBlock): SpecialLayout["diagramProps"]
   return {
     visual: {
       backgroundColor: normalizeHex(props.background, defaultDiagramVisual.backgroundColor),
+      gridColor: normalizeHex(props.gridColor, defaultDiagramVisual.gridColor),
+      gridSize: normalizeGridSize(props.gridSize, defaultDiagramVisual.gridSize),
     },
   };
 }

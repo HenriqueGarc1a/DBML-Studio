@@ -5,9 +5,18 @@ export const TABLE_ROW_HEIGHT = 28;
 export const TABLE_MIN_HEIGHT = 80;
 export const TABLE_MIN_WIDTH = 220;
 export const TABLE_PADDING_X = 18;
+export const DIAGRAM_DEFAULT_GRID_SIZE = 4;
+export const DIAGRAM_MIN_GRID_SIZE = 2;
+export const DIAGRAM_MAX_GRID_SIZE = 128;
 
 export function getTableMinHeight(columnCount: number): number {
   return Math.max(TABLE_MIN_HEIGHT, TABLE_HEADER_HEIGHT + columnCount * TABLE_ROW_HEIGHT);
+}
+
+export function normalizeGridSize(value: unknown, fallback = DIAGRAM_DEFAULT_GRID_SIZE): number {
+  const next = Number(value);
+  if (!Number.isFinite(next)) return fallback;
+  return Math.min(DIAGRAM_MAX_GRID_SIZE, Math.max(DIAGRAM_MIN_GRID_SIZE, Math.round(next)));
 }
 
 export const defaultTableVisual: TableVisual = {
@@ -20,6 +29,8 @@ export const defaultTableVisual: TableVisual = {
 
 export const defaultDiagramVisual: DiagramVisual = {
   backgroundColor: "#f8fafc",
+  gridColor: "#d7dee8",
+  gridSize: DIAGRAM_DEFAULT_GRID_SIZE,
 };
 
 export const defaultRelationVisual: Pick<

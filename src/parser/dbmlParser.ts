@@ -35,6 +35,8 @@ interface ParsedRelation {
 }
 
 export function parseDbml(source: string): DiagramModel {
+  validateDbmlSyntax(source);
+
   const special = parseSpecialComments(source);
   const tables = parseTables(source, special.tableProps);
   const enums = parseEnums(source);
@@ -392,4 +394,65 @@ function measureWidth(tableName: string, columns: ColumnModel[]): number {
 
 function count(value: string, char: string): number {
   return value.split(char).length - 1;
+}
+
+function validateDbmlSyntax(source: string): void {
+  const stack: Array<{ char: string; line: number; column: number }> = [];
+  const matching: Record<string, string> = {
+    "}": "{",
+    "]": "[",
+    ")": "(",
+  };
+
+  for (const [lineIndex, line] of source.split(/\r?\n/).entries()) {
+    let quote: string | undefined;
+    let escaped = false;
+
+    for (let columnIndex = 0; columnIndex < line.length; columnIndex += 1) {
+      const char = line[columnIndex];
+      const next = line[columnIndex + 1];
+
+      if (!quote && char === "/" && next === "/") break;
+
+      if (quote) {
+        if (char === "\\" && !escaped) {
+          escaped = true;
+          continue;
+        }
+
+        if (char === quote && !escaped) {
+          quote = undefined;
+        }
+
+        escaped = false;
+        continue;
+      }
+
+      if (char === "'" || char === "\"" || char === "`") {
+        quote = char;
+        continue;
+      }
+
+      if (char === "{" || char === "[" || char === "(") {
+        stack.push({ char, line: lineIndex + 1, column: columnIndex + 1 });
+        continue;
+      }
+
+      if (char === "}" || char === "]" || char === ")") {
+        const open = stack.pop();
+        if (!open || open.char !== matching[char]) {
+          throw new Error(`Linha ${lineIndex + 1}: fechamento "${char}" sem abertura correspondente.`);
+        }
+      }
+    }
+
+    if (quote) {
+      throw new Error(`Linha ${lineIndex + 1}: texto "${quote}" nao foi fechado.`);
+    }
+  }
+
+  const open = stack.pop();
+  if (open) {
+    throw new Error(`Linha ${open.line}: abertura "${open.char}" nao foi fechada.`);
+  }
 }

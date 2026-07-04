@@ -27,6 +27,8 @@ function exportDiagram(diagram: DiagramModel): string {
   return [
     "// @diagram",
     `// background=${diagram.visual.backgroundColor}`,
+    `// gridColor=${diagram.visual.gridColor}`,
+    `// gridSize=${round(diagram.visual.gridSize, 0)}`,
   ].join("\n");
 }
 

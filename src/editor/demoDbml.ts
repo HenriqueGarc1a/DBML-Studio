@@ -1,5 +1,7 @@
 export const demoDbml = `// @diagram
 // background=#f8fafc
+// gridColor=#d7dee8
+// gridSize=4
 
 // @table user
 // x=80

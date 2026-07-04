@@ -30,6 +30,8 @@ export interface TableVisual {
 
 export interface DiagramVisual {
   backgroundColor: string;
+  gridColor: string;
+  gridSize: number;
 }
 
 export interface ColumnModel {

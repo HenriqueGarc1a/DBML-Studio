@@ -86,6 +86,7 @@ export function snapRelationEndpoint(
   columnName: string,
   point: Point,
   snapToGrid: boolean,
+  gridSize?: number,
 ): {
   side: Direction;
   point: Point;
@@ -93,7 +94,7 @@ export function snapRelationEndpoint(
   offsetY: number;
 } {
   const side = sideForPoint(table, point);
-  const projected = projectPointToTableSide(table, point, side, snapToGrid);
+  const projected = projectPointToTableSide(table, point, side, snapToGrid, gridSize);
   const anchor = getColumnPoint(table, columnName, side);
 
   return {
@@ -121,16 +122,17 @@ function projectPointToTableSide(
   point: Point,
   side: Direction,
   shouldSnap: boolean,
+  gridSize?: number,
 ): Point {
   if (side === "north" || side === "south") {
-    const x = shouldSnap ? snapValue(point.x) : point.x;
+    const x = shouldSnap ? snapValue(point.x, gridSize) : point.x;
     return {
       x: clamp(x, table.x, table.x + table.width),
       y: side === "north" ? table.y : table.y + table.height,
     };
   }
 
-  const y = shouldSnap ? snapValue(point.y) : point.y;
+  const y = shouldSnap ? snapValue(point.y, gridSize) : point.y;
   return {
     x: side === "west" ? table.x : table.x + table.width,
     y: clamp(y, table.y, table.y + table.height),
