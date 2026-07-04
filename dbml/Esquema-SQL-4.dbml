@@ -1,6 +1,6 @@
 // @diagram
 // background=#0f172a
-// gridColor=#1f2a3a
+// gridColor=#2dd4bf
 // gridSize=26
 // tableBackground=#111827
 // tableBorder=#4b5f78
@@ -19,6 +19,7 @@
 // uniqueBadgeBackground=#1e1b4b
 // uniqueBadgeBorder=#818cf8
 // uniqueBadgeText=#c7d2fe
+// savedColors=Cor:#2dd4bf
 
 // @table ages_user
 // x=1700
@@ -486,7 +487,7 @@ Ref: report.student_id > semester_profile.id
 // startOffsetY=0
 // endOffsetX=0
 // endOffsetY=0
-// via=(782,794.7),(828,794.7),(828,490.7)
+// via=(806,490.7)
 
 Ref: examining_board.student_id > semester_profile.id
 // @line relation-examining_board-student_id-semester_profile-id-12
@@ -503,7 +504,7 @@ Ref: examining_board.student_id > semester_profile.id
 // startOffsetY=0
 // endOffsetX=0
 // endOffsetY=0
-// via=(755.2,520),(828,630.7),(828,490.7)
+// via=(780,490.7)
 
 Ref: examining_board_member.examining_board_id > examining_board.id
 // @line relation-examining_board_member-examining_board_id-examining_board-id-13
@@ -537,7 +538,7 @@ Ref: examining_board_member.teacher_id > ages_user.id
 // startOffsetY=0
 // endOffsetX=0
 // endOffsetY=0
-// via=(374,120),(374,312.5),(1668,312.5),(1638,382.4)
+// via=(374,120),(374,312.5),(1668,312.5),(1664.8,382.7)
 
 Ref: attendance.lesson_id > lesson.id
 // @line relation-attendance-lesson_id-lesson-id-15
@@ -571,7 +572,7 @@ Ref: attendance.student_id > semester_profile.id
 // startOffsetY=0
 // endOffsetX=0
 // endOffsetY=0
-// via=(782,199.7),(828,199.7),(828,490.7)
+// via=(782,199.7),(828,199.7),(754,490.7)
 
 Ref: report_review.report_id > report.id
 // @line relation-report_review-report_id-report-id-17

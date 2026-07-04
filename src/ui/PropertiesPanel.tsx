@@ -429,57 +429,74 @@ function SavedColorsEditor({
       id="diagram.savedColors"
       title="Cores salvas"
       defaultOpen={false}
-      actions={
-        <button type="button" className="icon-button" onClick={addColor} title="Salvar cor">
-          <Plus size={15} />
-        </button>
-      }
     >
       <div className="saved-color-editor">
         <input
+          className="saved-color-name-input"
           type="text"
           value={draftName}
           aria-label="Nome da cor"
           onChange={(event) => setDraftName(event.target.value)}
         />
-        <span className="color-control">
-          <input type="color" value={isHexColor(draftColor) ? draftColor : "#2dd4bf"} onChange={(event) => setDraftColor(event.target.value)} />
-          <input type="text" value={draftColor} onChange={(event) => setDraftColor(event.target.value)} />
-        </span>
+        <div className="saved-color-line">
+          <input className="saved-color-picker" type="color" value={isHexColor(draftColor) ? draftColor : "#2dd4bf"} onChange={(event) => setDraftColor(event.target.value)} />
+          <input className="saved-color-hex" type="text" value={draftColor} onChange={(event) => setDraftColor(event.target.value)} />
+        </div>
+        <button type="button" className="secondary-button saved-color-add" onClick={addColor}>
+          <Plus size={15} />
+          Salvar cor
+        </button>
       </div>
       <div className="saved-color-list">
         {colors.map((item, index) => (
           <div key={`${item.name}-${item.color}-${index}`} className="saved-color-row">
-            <span className="saved-color-chip" style={{ backgroundColor: item.color }} />
-            <input
-              type="text"
-              value={item.name}
-              aria-label="Nome salvo"
-              onChange={(event) => {
-                onChange(colors.map((color, colorIndex) =>
-                  colorIndex === index ? { ...color, name: event.target.value } : color,
-                ));
-              }}
-            />
-            <input
-              type="color"
-              value={isHexColor(item.color) ? item.color : "#000000"}
-              aria-label="Cor salva"
-              title={item.color}
-              onChange={(event) => {
-                onChange(colors.map((color, colorIndex) =>
-                  colorIndex === index ? { ...color, color: event.target.value } : color,
-                ));
-              }}
-            />
-            <button
-              type="button"
-              className="icon-button"
-              title={`Remover ${item.name}`}
-              onClick={() => onChange(colors.filter((_, colorIndex) => colorIndex !== index))}
-            >
-              <Trash2 size={14} />
-            </button>
+            <div className="saved-color-row-header">
+              <span className="saved-color-chip" style={{ backgroundColor: item.color }} />
+              <input
+                className="saved-color-name"
+                type="text"
+                value={item.name}
+                aria-label="Nome salvo"
+                onChange={(event) => {
+                  onChange(colors.map((color, colorIndex) =>
+                    colorIndex === index ? { ...color, name: event.target.value } : color,
+                  ));
+                }}
+              />
+              <button
+                type="button"
+                className="icon-button"
+                title={`Remover ${item.name}`}
+                onClick={() => onChange(colors.filter((_, colorIndex) => colorIndex !== index))}
+              >
+                <Trash2 size={14} />
+              </button>
+            </div>
+            <div className="saved-color-line">
+              <input
+                className="saved-color-picker"
+                type="color"
+                value={isHexColor(item.color) ? item.color : "#000000"}
+                aria-label="Cor salva"
+                title={item.color}
+                onChange={(event) => {
+                  onChange(colors.map((color, colorIndex) =>
+                    colorIndex === index ? { ...color, color: event.target.value } : color,
+                  ));
+                }}
+              />
+              <input
+                className="saved-color-hex"
+                type="text"
+                value={item.color}
+                aria-label="Hex salvo"
+                onChange={(event) => {
+                  onChange(colors.map((color, colorIndex) =>
+                    colorIndex === index ? { ...color, color: event.target.value } : color,
+                  ));
+                }}
+              />
+            </div>
           </div>
         ))}
       </div>

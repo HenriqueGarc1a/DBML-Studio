@@ -125,11 +125,22 @@ export function SvgCanvas({ controller, svgRef: externalSvgRef }: SvgCanvasProps
     () => expandPaintBounds(unionViewBox(computedBounds, viewport), gridSize),
     [computedBounds, gridSize, viewport],
   );
+  const relationRenderOrder = useMemo(() => {
+    if (selected?.type !== "relation") return controller.diagram.relations;
+
+    const selectedRelation = controller.diagram.relations.find((relation) => relation.id === selected.id);
+    if (!selectedRelation) return controller.diagram.relations;
+
+    return [
+      ...controller.diagram.relations.filter((relation) => relation.id !== selected.id),
+      selectedRelation,
+    ];
+  }, [controller.diagram.relations, selected]);
   const relationPaths = useMemo(() => {
     const paths = new Map<string, string>();
     const previousPolylines: Point[][] = [];
 
-    for (const relation of controller.diagram.relations) {
+    for (const relation of relationRenderOrder) {
       const fromTable = tableMap.get(relation.fromTable);
       const toTable = tableMap.get(relation.toTable);
       if (!fromTable || !toTable) continue;
@@ -140,7 +151,7 @@ export function SvgCanvas({ controller, svgRef: externalSvgRef }: SvgCanvasProps
     }
 
     return paths;
-  }, [controller.diagram.relations, tableMap]);
+  }, [relationRenderOrder, tableMap]);
   useEffect(() => {
     const svg = svgRef.current;
     if (!svg) return;
@@ -525,7 +536,7 @@ export function SvgCanvas({ controller, svgRef: externalSvgRef }: SvgCanvasProps
             }}
           />
         ))}
-        {controller.diagram.relations.map((sourceRelation) => {
+        {relationRenderOrder.map((sourceRelation) => {
           const relation = sourceRelation;
           const fromTable = tableMap.get(sourceRelation.fromTable);
           const toTable = tableMap.get(sourceRelation.toTable);
