@@ -1,5 +1,6 @@
 import { TABLE_HEADER_HEIGHT, TABLE_ROW_HEIGHT } from "../model/defaults";
 import type { Direction, Point, RelationModel, TableModel } from "../model/types";
+import { snapPoint } from "./grid";
 
 export interface RelationGeometry {
   points: Point[];
@@ -80,6 +81,39 @@ export function snapRelationEndpoint(
     offsetX: 0,
     offsetY: 0,
   };
+}
+
+export function snapRelationViaPoint(
+  relation: RelationModel,
+  viaPointIndex: number,
+  point: Point,
+  fromTable: TableModel,
+  toTable: TableModel,
+  snapToGrid: boolean,
+  gridSize: number,
+): Point {
+  const snapped = snapPoint(point, snapToGrid, gridSize);
+  if (!snapToGrid) return snapped;
+
+  const fromSide = normalizeRelationSide(relation.fromSide);
+  const toSide = normalizeRelationSide(relation.toSide);
+  const anchors: number[] = [];
+
+  if (viaPointIndex === 0) {
+    anchors.push(getColumnPoint(fromTable, relation.fromColumn, fromSide).y);
+  }
+
+  if (viaPointIndex === relation.viaPoints.length - 1) {
+    anchors.push(getColumnPoint(toTable, relation.toColumn, toSide).y);
+  }
+
+  const threshold = Math.max(6, gridSize / 2);
+  const bestAnchor = anchors
+    .map((y) => ({ y, distance: Math.min(Math.abs(point.y - y), Math.abs(snapped.y - y)) }))
+    .filter((anchor) => anchor.distance <= threshold)
+    .sort((a, b) => a.distance - b.distance)[0];
+
+  return bestAnchor ? { ...snapped, y: bestAnchor.y } : snapped;
 }
 
 export function normalizeRelationSide(side: Direction): Direction {

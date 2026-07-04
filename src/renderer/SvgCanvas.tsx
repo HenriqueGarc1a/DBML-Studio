@@ -25,8 +25,9 @@ import {
   getRelationGeometry,
   getTableBounds,
   snapRelationEndpoint,
+  snapRelationViaPoint,
 } from "../utils/geometry";
-import { snapPoint, snapValue } from "../utils/grid";
+import { snapValue } from "../utils/grid";
 import { buildJumpPath } from "../utils/lineJumps";
 import {
   fitViewBoxToAspect,
@@ -267,7 +268,16 @@ export function SvgCanvas({ controller, svgRef: externalSvgRef }: SvgCanvasProps
     }
 
     if (drag.kind === "via") {
-      controller.updateViaPoint(drag.id, drag.index, snapPoint(point, controller.snapToGrid, gridSize));
+      const relation = controller.diagram.relations.find((item) => item.id === drag.id);
+      if (!relation) return;
+      const fromTable = tableMap.get(relation.fromTable);
+      const toTable = tableMap.get(relation.toTable);
+      if (!fromTable || !toTable) return;
+      controller.updateViaPoint(
+        drag.id,
+        drag.index,
+        snapRelationViaPoint(relation, drag.index, point, fromTable, toTable, controller.snapToGrid, gridSize),
+      );
     }
 
     if (drag.kind === "endpoint") {
@@ -369,7 +379,28 @@ export function SvgCanvas({ controller, svgRef: externalSvgRef }: SvgCanvasProps
 
   const addRelationViaPoint = (relationId: string, event: MouseEvent<SVGPathElement>) => {
     event.stopPropagation();
-    controller.addViaPoint(relationId, snapPoint(toSvgPoint(event), controller.snapToGrid, gridSize));
+    const relation = controller.diagram.relations.find((item) => item.id === relationId);
+    if (!relation) return;
+    const fromTable = tableMap.get(relation.fromTable);
+    const toTable = tableMap.get(relation.toTable);
+    if (!fromTable || !toTable) return;
+    const point = toSvgPoint(event);
+    const nextRelation = {
+      ...relation,
+      viaPoints: [...relation.viaPoints, point],
+    };
+    controller.addViaPoint(
+      relationId,
+      snapRelationViaPoint(
+        nextRelation,
+        nextRelation.viaPoints.length - 1,
+        point,
+        fromTable,
+        toTable,
+        controller.snapToGrid,
+        gridSize,
+      ),
+    );
     controller.setSelected({ type: "relation", id: relationId });
   };
 

@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { defaultRelationVisual } from "../model/defaults";
 import type { RelationModel, TableModel } from "../model/types";
-import { getRelationGeometry, snapRelationEndpoint } from "./geometry";
+import { getRelationGeometry, snapRelationEndpoint, snapRelationViaPoint } from "./geometry";
 
 const table: TableModel = {
   id: "user",
@@ -89,6 +89,33 @@ describe("relation geometry", () => {
       const next = geometry.points[index + 1];
       expect(current.x === next.x || current.y === next.y).toBe(true);
     }
+  });
+
+  it("snaps the last via point to the target column row when grid snap is enabled", () => {
+    const target = { ...table, id: "account", name: "account", x: 520 };
+    const relation = {
+      ...makeRelation(),
+      viaPoints: [
+        { x: 400, y: 96 },
+        { x: 460, y: 140 },
+      ],
+    };
+
+    expect(
+      snapRelationViaPoint(relation, 1, { x: 460, y: 140 }, table, target, true, 32),
+    ).toEqual({ x: 448, y: 132 });
+  });
+
+  it("does not apply column-row snapping when grid snap is disabled", () => {
+    const target = { ...table, id: "account", name: "account", x: 520 };
+    const relation = {
+      ...makeRelation(),
+      viaPoints: [{ x: 460, y: 140 }],
+    };
+
+    expect(
+      snapRelationViaPoint(relation, 0, { x: 460, y: 140 }, table, target, false, 32),
+    ).toEqual({ x: 460, y: 140 });
   });
 });
 
