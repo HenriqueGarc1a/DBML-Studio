@@ -1,6 +1,6 @@
 // @diagram
-// background=#161718
-// gridColor=#161718
+// background=#a0a3a6
+// gridColor=#ffffff
 // gridSize=16
 // tableBackground=#111827
 // tableBorder=#4b5f78
@@ -58,8 +58,8 @@ Table class {
 }
 
 // @table user
-// x=112
-// y=416
+// x=87.9
+// y=420.7
 // width=282
 // height=262
 // useDefaultStyle=false
@@ -195,7 +195,7 @@ Table project_stack {
 }
 
 // @table report
-// x=864
+// x=896
 // y=368
 // width=304
 // height=234
@@ -218,7 +218,7 @@ Table report {
 // @table semester_profile
 // x=512
 // y=416
-// width=272
+// width=258
 // height=234
 // useDefaultStyle=false
 // background=#111827
@@ -237,8 +237,8 @@ Table semester_profile {
 }
 
 // @table examining_board_member
-// x=128
-// y=48
+// x=127.3
+// y=92.2
 // width=290
 // height=122
 // useDefaultStyle=false
@@ -441,10 +441,10 @@ Ref: examining_board_member.teacher_id > user.id
 // from=west
 // to=west
 // startOffsetX=0
-// startOffsetY=4
+// startOffsetY=0
 // endOffsetX=0
-// endOffsetY=-4
-// via=(32,160),(32,464)
+// endOffsetY=0
+// via=(32,176),(32,464)
 
 Ref: team.project_id > project.id
 // @line relation-team-project_id-project-id-7
@@ -472,8 +472,8 @@ Ref: team.teacher_id > user.id
 // startOffsetX=0
 // startOffsetY=0.22
 // endOffsetX=0
-// endOffsetY=8
-// via=(416,1088),(416,476)
+// endOffsetY=55.3
+// via=(416,1088),(421.7,533.2)
 
 Ref: attendance.lesson_id > lesson.id
 // @line relation-attendance-lesson_id-lesson-id-9
@@ -501,7 +501,7 @@ Ref: semester_profile.user_id > user.id
 // startOffsetX=0
 // startOffsetY=-4
 // endOffsetX=0
-// endOffsetY=-8
+// endOffsetY=-8.7
 
 Ref: semester_profile.team_id > team.id
 // @line relation-semester_profile-team_id-team-id-11
@@ -573,8 +573,8 @@ Ref: class.teacher_id > user.id
 // startOffsetX=0
 // startOffsetY=0
 // endOffsetX=0
-// endOffsetY=0
-// via=(424,884),(424,468)
+// endOffsetY=-8.7
+// via=(424,884),(432,448)
 
 Ref: semester_profile.class_id > class.id
 // @line relation-semester_profile-class_id-class-id-16
@@ -667,8 +667,8 @@ Ref: examining_board.student_id > semester_profile.id
 
 // @group 1t0m8jg
 // label=Relatorios
-// x=800
-// y=0
+// x=848
+// y=-32
 // width=896
 // height=672
 // background=#0f766e

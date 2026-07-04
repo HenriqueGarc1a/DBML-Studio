@@ -163,12 +163,6 @@ button.is-toggle-active {
   padding: 0 8px;
 }
 
-.save-status {
-  color: var(--muted);
-  font-size: 12px;
-  white-space: nowrap;
-}
-
 .workspace {
   --dbml-pane-width: minmax(260px, 330px);
   --properties-pane-width: minmax(360px, 440px);
@@ -389,6 +383,11 @@ button.is-toggle-active {
   cursor: nesw-resize;
 }
 
+.resize-handle-w,
+.resize-handle-e {
+  cursor: ew-resize;
+}
+
 .property-section {
   padding: 14px;
   border-bottom: 1px solid var(--line);
@@ -398,6 +397,64 @@ button.is-toggle-active {
   margin: 0 0 12px;
   font-size: 13px;
   letter-spacing: 0;
+}
+
+.property-group {
+  border-top: 1px solid color-mix(in srgb, var(--line) 70%, transparent);
+  padding: 7px 0;
+}
+
+.property-section h3 + .property-group {
+  border-top: 0;
+  padding-top: 0;
+}
+
+.property-group-heading {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 30px;
+}
+
+.property-group-toggle {
+  flex: 1;
+  min-width: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 6px;
+  height: 30px;
+  padding: 0 3px;
+  border: 0;
+  color: var(--text);
+  background: transparent;
+  font-size: 12px;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.property-group-toggle:hover {
+  color: var(--teal-dark);
+  background: transparent;
+}
+
+.property-group-toggle svg {
+  color: var(--muted);
+}
+
+.property-group-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.property-group-body {
+  padding: 7px 0 2px;
+}
+
+.property-group-body > .field-row:last-child,
+.property-group-body > .button-row:last-child {
+  margin-bottom: 0;
 }
 
 .empty-state {
@@ -493,26 +550,6 @@ button.is-toggle-active {
 .danger-action:hover {
   border-color: var(--red);
   background: color-mix(in srgb, var(--red) 14%, var(--button-bg));
-}
-
-.subsection-heading {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-  margin: 14px 0 8px;
-}
-
-.subsection-heading h4 {
-  margin: 0;
-  color: var(--muted);
-  font-size: 12px;
-  letter-spacing: 0;
-  text-transform: uppercase;
-}
-
-.nested-editor {
-  margin-top: 14px;
 }
 
 .badge-color-editor {
@@ -653,11 +690,13 @@ button.is-toggle-active {
 .zoom-controls {
   position: absolute;
   z-index: 3;
-  display: flex;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: 24px repeat(5, 32px);
+  grid-template-rows: repeat(2, 30px);
   align-items: center;
   gap: 6px;
-  width: min(248px, calc(100% - 16px));
+  width: max-content;
+  max-width: calc(100% - 16px);
   padding: 6px;
   border: 1px solid var(--line);
   border-radius: 8px;
@@ -676,17 +715,24 @@ button.is-toggle-active {
   background: var(--active-bg);
 }
 
-.floating-toolbar-group {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  min-width: 0;
-}
-
 .zoom-drag-handle {
+  grid-row: 1 / span 2;
+  align-self: stretch;
+  width: 24px;
+  min-width: 24px;
+  min-height: 66px;
   color: var(--muted);
   cursor: grab;
   touch-action: none;
+}
+
+.floating-toolbar-grid {
+  display: grid;
+  grid-column: 2 / span 5;
+  grid-row: 1 / span 2;
+  grid-template-columns: repeat(5, 32px);
+  grid-template-rows: repeat(2, 30px);
+  gap: 6px;
 }
 
 .zoom-controls.is-dragging .zoom-drag-handle {

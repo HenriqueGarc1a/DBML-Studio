@@ -336,7 +336,7 @@ export function useDiagramController(): DiagramController {
 
         const loaded = await importDbmlText(active.dbml, { resetHistory: true });
         if (!cancelled) {
-          setSaveMessage(loaded ? "Pasta dbml sincronizada" : "Arquivo DBML invalido");
+          setSaveMessage(loaded ? "" : "Arquivo DBML inválido");
         }
         return;
       }
@@ -463,7 +463,6 @@ export function useDiagramController(): DiagramController {
     const intervalId = window.setInterval(() => {
       const snapshot = persistCurrentDiagram({ silent: true });
       void saveWorkspaceDbml(currentDbmlFilename(diagramsRef.current, activeDiagramIdRef.current, snapshot.name), snapshot.dbml);
-      setSaveMessage(`Autos salvo ${new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}`);
     }, 60_000);
 
     return () => window.clearInterval(intervalId);
@@ -1061,7 +1060,7 @@ function createDiagramVisual(): DiagramModel["visual"] {
 }
 
 function formatDbmlError(error: unknown): string {
-  return error instanceof Error ? error.message : "DBML invalido.";
+  return error instanceof Error ? error.message : "DBML inválido.";
 }
 
 function createColumn(tableName: string, name: string, index: number): ColumnModel {

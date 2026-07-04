@@ -13,12 +13,17 @@ import { PropertiesPanel } from "./ui/PropertiesPanel";
 import { downloadText } from "./utils/download";
 import { saveTextFile, type TextFileHandle } from "./utils/fileSave";
 
+const DBML_COLLAPSED_STORAGE_KEY = "dbml-studio-dbml-collapsed";
+const PROPERTIES_COLLAPSED_STORAGE_KEY = "dbml-studio-properties-collapsed";
+
 export function App() {
   const controller = useDiagramController();
   const svgRef = useRef<SVGSVGElement | null>(null);
   const dbmlFileHandleRef = useRef<TextFileHandle | undefined>();
-  const [dbmlCollapsed, setDbmlCollapsed] = useState(false);
-  const [propertiesCollapsed, setPropertiesCollapsed] = useState(false);
+  const [dbmlCollapsed, setDbmlCollapsed] = useState(() => readStoredBoolean(DBML_COLLAPSED_STORAGE_KEY, false));
+  const [propertiesCollapsed, setPropertiesCollapsed] = useState(() =>
+    readStoredBoolean(PROPERTIES_COLLAPSED_STORAGE_KEY, false),
+  );
 
   const exportPdf = async () => {
     const { exportDiagramPdf } = await import("./utils/pdfExport");
@@ -63,6 +68,14 @@ export function App() {
     return () => window.removeEventListener("keydown", onKeyDown);
   }, [controller]);
 
+  useEffect(() => {
+    writeStoredBoolean(DBML_COLLAPSED_STORAGE_KEY, dbmlCollapsed);
+  }, [dbmlCollapsed]);
+
+  useEffect(() => {
+    writeStoredBoolean(PROPERTIES_COLLAPSED_STORAGE_KEY, propertiesCollapsed);
+  }, [propertiesCollapsed]);
+
   return (
     <div className="app-shell">
       <header className="topbar">
@@ -102,7 +115,6 @@ export function App() {
             <Save size={16} />
             Salvar
           </button>
-          {controller.saveMessage && <span className="save-status">{controller.saveMessage}</span>}
           <button type="button" onClick={() => void exportPdf()}>
             <FileDown size={16} />
             Exportar PDF
@@ -155,4 +167,24 @@ function isEditableTarget(target: EventTarget | null): boolean {
   if (!element) return false;
   const tagName = element.tagName.toLowerCase();
   return element.isContentEditable || tagName === "input" || tagName === "textarea" || tagName === "select";
+}
+
+function readStoredBoolean(key: string, fallback: boolean): boolean {
+  try {
+    const stored = localStorage.getItem(key);
+    if (stored === "true") return true;
+    if (stored === "false") return false;
+  } catch {
+    // localStorage may be unavailable in restricted browser contexts.
+  }
+
+  return fallback;
+}
+
+function writeStoredBoolean(key: string, value: boolean): void {
+  try {
+    localStorage.setItem(key, String(value));
+  } catch {
+    // localStorage may be unavailable in restricted browser contexts.
+  }
 }

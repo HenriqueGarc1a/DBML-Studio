@@ -1,5 +1,5 @@
-import { ChevronLeft, ChevronRight, Minus, Plus, RotateCcw, Trash2 } from "lucide-react";
-import { useState, type ChangeEvent } from "react";
+import { ChevronDown, ChevronLeft, ChevronRight, Minus, Plus, RotateCcw, Trash2 } from "lucide-react";
+import { useEffect, useState, type ChangeEvent, type ReactNode } from "react";
 import type { DiagramController } from "../editor/useDiagramController";
 import { DIAGRAM_MAX_GRID_SIZE, DIAGRAM_MIN_GRID_SIZE } from "../model/defaults";
 import type {
@@ -22,6 +22,8 @@ interface PropertiesPanelProps {
   collapsed: boolean;
   onToggle: () => void;
 }
+
+const PROPERTY_GROUP_STORAGE_PREFIX = "dbml-studio-property-group:";
 
 export function PropertiesPanel({ controller, collapsed, onToggle }: PropertiesPanelProps) {
   const selection = controller.selected;
@@ -54,26 +56,28 @@ export function PropertiesPanel({ controller, collapsed, onToggle }: PropertiesP
       {!collapsed && !selection && (
         <section className="property-section">
           <h3>Diagrama</h3>
-          <ColorField
-            label="Fundo"
-            value={controller.diagram.visual.backgroundColor}
-            savedColors={savedColors}
-            onChange={(backgroundColor) => controller.updateDiagramVisual({ backgroundColor })}
-          />
-          <ColorField
-            label="Cor grid"
-            value={controller.diagram.visual.gridColor}
-            savedColors={savedColors}
-            onChange={(gridColor) => controller.updateDiagramVisual({ gridColor })}
-          />
-          <NumberField
-            label="Grid"
-            value={controller.diagram.visual.gridSize}
-            min={DIAGRAM_MIN_GRID_SIZE}
-            max={DIAGRAM_MAX_GRID_SIZE}
-            step={1}
-            onChange={(gridSize) => controller.updateDiagramVisual({ gridSize })}
-          />
+          <CollapsibleGroup id="diagram.canvas" title="Canvas">
+            <ColorField
+              label="Fundo"
+              value={controller.diagram.visual.backgroundColor}
+              savedColors={savedColors}
+              onChange={(backgroundColor) => controller.updateDiagramVisual({ backgroundColor })}
+            />
+            <ColorField
+              label="Cor do grid"
+              value={controller.diagram.visual.gridColor}
+              savedColors={savedColors}
+              onChange={(gridColor) => controller.updateDiagramVisual({ gridColor })}
+            />
+            <NumberField
+              label="Grid"
+              value={controller.diagram.visual.gridSize}
+              min={DIAGRAM_MIN_GRID_SIZE}
+              max={DIAGRAM_MAX_GRID_SIZE}
+              step={1}
+              onChange={(gridSize) => controller.updateDiagramVisual({ gridSize })}
+            />
+          </CollapsibleGroup>
           <DefaultTableStyleEditor controller={controller} savedColors={savedColors} />
           <BadgeColorsEditor controller={controller} savedColors={savedColors} />
           <SavedColorsEditor
@@ -85,36 +89,44 @@ export function PropertiesPanel({ controller, collapsed, onToggle }: PropertiesP
       {!collapsed && table && (
         <section className="property-section">
           <h3>Tabela</h3>
-          <TextField label="Nome" value={table.name} onChange={(name) => controller.updateTable(table.id, { name })} />
-          <NumberField label="X" value={table.x} onChange={(x) => controller.updateTable(table.id, { x })} />
-          <NumberField label="Y" value={table.y} onChange={(y) => controller.updateTable(table.id, { y })} />
-          <NumberField label="Largura" value={table.width} onChange={(width) => controller.resizeTable(table.id, width)} />
-          <CheckboxField
-            label="Padrao"
-            checked={table.usesDefaultStyle}
-            onChange={(usesDefaultStyle) => {
-              controller.updateTable(table.id, {
-                usesDefaultStyle,
-                visual: usesDefaultStyle
-                  ? table.visual
-                  : { ...getEffectiveTableVisual(table, controller.diagram.visual.defaultTable) },
-              });
-            }}
-          />
-          {!table.usesDefaultStyle && (
-            <TableVisualFields
-              visual={table.visual}
-              savedColors={savedColors}
-              onChange={(visual) => controller.updateTable(table.id, { visual })}
+          <CollapsibleGroup id="table.general" title="Geral">
+            <TextField label="Nome" value={table.name} onChange={(name) => controller.updateTable(table.id, { name })} />
+          </CollapsibleGroup>
+          <CollapsibleGroup id="table.layout" title="Layout">
+            <NumberField label="X" value={table.x} onChange={(x) => controller.updateTable(table.id, { x })} />
+            <NumberField label="Y" value={table.y} onChange={(y) => controller.updateTable(table.id, { y })} />
+            <NumberField label="Largura" value={table.width} onChange={(width) => controller.resizeTable(table.id, width)} />
+          </CollapsibleGroup>
+          <CollapsibleGroup id="table.style" title="Estilo" defaultOpen={false}>
+            <CheckboxField
+              label="Padrão"
+              checked={table.usesDefaultStyle}
+              onChange={(usesDefaultStyle) => {
+                controller.updateTable(table.id, {
+                  usesDefaultStyle,
+                  visual: usesDefaultStyle
+                    ? table.visual
+                    : { ...getEffectiveTableVisual(table, controller.diagram.visual.defaultTable) },
+                });
+              }}
             />
-          )}
+            {!table.usesDefaultStyle && (
+              <TableVisualFields
+                visual={table.visual}
+                savedColors={savedColors}
+                onChange={(visual) => controller.updateTable(table.id, { visual })}
+              />
+            )}
+          </CollapsibleGroup>
           <TableColumnsEditor controller={controller} table={table} />
-          <div className="button-row">
-            <button type="button" className="secondary-button danger-action" onClick={() => controller.removeTable(table.id)}>
-              <Trash2 size={16} />
-              Excluir tabela
-            </button>
-          </div>
+          <CollapsibleGroup id="table.actions" title="Ações" defaultOpen={false}>
+            <div className="button-row">
+              <button type="button" className="secondary-button danger-action" onClick={() => controller.removeTable(table.id)}>
+                <Trash2 size={16} />
+                Excluir tabela
+              </button>
+            </div>
+          </CollapsibleGroup>
         </section>
       )}
       {!collapsed && relation && (
@@ -123,43 +135,101 @@ export function PropertiesPanel({ controller, collapsed, onToggle }: PropertiesP
       {!collapsed && group && (
         <section className="property-section">
           <h3>Grupo</h3>
-          <TextField label="Titulo" value={group.label} onChange={(label) => controller.updateGroup(group.id, { label })} />
-          <NumberField label="X" value={group.x} onChange={(x) => controller.updateGroup(group.id, { x })} />
-          <NumberField label="Y" value={group.y} onChange={(y) => controller.updateGroup(group.id, { y })} />
-          <NumberField label="Largura" value={group.width} onChange={(width) => controller.resizeGroup(group.id, width, group.height)} />
-          <NumberField label="Altura" value={group.height} onChange={(height) => controller.resizeGroup(group.id, group.width, height)} />
-          <ColorField
-            label="Fundo"
-            value={group.backgroundColor}
-            savedColors={savedColors}
-            onChange={(backgroundColor) => controller.updateGroup(group.id, { backgroundColor })}
-          />
-          <ColorField
-            label="Borda"
-            value={group.borderColor}
-            savedColors={savedColors}
-            onChange={(borderColor) => controller.updateGroup(group.id, { borderColor })}
-          />
-          <RangeField label="Opacidade" value={group.opacity} min={0.02} max={0.8} step={0.02} onChange={(opacity) => controller.updateGroup(group.id, { opacity })} />
-          <div className="button-row">
-            <button type="button" className="secondary-button" onClick={() => controller.sendGroupBackward(group.id)}>
-              <Minus size={16} />
-              Enviar tras
-            </button>
-            <button type="button" className="secondary-button" onClick={() => controller.bringGroupForward(group.id)}>
-              <Plus size={16} />
-              Trazer frente
-            </button>
-          </div>
-          <div className="button-row">
-            <button type="button" className="secondary-button danger-action" onClick={() => controller.removeGroup(group.id)}>
-              <Trash2 size={16} />
-              Excluir grupo
-            </button>
-          </div>
+          <CollapsibleGroup id="group.general" title="Geral">
+            <TextField label="Título" value={group.label} onChange={(label) => controller.updateGroup(group.id, { label })} />
+          </CollapsibleGroup>
+          <CollapsibleGroup id="group.layout" title="Layout">
+            <NumberField label="X" value={group.x} onChange={(x) => controller.updateGroup(group.id, { x })} />
+            <NumberField label="Y" value={group.y} onChange={(y) => controller.updateGroup(group.id, { y })} />
+            <NumberField label="Largura" value={group.width} onChange={(width) => controller.resizeGroup(group.id, width, group.height)} />
+            <NumberField label="Altura" value={group.height} onChange={(height) => controller.resizeGroup(group.id, group.width, height)} />
+          </CollapsibleGroup>
+          <CollapsibleGroup id="group.style" title="Estilo" defaultOpen={false}>
+            <ColorField
+              label="Fundo"
+              value={group.backgroundColor}
+              savedColors={savedColors}
+              onChange={(backgroundColor) => controller.updateGroup(group.id, { backgroundColor })}
+            />
+            <ColorField
+              label="Borda"
+              value={group.borderColor}
+              savedColors={savedColors}
+              onChange={(borderColor) => controller.updateGroup(group.id, { borderColor })}
+            />
+            <RangeField label="Opacidade" value={group.opacity} min={0.02} max={0.8} step={0.02} onChange={(opacity) => controller.updateGroup(group.id, { opacity })} />
+          </CollapsibleGroup>
+          <CollapsibleGroup id="group.actions" title="Ações" defaultOpen={false}>
+            <div className="button-row">
+              <button type="button" className="secondary-button" onClick={() => controller.sendGroupBackward(group.id)}>
+                <Minus size={16} />
+                Enviar atrás
+              </button>
+              <button type="button" className="secondary-button" onClick={() => controller.bringGroupForward(group.id)}>
+                <Plus size={16} />
+                Trazer frente
+              </button>
+            </div>
+            <div className="button-row">
+              <button type="button" className="secondary-button danger-action" onClick={() => controller.removeGroup(group.id)}>
+                <Trash2 size={16} />
+                Excluir grupo
+              </button>
+            </div>
+          </CollapsibleGroup>
         </section>
       )}
     </aside>
+  );
+}
+
+function CollapsibleGroup({
+  id,
+  title,
+  defaultOpen = true,
+  actions,
+  children,
+}: {
+  id: string;
+  title: string;
+  defaultOpen?: boolean;
+  actions?: ReactNode;
+  children: ReactNode;
+}) {
+  const [storedOpen, setStoredOpen] = useState(() => ({
+    id,
+    open: readStoredGroupOpen(id, defaultOpen),
+  }));
+  const open = storedOpen.id === id ? storedOpen.open : readStoredGroupOpen(id, defaultOpen);
+  const setOpen = (updater: boolean | ((current: boolean) => boolean)) => {
+    const nextOpen = typeof updater === "function" ? updater(open) : updater;
+    setStoredOpen({ id, open: nextOpen });
+  };
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(`${PROPERTY_GROUP_STORAGE_PREFIX}${id}`, open ? "open" : "closed");
+    } catch {
+      // localStorage may be unavailable in restricted browser contexts.
+    }
+  }, [id, open]);
+
+  return (
+    <div className={`property-group${open ? " is-open" : ""}`}>
+      <div className="property-group-heading">
+        <button
+          type="button"
+          className="property-group-toggle"
+          aria-expanded={open}
+          onClick={() => setOpen((current) => !current)}
+        >
+          {open ? <ChevronDown size={15} /> : <ChevronRight size={15} />}
+          <span>{title}</span>
+        </button>
+        {actions && open && <div className="property-group-actions">{actions}</div>}
+      </div>
+      {open && <div className="property-group-body">{children}</div>}
+    </div>
   );
 }
 
@@ -173,16 +243,13 @@ function DefaultTableStyleEditor({
   const visual = controller.diagram.visual.defaultTable;
 
   return (
-    <div className="nested-editor">
-      <div className="subsection-heading">
-        <h4>Tabela padrao</h4>
-      </div>
+    <CollapsibleGroup id="diagram.defaultTable" title="Tabela padrão" defaultOpen={false}>
       <TableVisualFields
         visual={visual}
         savedColors={savedColors}
         onChange={(defaultTable) => controller.updateDiagramVisual({ defaultTable })}
       />
-    </div>
+    </CollapsibleGroup>
   );
 }
 
@@ -210,7 +277,7 @@ function TableVisualFields({
         onChange={(borderColor) => onChange({ ...visual, borderColor })}
       />
       <ColorField
-        label="Cabecalho"
+        label="Cabeçalho"
         value={visual.headerColor}
         savedColors={savedColors}
         onChange={(headerColor) => onChange({ ...visual, headerColor })}
@@ -252,10 +319,7 @@ function BadgeColorsEditor({
   };
 
   return (
-    <div className="nested-editor">
-      <div className="subsection-heading">
-        <h4>Badges</h4>
-      </div>
+    <CollapsibleGroup id="diagram.badges" title="Badges" defaultOpen={false}>
       <BadgeVisualFields
         label="PK"
         visual={badges.primaryKey}
@@ -280,7 +344,7 @@ function BadgeColorsEditor({
         savedColors={savedColors}
         onChange={(patch) => updateBadge("unique", patch)}
       />
-    </div>
+    </CollapsibleGroup>
   );
 }
 
@@ -342,13 +406,16 @@ function SavedColorsEditor({
   };
 
   return (
-    <div className="nested-editor">
-      <div className="subsection-heading">
-        <h4>Cores salvas</h4>
+    <CollapsibleGroup
+      id="diagram.savedColors"
+      title="Cores salvas"
+      defaultOpen={false}
+      actions={
         <button type="button" className="icon-button" onClick={addColor} title="Salvar cor">
           <Plus size={15} />
         </button>
-      </div>
+      }
+    >
       <div className="saved-color-editor">
         <input
           type="text"
@@ -397,7 +464,7 @@ function SavedColorsEditor({
           </div>
         ))}
       </div>
-    </div>
+    </CollapsibleGroup>
   );
 }
 
@@ -409,13 +476,15 @@ function TableColumnsEditor({ controller, table }: { controller: DiagramControll
   );
 
   return (
-    <div className="columns-editor">
-      <div className="subsection-heading">
-        <h4>Campos</h4>
+    <CollapsibleGroup
+      id="table.columns"
+      title="Campos"
+      actions={
         <button type="button" className="icon-button" onClick={() => controller.addColumn(table.id)} title="Adicionar campo">
           <Plus size={15} />
         </button>
-      </div>
+      }
+    >
       <div className="columns-list">
         {table.columns.map((column) => (
           <ColumnEditor
@@ -427,7 +496,7 @@ function TableColumnsEditor({ controller, table }: { controller: DiagramControll
           />
         ))}
       </div>
-    </div>
+    </CollapsibleGroup>
   );
 }
 
@@ -464,7 +533,7 @@ function ColumnEditor({
         />
         <span>PK</span>
       </label>
-      <label className="mini-check" title={relationBackedFk ? "FK definido por uma relacao" : "Foreign key"}>
+      <label className="mini-check" title={relationBackedFk ? "FK definido por uma relação" : "Foreign key"}>
         <input
           type="checkbox"
           checked={column.foreignKey}
@@ -518,85 +587,93 @@ function RelationProperties({ controller, relationId }: { controller: DiagramCon
   return (
     <section className="property-section">
       <h3>Linha</h3>
-      <TextField label="Rotulo" value={relation.label} onChange={(label) => controller.updateRelation(relation.id, { label })} />
-      <ColorField
-        label="Cor"
-        value={relation.color}
-        savedColors={controller.diagram.visual.savedColors}
-        onChange={(color) => controller.updateRelation(relation.id, { color })}
-      />
-      <NumberField label="Espessura" value={relation.strokeWidth} onChange={(strokeWidth) => controller.updateRelation(relation.id, { strokeWidth })} />
-      <RangeField label="Opacidade" value={relation.opacity} min={0.1} max={1} step={0.05} onChange={(opacity) => controller.updateRelation(relation.id, { opacity })} />
-      <SelectField<LineStyle>
-        label="Estilo"
-        value={relation.style}
-        options={["solid", "dashed", "dotted", "rounded"]}
-        onChange={(style) => controller.updateRelation(relation.id, { style })}
-      />
-      <SelectField<LineRoute>
-        label="Rota"
-        value={relation.route}
-        options={["straight", "orthogonal", "curve"]}
-        onChange={(route) => controller.updateRelation(relation.id, { route })}
-      />
-      <SelectField<Direction>
-        label="Origem"
-        value={relation.fromSide}
-        options={["north", "south", "east", "west"]}
-        onChange={(fromSide) => controller.updateRelation(relation.id, {
-          fromSide,
-          startOffsetX: 0,
-          startOffsetY: 0,
-        })}
-      />
-      <SelectField<Direction>
-        label="Destino"
-        value={relation.toSide}
-        options={["north", "south", "east", "west"]}
-        onChange={(toSide) => controller.updateRelation(relation.id, {
-          toSide,
-          endOffsetX: 0,
-          endOffsetY: 0,
-        })}
-      />
-      <div className="button-row">
-        <button type="button" className="secondary-button" onClick={addCenteredPoint}>
-          <Plus size={16} />
-          Ponto
-        </button>
-        <button
-          type="button"
-          className="secondary-button"
-          disabled={!relation.viaPoints.length}
-          onClick={() => controller.removeViaPoint(relation.id, relation.viaPoints.length - 1)}
-        >
-          <Trash2 size={16} />
-          Ultimo
-        </button>
-        <button
-          type="button"
-          className="secondary-button"
-          onClick={() => controller.resetRelation(relation.id)}
-        >
-          <RotateCcw size={16} />
-          Reset
-        </button>
-      </div>
-      <div className="button-row">
-        <button type="button" className="secondary-button danger-action" onClick={() => controller.removeRelation(relation.id)}>
-          <Trash2 size={16} />
-          Excluir relacao
-        </button>
-      </div>
-      {relation.viaPoints.map((point, index) => (
-        <PointEditor
-          key={`${relation.id}-point-${index}`}
-          point={point}
-          label={`P${index + 1}`}
-          onChange={(next) => controller.updateViaPoint(relation.id, index, next)}
-          onRemove={() => controller.removeViaPoint(relation.id, index)}
+      <CollapsibleGroup id="relation.general" title="Geral">
+        <TextField label="Rótulo" value={relation.label} onChange={(label) => controller.updateRelation(relation.id, { label })} />
+        <ColorField
+          label="Cor"
+          value={relation.color}
+          savedColors={controller.diagram.visual.savedColors}
+          onChange={(color) => controller.updateRelation(relation.id, { color })}
         />
-      ))}
+        <NumberField label="Espessura" value={relation.strokeWidth} onChange={(strokeWidth) => controller.updateRelation(relation.id, { strokeWidth })} />
+        <RangeField label="Opacidade" value={relation.opacity} min={0.1} max={1} step={0.05} onChange={(opacity) => controller.updateRelation(relation.id, { opacity })} />
+      </CollapsibleGroup>
+      <CollapsibleGroup id="relation.route" title="Rota" defaultOpen={false}>
+        <SelectField<LineStyle>
+          label="Estilo"
+          value={relation.style}
+          options={["solid", "dashed", "dotted", "rounded"]}
+          onChange={(style) => controller.updateRelation(relation.id, { style })}
+        />
+        <SelectField<LineRoute>
+          label="Rota"
+          value={relation.route}
+          options={["straight", "orthogonal", "curve"]}
+          onChange={(route) => controller.updateRelation(relation.id, { route })}
+        />
+        <SelectField<Direction>
+          label="Origem"
+          value={relation.fromSide}
+          options={["north", "south", "east", "west"]}
+          onChange={(fromSide) => controller.updateRelation(relation.id, {
+            fromSide,
+            startOffsetX: 0,
+            startOffsetY: 0,
+          })}
+        />
+        <SelectField<Direction>
+          label="Destino"
+          value={relation.toSide}
+          options={["north", "south", "east", "west"]}
+          onChange={(toSide) => controller.updateRelation(relation.id, {
+            toSide,
+            endOffsetX: 0,
+            endOffsetY: 0,
+          })}
+        />
+      </CollapsibleGroup>
+      <CollapsibleGroup id="relation.points" title="Pontos" defaultOpen={false}>
+        <div className="button-row">
+          <button type="button" className="secondary-button" onClick={addCenteredPoint}>
+            <Plus size={16} />
+            Ponto
+          </button>
+          <button
+            type="button"
+            className="secondary-button"
+            disabled={!relation.viaPoints.length}
+            onClick={() => controller.removeViaPoint(relation.id, relation.viaPoints.length - 1)}
+          >
+            <Trash2 size={16} />
+            Último
+          </button>
+          <button
+            type="button"
+            className="secondary-button"
+            onClick={() => controller.resetRelation(relation.id)}
+          >
+            <RotateCcw size={16} />
+            Reset
+          </button>
+        </div>
+        {relation.viaPoints.map((point, index) => (
+          <PointEditor
+            key={`${relation.id}-point-${index}`}
+            point={point}
+            label={`P${index + 1}`}
+            onChange={(next) => controller.updateViaPoint(relation.id, index, next)}
+            onRemove={() => controller.removeViaPoint(relation.id, index)}
+          />
+        ))}
+      </CollapsibleGroup>
+      <CollapsibleGroup id="relation.actions" title="Ações" defaultOpen={false}>
+        <div className="button-row">
+          <button type="button" className="secondary-button danger-action" onClick={() => controller.removeRelation(relation.id)}>
+            <Trash2 size={16} />
+            Excluir relação
+          </button>
+        </div>
+      </CollapsibleGroup>
     </section>
   );
 }
@@ -785,4 +862,16 @@ function getEffectiveTableVisual(table: TableModel, defaultVisual: TableVisual):
 
 function isHexColor(value: string): boolean {
   return /^#[0-9a-fA-F]{3}$/.test(value) || /^#[0-9a-fA-F]{6}$/.test(value);
+}
+
+function readStoredGroupOpen(id: string, fallback: boolean): boolean {
+  try {
+    const stored = localStorage.getItem(`${PROPERTY_GROUP_STORAGE_PREFIX}${id}`);
+    if (stored === "open") return true;
+    if (stored === "closed") return false;
+  } catch {
+    // localStorage may be unavailable in restricted browser contexts.
+  }
+
+  return fallback;
 }

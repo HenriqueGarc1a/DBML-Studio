@@ -587,7 +587,7 @@ export function SvgCanvas({ controller, svgRef: externalSvgRef }: SvgCanvasProps
         >
           <GripVertical size={15} />
         </button>
-        <span className="floating-toolbar-group" aria-label="Historico">
+        <div className="floating-toolbar-grid" aria-label="Ferramentas do diagrama">
           <button
             type="button"
             className="icon-button"
@@ -606,20 +606,16 @@ export function SvgCanvas({ controller, svgRef: externalSvgRef }: SvgCanvasProps
           >
             <Redo2 size={16} />
           </button>
-        </span>
-        <span className="floating-toolbar-group" aria-label="Criacao">
           <button type="button" className="icon-button" title="Nova tabela" onClick={controller.addTable}>
             <Table2 size={16} />
           </button>
           <button type="button" className="icon-button" title="Novo grupo" onClick={controller.addGroup}>
             <FolderPlus size={16} />
           </button>
-        </span>
-        <span className="floating-toolbar-group" aria-label="Ferramentas">
           <button
             type="button"
             className={`icon-button${relationMode ? " is-toggle-active" : ""}`}
-            title={relationSource ? "Campo destino da relacao" : "Nova relacao"}
+            title={relationSource ? "Campo destino da relação" : "Nova relação"}
             aria-pressed={relationMode}
             onClick={() => {
               setRelationMode((active) => !active);
@@ -637,18 +633,16 @@ export function SvgCanvas({ controller, svgRef: externalSvgRef }: SvgCanvasProps
           >
             <Magnet size={16} />
           </button>
-        </span>
-        <span className="floating-toolbar-group" aria-label="Zoom">
           <button type="button" className="icon-button" title="Diminuir zoom" onClick={() => zoomAt(1 / 1.2)}>
             <ZoomOut size={16} />
           </button>
           <button type="button" className="icon-button" title="Aumentar zoom" onClick={() => zoomAt(1.2)}>
             <ZoomIn size={16} />
           </button>
-          <button type="button" className="icon-button" title="Ajustar ao diagrama" onClick={fitDiagram}>
+          <button type="button" className="icon-button" title="Centralizar diagrama" onClick={fitDiagram}>
             <Maximize2 size={16} />
           </button>
-        </span>
+        </div>
       </div>
     </>
   );
