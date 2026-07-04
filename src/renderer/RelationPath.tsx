@@ -39,6 +39,8 @@ export function RelationPath({
   const lineCap = relation.style === "dotted" ? "round" : "butt";
   const start = geometry.points[0];
   const end = geometry.points[geometry.points.length - 1];
+  const startCardinalityPoint = cardinalityPoint(start, geometry.points[1] ?? end);
+  const endCardinalityPoint = cardinalityPoint(end, geometry.points[geometry.points.length - 2] ?? start);
   const strokeColor = selected ? "#0f766e" : relation.color;
 
   return (
@@ -71,6 +73,20 @@ export function RelationPath({
           {relation.label}
         </text>
       )}
+      <text
+        x={startCardinalityPoint.x}
+        y={startCardinalityPoint.y}
+        className="relation-cardinality"
+      >
+        {cardinalityLabel(relation.fromCardinality)}
+      </text>
+      <text
+        x={endCardinalityPoint.x}
+        y={endCardinalityPoint.y}
+        className="relation-cardinality"
+      >
+        {cardinalityLabel(relation.toCardinality)}
+      </text>
       {selected && (
         <>
           <EndpointHandle
@@ -95,6 +111,29 @@ export function RelationPath({
       )}
     </g>
   );
+}
+
+function cardinalityLabel(value: RelationModel["fromCardinality"]): string {
+  return value === "many" ? "n" : "1";
+}
+
+function cardinalityPoint(endpoint: { x: number; y: number }, neighbor: { x: number; y: number }): { x: number; y: number } {
+  const dx = neighbor.x - endpoint.x;
+  const dy = neighbor.y - endpoint.y;
+  const length = Math.hypot(dx, dy) || 1;
+  const along = {
+    x: dx / length,
+    y: dy / length,
+  };
+  const normal = {
+    x: -along.y,
+    y: along.x,
+  };
+
+  return {
+    x: endpoint.x + along.x * 18 + normal.x * 8,
+    y: endpoint.y + along.y * 18 + normal.y * 8 + 4,
+  };
 }
 
 function EndpointHandle({

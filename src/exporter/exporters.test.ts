@@ -38,6 +38,8 @@ Ref: project.user_id > user.id
 // color=#dc2626
 // strokeWidth=2
 // style=dashed
+// fromCardinality=one
+// toCardinality=many
 // via=(300,60)
 
 // @group backend
@@ -74,7 +76,8 @@ describe("exporters", () => {
     expect(dbml).toContain("// useGroupStyle=true");
     expect(dbml).toContain("Ref: project.user_id > user.id");
     expect(dbml).toContain("// style=dashed");
-    expect(dbml).not.toContain("Cardinality");
+    expect(dbml).toContain("// fromCardinality=one");
+    expect(dbml).toContain("// toCardinality=many");
     expect(dbml).toContain("// via=(300,60)");
     expect(dbml).toContain("// @group backend");
     expect(dbml).toContain("// tableBorder=#14b8a6");

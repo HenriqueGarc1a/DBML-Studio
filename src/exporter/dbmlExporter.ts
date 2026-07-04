@@ -149,6 +149,8 @@ function exportRelation(relation: RelationModel, tableMap: Map<string, TableMode
     `// route=${relation.route}`,
     `// from=${normalizeRelationSide(relation.fromSide)}`,
     `// to=${normalizeRelationSide(relation.toSide)}`,
+    `// fromCardinality=${relation.fromCardinality}`,
+    `// toCardinality=${relation.toCardinality}`,
     `// startOffsetX=0`,
     `// startOffsetY=0`,
     `// endOffsetX=0`,

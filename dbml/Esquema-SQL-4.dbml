@@ -293,6 +293,8 @@ Ref: team.teacher_id > ages_user.id
 // route=orthogonal
 // from=east
 // to=west
+// fromCardinality=many
+// toCardinality=one
 // startOffsetX=0
 // startOffsetY=0
 // endOffsetX=0
@@ -308,6 +310,8 @@ Ref: team.project_id > project.id
 // route=orthogonal
 // from=east
 // to=west
+// fromCardinality=many
+// toCardinality=one
 // startOffsetX=0
 // startOffsetY=0
 // endOffsetX=0
@@ -323,6 +327,8 @@ Ref: class.teacher_id > ages_user.id
 // route=orthogonal
 // from=east
 // to=west
+// fromCardinality=many
+// toCardinality=one
 // startOffsetX=0
 // startOffsetY=0
 // endOffsetX=0
@@ -338,6 +344,8 @@ Ref: semester_profile.user_id > ages_user.id
 // route=orthogonal
 // from=east
 // to=west
+// fromCardinality=many
+// toCardinality=one
 // startOffsetX=0
 // startOffsetY=0
 // endOffsetX=0
@@ -353,6 +361,8 @@ Ref: semester_profile.team_id > team.id
 // route=orthogonal
 // from=east
 // to=west
+// fromCardinality=many
+// toCardinality=one
 // startOffsetX=0
 // startOffsetY=0
 // endOffsetX=0
@@ -368,6 +378,8 @@ Ref: semester_profile.class_id > class.id
 // route=orthogonal
 // from=east
 // to=west
+// fromCardinality=many
+// toCardinality=one
 // startOffsetX=0
 // startOffsetY=0
 // endOffsetX=0
@@ -383,6 +395,8 @@ Ref: lesson.class_id > class.id
 // route=orthogonal
 // from=east
 // to=west
+// fromCardinality=many
+// toCardinality=one
 // startOffsetX=0
 // startOffsetY=0
 // endOffsetX=0
@@ -398,6 +412,8 @@ Ref: otp.user_id > ages_user.id
 // route=orthogonal
 // from=east
 // to=west
+// fromCardinality=many
+// toCardinality=one
 // startOffsetX=0
 // startOffsetY=0
 // endOffsetX=0
@@ -413,6 +429,8 @@ Ref: schedule.admin_id > ages_user.id
 // route=orthogonal
 // from=east
 // to=west
+// fromCardinality=many
+// toCardinality=one
 // startOffsetX=0
 // startOffsetY=0
 // endOffsetX=0
@@ -428,6 +446,8 @@ Ref: project_stack.project_id > project.id
 // route=orthogonal
 // from=east
 // to=west
+// fromCardinality=many
+// toCardinality=one
 // startOffsetX=0
 // startOffsetY=0
 // endOffsetX=0
@@ -443,6 +463,8 @@ Ref: project_stack.technology_id > technology.id
 // route=orthogonal
 // from=east
 // to=west
+// fromCardinality=many
+// toCardinality=one
 // startOffsetX=0
 // startOffsetY=0
 // endOffsetX=0
@@ -458,6 +480,8 @@ Ref: report.student_id > semester_profile.id
 // route=orthogonal
 // from=east
 // to=west
+// fromCardinality=many
+// toCardinality=one
 // startOffsetX=0
 // startOffsetY=0
 // endOffsetX=0
@@ -473,6 +497,8 @@ Ref: examining_board.student_id > semester_profile.id
 // route=orthogonal
 // from=east
 // to=west
+// fromCardinality=many
+// toCardinality=one
 // startOffsetX=0
 // startOffsetY=0
 // endOffsetX=0
@@ -488,6 +514,8 @@ Ref: examining_board_member.examining_board_id > examining_board.id
 // route=orthogonal
 // from=east
 // to=west
+// fromCardinality=many
+// toCardinality=one
 // startOffsetX=0
 // startOffsetY=0
 // endOffsetX=0
@@ -503,11 +531,13 @@ Ref: examining_board_member.teacher_id > ages_user.id
 // route=orthogonal
 // from=east
 // to=west
+// fromCardinality=many
+// toCardinality=one
 // startOffsetX=0
 // startOffsetY=0
 // endOffsetX=0
 // endOffsetY=0
-// via=(374,120),(374,312.5),(1668,312.5),(1664.8,382.7)
+// via=(374,120),(374,312.5),(1668,312.5),(1638,382.4)
 
 Ref: attendance.lesson_id > lesson.id
 // @line relation-attendance-lesson_id-lesson-id-15
@@ -518,6 +548,8 @@ Ref: attendance.lesson_id > lesson.id
 // route=orthogonal
 // from=east
 // to=west
+// fromCardinality=many
+// toCardinality=one
 // startOffsetX=0
 // startOffsetY=0
 // endOffsetX=0
@@ -533,6 +565,8 @@ Ref: attendance.student_id > semester_profile.id
 // route=orthogonal
 // from=east
 // to=west
+// fromCardinality=many
+// toCardinality=one
 // startOffsetX=0
 // startOffsetY=0
 // endOffsetX=0
@@ -548,6 +582,8 @@ Ref: report_review.report_id > report.id
 // route=orthogonal
 // from=east
 // to=west
+// fromCardinality=many
+// toCardinality=one
 // startOffsetX=0
 // startOffsetY=0
 // endOffsetX=0
@@ -563,6 +599,8 @@ Ref: sprint_report.report_id > report.id
 // route=orthogonal
 // from=east
 // to=west
+// fromCardinality=many
+// toCardinality=one
 // startOffsetX=0
 // startOffsetY=0
 // endOffsetX=0
@@ -578,6 +616,8 @@ Ref: hours_report.report_id > report.id
 // route=orthogonal
 // from=east
 // to=west
+// fromCardinality=many
+// toCardinality=one
 // startOffsetX=0
 // startOffsetY=0
 // endOffsetX=0

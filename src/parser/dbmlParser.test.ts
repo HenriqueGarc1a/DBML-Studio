@@ -50,6 +50,8 @@ Ref: project.user_id > user.id
 // route=orthogonal
 // from=west
 // to=east
+// fromCardinality=one
+// toCardinality=many
 // via=(100,120),(200,120)
 
 // @group backend
@@ -104,8 +106,8 @@ describe("parseDbml", () => {
       fromColumn: "user_id",
       toTable: "user",
       toColumn: "id",
-      fromCardinality: "many",
-      toCardinality: "one",
+      fromCardinality: "one",
+      toCardinality: "many",
       color: "#dc2626",
       strokeWidth: 3,
       style: "dashed",

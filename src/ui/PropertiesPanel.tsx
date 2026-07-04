@@ -5,6 +5,7 @@ import { DIAGRAM_MAX_GRID_SIZE, DIAGRAM_MIN_GRID_SIZE } from "../model/defaults"
 import type {
   BadgeKind,
   BadgeVisual,
+  Cardinality,
   ColumnModel,
   Direction,
   LineStyle,
@@ -623,6 +624,20 @@ function RelationProperties({ controller, relationId }: { controller: DiagramCon
           options={["solid", "dashed", "dotted"]}
           labels={{ solid: "Sólida", dashed: "Tracejada", dotted: "Pontilhada" }}
           onChange={(style) => controller.updateRelation(relation.id, { style })}
+        />
+        <SelectField<Cardinality>
+          label="Card. origem"
+          value={relation.fromCardinality}
+          options={["many", "one"]}
+          labels={{ many: "N", one: "1" }}
+          onChange={(fromCardinality) => controller.updateRelation(relation.id, { fromCardinality })}
+        />
+        <SelectField<Cardinality>
+          label="Card. destino"
+          value={relation.toCardinality}
+          options={["one", "many"]}
+          labels={{ many: "N", one: "1" }}
+          onChange={(toCardinality) => controller.updateRelation(relation.id, { toCardinality })}
         />
         <SelectField<Direction>
           label="Origem"
