@@ -600,6 +600,11 @@ export function SvgCanvas({ controller, svgRef: externalSvgRef }: SvgCanvasProps
             controller.diagram.visual.defaultTable,
             controller.diagram.groups,
           ).headerColor;
+          const exportFlowColor = getEffectiveTableVisual(
+            toTable,
+            controller.diagram.visual.defaultTable,
+            controller.diagram.groups,
+          ).headerColor;
           const relationColor = sourceRelation.usesTableLineColor
             ? getEffectiveTableVisual(
                 fromTable,
@@ -619,6 +624,8 @@ export function SvgCanvas({ controller, svgRef: externalSvgRef }: SvgCanvasProps
               highlighted={highlightedByTable}
               flowDirection={flowDirection}
               flowColor={flowColor}
+              exportFlowDirection="reverse"
+              exportFlowColor={exportFlowColor}
               renderedPath={relationPaths.get(sourceRelation.id)}
               onSelect={(item) => controller.setSelected({ type: "relation", id: item.id })}
               onAddViaPoint={(item, event) => addRelationViaPoint(item.id, event)}

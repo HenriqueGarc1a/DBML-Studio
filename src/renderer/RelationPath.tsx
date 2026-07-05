@@ -12,6 +12,8 @@ interface RelationPathProps {
   highlighted?: boolean;
   flowDirection?: "forward" | "reverse";
   flowColor?: string;
+  exportFlowDirection?: "forward" | "reverse";
+  exportFlowColor?: string;
   renderedPath?: string;
   onSelect: (relation: RelationModel) => void;
   onAddViaPoint: (relation: RelationModel, event: MouseEvent<SVGPathElement>) => void;
@@ -36,6 +38,8 @@ export function RelationPath({
   highlighted = false,
   flowDirection = "forward",
   flowColor,
+  exportFlowDirection,
+  exportFlowColor,
   renderedPath,
   onSelect,
   onAddViaPoint,
@@ -57,9 +61,15 @@ export function RelationPath({
   const flowArrowCount = highlighted ? getFlowArrowCount(flowLength) : 0;
   const flowDuration = Math.max(0.9, flowLength / 180);
   const arrowColor = flowColor ?? strokeColor;
+  const pdfFlowDirection = exportFlowDirection ?? flowDirection;
+  const pdfFlowColor = exportFlowColor ?? arrowColor;
 
   return (
-    <g className={`relation-path${selected ? " is-selected" : ""}${highlighted ? " is-table-highlighted" : ""}`}>
+    <g
+      className={`relation-path${selected ? " is-selected" : ""}${highlighted ? " is-table-highlighted" : ""}`}
+      data-export-flow-direction={pdfFlowDirection}
+      data-export-flow-color={pdfFlowColor}
+    >
       <path
         d={path}
         fill="none"
