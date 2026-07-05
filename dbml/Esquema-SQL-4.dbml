@@ -22,9 +22,9 @@
 // savedColors=Cor:#2dd4bf
 
 // @table ages_user
-// x=1700
-// y=330.4
-// width=282
+// x=156
+// y=1430
+// width=364
 // height=262
 // useDefaultStyle=true
 // useGroupStyle=false
@@ -40,9 +40,9 @@ Table ages_user {
 }
 
 // @table project
-// x=1700
-// y=799.3
-// width=330
+// x=1118
+// y=2132
+// width=364
 // height=290
 // useDefaultStyle=true
 // useGroupStyle=false
@@ -59,9 +59,9 @@ Table project {
 }
 
 // @table team
-// x=1348
-// y=814.7
-// width=226
+// x=650
+// y=2132
+// width=364
 // height=122
 // useDefaultStyle=true
 // useGroupStyle=false
@@ -72,9 +72,9 @@ Table team {
 }
 
 // @table class
-// x=1326.7
-// y=63.7
-// width=242
+// x=650
+// y=1820
+// width=364
 // height=206
 // useDefaultStyle=true
 // useGroupStyle=false
@@ -88,9 +88,9 @@ Table class {
 }
 
 // @table semester_profile
-// x=860
-// y=438.7
-// width=346
+// x=650
+// y=1430
+// width=364
 // height=234
 // useDefaultStyle=true
 // useGroupStyle=false
@@ -105,9 +105,9 @@ Table semester_profile {
 }
 
 // @table lesson
-// x=923
-// y=71.3
-// width=220
+// x=1118
+// y=1820
+// width=364
 // height=122
 // useDefaultStyle=true
 // useGroupStyle=false
@@ -118,9 +118,9 @@ Table lesson {
 }
 
 // @table otp
-// x=1324
-// y=566.7
-// width=266
+// x=156
+// y=1820
+// width=364
 // height=178
 // useDefaultStyle=true
 // useGroupStyle=false
@@ -133,9 +133,9 @@ Table otp {
 }
 
 // @table schedule
-// x=1316
-// y=339.7
-// width=274
+// x=156
+// y=2132
+// width=364
 // height=206
 // useDefaultStyle=true
 // useGroupStyle=false
@@ -149,9 +149,9 @@ Table schedule {
 }
 
 // @table technology
-// x=1700
-// y=1159.3
-// width=266
+// x=1612
+// y=2288
+// width=364
 // height=122
 // useDefaultStyle=true
 // useGroupStyle=false
@@ -162,9 +162,9 @@ Table technology {
 }
 
 // @table project_stack
-// x=1340
-// y=1139
-// width=250
+// x=1612
+// y=2132
+// width=364
 // height=122
 // useDefaultStyle=true
 // useGroupStyle=false
@@ -178,9 +178,9 @@ Table project_stack {
 }
 
 // @table report
-// x=452
-// y=714.7
-// width=298
+// x=1118
+// y=1430
+// width=364
 // height=234
 // useDefaultStyle=true
 // useGroupStyle=false
@@ -195,9 +195,9 @@ Table report {
 }
 
 // @table examining_board
-// x=476
-// y=466.7
-// width=250
+// x=650
+// y=1118
+// width=364
 // height=178
 // useDefaultStyle=true
 // useGroupStyle=false
@@ -210,9 +210,9 @@ Table examining_board {
 }
 
 // @table examining_board_member
-// x=52
-// y=12
-// width=290
+// x=156
+// y=1118
+// width=364
 // height=122
 // useDefaultStyle=true
 // useGroupStyle=false
@@ -223,9 +223,9 @@ Table examining_board_member {
 }
 
 // @table attendance
-// x=524
-// y=91.7
-// width=226
+// x=1612
+// y=1820
+// width=364
 // height=122
 // useDefaultStyle=true
 // useGroupStyle=false
@@ -236,9 +236,9 @@ Table attendance {
 }
 
 // @table report_review
-// x=20
-// y=466.7
-// width=322
+// x=1118
+// y=1118
+// width=364
 // height=178
 // useDefaultStyle=true
 // useGroupStyle=false
@@ -251,9 +251,9 @@ Table report_review {
 }
 
 // @table sprint_report
-// x=36
-// y=1018.7
-// width=306
+// x=1612
+// y=1430
+// width=364
 // height=262
 // useDefaultStyle=true
 // useGroupStyle=false
@@ -269,9 +269,9 @@ Table sprint_report {
 }
 
 // @table hours_report
-// x=12
-// y=714.7
-// width=330
+// x=1612
+// y=1118
+// width=364
 // height=234
 // useDefaultStyle=true
 // useGroupStyle=false
@@ -292,15 +292,15 @@ Ref: team.teacher_id > ages_user.id
 // opacity=0.9
 // style=solid
 // route=orthogonal
-// from=east
-// to=west
+// from=west
+// to=east
 // fromCardinality=many
 // toCardinality=one
 // startOffsetX=0
 // startOffsetY=0
 // endOffsetX=0
 // endOffsetY=0
-// via=(1606,894.7),(1668,894.7),(1668,382.4)
+// via=(546,2212),(546,1482)
 
 Ref: team.project_id > project.id
 // @line relation-team-project_id-project-id-1
@@ -311,13 +311,12 @@ Ref: team.project_id > project.id
 // route=orthogonal
 // from=east
 // to=west
-// fromCardinality=many
+// fromCardinality=one
 // toCardinality=one
 // startOffsetX=0
 // startOffsetY=0
 // endOffsetX=0
 // endOffsetY=0
-// via=(1606,922.7),(1668,922.7),(1668,851.3)
 
 Ref: class.teacher_id > ages_user.id
 // @line relation-class-teacher_id-ages_user-id-2
@@ -326,15 +325,15 @@ Ref: class.teacher_id > ages_user.id
 // opacity=0.9
 // style=solid
 // route=orthogonal
-// from=east
-// to=west
+// from=west
+// to=east
 // fromCardinality=many
 // toCardinality=one
 // startOffsetX=0
 // startOffsetY=0
 // endOffsetX=0
 // endOffsetY=0
-// via=(1600.7,227.7),(1668,227.7),(1668,382.4)
+// via=(572,1482)
 
 Ref: semester_profile.user_id > ages_user.id
 // @line relation-semester_profile-user_id-ages_user-id-3
@@ -343,15 +342,15 @@ Ref: semester_profile.user_id > ages_user.id
 // opacity=0.9
 // style=solid
 // route=orthogonal
-// from=east
-// to=west
+// from=west
+// to=east
 // fromCardinality=many
 // toCardinality=one
 // startOffsetX=0
 // startOffsetY=0
 // endOffsetX=0
 // endOffsetY=0
-// via=(1238,602.7),(1238,321.5),(1668,321.5),(1668,382.4)
+// via=(598,1482)
 
 Ref: semester_profile.team_id > team.id
 // @line relation-semester_profile-team_id-team-id-4
@@ -360,7 +359,7 @@ Ref: semester_profile.team_id > team.id
 // opacity=0.9
 // style=solid
 // route=orthogonal
-// from=east
+// from=west
 // to=west
 // fromCardinality=many
 // toCardinality=one
@@ -368,7 +367,7 @@ Ref: semester_profile.team_id > team.id
 // startOffsetY=0
 // endOffsetX=0
 // endOffsetY=0
-// via=(1238,630.7),(1238,866.7),(1316,866.7)
+// via=(624,1622),(598,2184)
 
 Ref: semester_profile.class_id > class.id
 // @line relation-semester_profile-class_id-class-id-5
@@ -378,14 +377,13 @@ Ref: semester_profile.class_id > class.id
 // style=solid
 // route=orthogonal
 // from=east
-// to=west
+// to=east
 // fromCardinality=many
 // toCardinality=one
 // startOffsetX=0
 // startOffsetY=0
 // endOffsetX=0
 // endOffsetY=0
-// via=(1238,658.7),(1294.7,658.7),(1294.7,115.7)
 
 Ref: lesson.class_id > class.id
 // @line relation-lesson-class_id-class-id-6
@@ -394,15 +392,14 @@ Ref: lesson.class_id > class.id
 // opacity=0.9
 // style=solid
 // route=orthogonal
-// from=east
-// to=west
+// from=west
+// to=east
 // fromCardinality=many
 // toCardinality=one
 // startOffsetX=0
 // startOffsetY=0
 // endOffsetX=0
 // endOffsetY=0
-// via=(1175,179.3),(1294.7,179.3),(1294.7,115.7)
 
 Ref: otp.user_id > ages_user.id
 // @line relation-otp-user_id-ages_user-id-7
@@ -411,7 +408,7 @@ Ref: otp.user_id > ages_user.id
 // opacity=0.9
 // style=solid
 // route=orthogonal
-// from=east
+// from=west
 // to=west
 // fromCardinality=many
 // toCardinality=one
@@ -419,7 +416,7 @@ Ref: otp.user_id > ages_user.id
 // startOffsetY=0
 // endOffsetX=0
 // endOffsetY=0
-// via=(1622,646.7),(1668,646.7),(1668,382.4)
+// via=(130,1482)
 
 Ref: schedule.admin_id > ages_user.id
 // @line relation-schedule-admin_id-ages_user-id-8
@@ -428,7 +425,7 @@ Ref: schedule.admin_id > ages_user.id
 // opacity=0.9
 // style=solid
 // route=orthogonal
-// from=east
+// from=west
 // to=west
 // fromCardinality=many
 // toCardinality=one
@@ -436,7 +433,7 @@ Ref: schedule.admin_id > ages_user.id
 // startOffsetY=0
 // endOffsetX=0
 // endOffsetY=0
-// via=(1622,419.7),(1668,419.7),(1668,382.4)
+// via=(130,1482)
 
 Ref: project_stack.project_id > project.id
 // @line relation-project_stack-project_id-project-id-9
@@ -445,15 +442,15 @@ Ref: project_stack.project_id > project.id
 // opacity=0.9
 // style=solid
 // route=orthogonal
-// from=east
-// to=west
+// from=west
+// to=east
 // fromCardinality=many
 // toCardinality=one
 // startOffsetX=0
 // startOffsetY=0
 // endOffsetX=0
 // endOffsetY=0
-// via=(1622,1219),(1668,1219),(1668,851.3)
+// via=(1580,2212),(1454,2212),(1454,2158)
 
 Ref: project_stack.technology_id > technology.id
 // @line relation-project_stack-technology_id-technology-id-10
@@ -462,7 +459,7 @@ Ref: project_stack.technology_id > technology.id
 // opacity=0.9
 // style=solid
 // route=orthogonal
-// from=east
+// from=west
 // to=west
 // fromCardinality=many
 // toCardinality=one
@@ -470,7 +467,7 @@ Ref: project_stack.technology_id > technology.id
 // startOffsetY=0
 // endOffsetX=0
 // endOffsetY=0
-// via=(1622,1247),(1668,1247),(1668,1211.3)
+// via=(1580,2240),(1580,2340)
 
 Ref: report.student_id > semester_profile.id
 // @line relation-report-student_id-semester_profile-id-11
@@ -479,15 +476,15 @@ Ref: report.student_id > semester_profile.id
 // opacity=0.9
 // style=solid
 // route=orthogonal
-// from=east
-// to=west
+// from=west
+// to=east
 // fromCardinality=many
 // toCardinality=one
 // startOffsetX=0
 // startOffsetY=0
 // endOffsetX=0
 // endOffsetY=0
-// via=(806,490.7)
+// via=(1066,1482),(1002,1172),(1002,1456)
 
 Ref: examining_board.student_id > semester_profile.id
 // @line relation-examining_board-student_id-semester_profile-id-12
@@ -496,15 +493,15 @@ Ref: examining_board.student_id > semester_profile.id
 // opacity=0.9
 // style=solid
 // route=orthogonal
-// from=east
+// from=west
 // to=west
-// fromCardinality=many
+// fromCardinality=one
 // toCardinality=one
 // startOffsetX=0
 // startOffsetY=0
 // endOffsetX=0
 // endOffsetY=0
-// via=(780,490.7)
+// via=(624,1482)
 
 Ref: examining_board_member.examining_board_id > examining_board.id
 // @line relation-examining_board_member-examining_board_id-examining_board-id-13
@@ -521,7 +518,6 @@ Ref: examining_board_member.examining_board_id > examining_board.id
 // startOffsetY=0
 // endOffsetX=0
 // endOffsetY=0
-// via=(374,92),(444,92),(444,518.7)
 
 Ref: examining_board_member.teacher_id > ages_user.id
 // @line relation-examining_board_member-teacher_id-ages_user-id-14
@@ -530,7 +526,7 @@ Ref: examining_board_member.teacher_id > ages_user.id
 // opacity=0.9
 // style=solid
 // route=orthogonal
-// from=east
+// from=west
 // to=west
 // fromCardinality=many
 // toCardinality=one
@@ -538,7 +534,7 @@ Ref: examining_board_member.teacher_id > ages_user.id
 // startOffsetY=0
 // endOffsetX=0
 // endOffsetY=0
-// via=(374,120),(374,312.5),(1668,312.5),(1664.8,382.7)
+// via=(130,1226),(130,1482)
 
 Ref: attendance.lesson_id > lesson.id
 // @line relation-attendance-lesson_id-lesson-id-15
@@ -547,15 +543,15 @@ Ref: attendance.lesson_id > lesson.id
 // opacity=0.9
 // style=solid
 // route=orthogonal
-// from=east
-// to=west
+// from=west
+// to=east
 // fromCardinality=many
 // toCardinality=one
 // startOffsetX=0
 // startOffsetY=0
 // endOffsetX=0
 // endOffsetY=0
-// via=(782,171.7),(891,171.7),(891,123.3)
+// via=(1580,1900),(1514,1900),(1514,1872)
 
 Ref: attendance.student_id > semester_profile.id
 // @line relation-attendance-student_id-semester_profile-id-16
@@ -565,14 +561,14 @@ Ref: attendance.student_id > semester_profile.id
 // style=solid
 // route=orthogonal
 // from=east
-// to=west
+// to=east
 // fromCardinality=many
 // toCardinality=one
 // startOffsetX=0
 // startOffsetY=0
 // endOffsetX=0
 // endOffsetY=0
-// via=(782,199.7),(828,199.7),(754,490.7)
+// via=(2002,1742),(1040,1482),(1002,1456)
 
 Ref: report_review.report_id > report.id
 // @line relation-report_review-report_id-report-id-17
@@ -581,15 +577,15 @@ Ref: report_review.report_id > report.id
 // opacity=0.9
 // style=solid
 // route=orthogonal
-// from=east
+// from=west
 // to=west
-// fromCardinality=many
+// fromCardinality=one
 // toCardinality=one
 // startOffsetX=0
 // startOffsetY=0
 // endOffsetX=0
 // endOffsetY=0
-// via=(374,630.7),(420,630.7),(420,766.7)
+// via=(1092,1482)
 
 Ref: sprint_report.report_id > report.id
 // @line relation-sprint_report-report_id-report-id-18
@@ -598,15 +594,15 @@ Ref: sprint_report.report_id > report.id
 // opacity=0.9
 // style=solid
 // route=orthogonal
-// from=east
-// to=west
-// fromCardinality=many
+// from=west
+// to=east
+// fromCardinality=one
 // toCardinality=one
 // startOffsetX=0
 // startOffsetY=0
 // endOffsetX=0
 // endOffsetY=0
-// via=(374,1266.7),(420,1266.7),(420,766.7)
+// via=(1580,1678),(1586,1482),(1514,1482)
 
 Ref: hours_report.report_id > report.id
 // @line relation-hours_report-report_id-report-id-19
@@ -615,12 +611,12 @@ Ref: hours_report.report_id > report.id
 // opacity=0.9
 // style=solid
 // route=orthogonal
-// from=east
-// to=west
-// fromCardinality=many
+// from=west
+// to=east
+// fromCardinality=one
 // toCardinality=one
 // startOffsetX=0
 // startOffsetY=0
 // endOffsetX=0
 // endOffsetY=0
-// via=(374,934.7),(420,934.7),(420,766.7)
+// via=(1580,1338),(1586,1482),(1514,1482)
