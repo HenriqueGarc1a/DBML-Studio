@@ -15,6 +15,8 @@ import {
 } from "lucide-react";
 import type { DiagramController } from "../editor/useDiagramController";
 import {
+  GROUP_LABEL_DEFAULT_X,
+  GROUP_LABEL_DEFAULT_Y,
   GROUP_MIN_HEIGHT,
   GROUP_MIN_WIDTH,
   getTableMinHeight,
@@ -64,6 +66,12 @@ type DragState =
     }
   | {
       kind: "group";
+      id: string;
+      start: Point;
+      origin: Point;
+    }
+  | {
+      kind: "group-label";
       id: string;
       start: Point;
       origin: Point;
@@ -126,6 +134,15 @@ export function SvgCanvas({ controller, svgRef: externalSvgRef }: SvgCanvasProps
     [computedBounds, gridSize, viewport],
   );
   const relationRenderOrder = useMemo(() => {
+    if (selected?.type === "table") {
+      const referencedBySelection = controller.diagram.relations.filter((relation) => relation.toTable === selected.id);
+
+      return [
+        ...controller.diagram.relations.filter((relation) => relation.toTable !== selected.id),
+        ...referencedBySelection,
+      ];
+    }
+
     if (selected?.type !== "relation") return controller.diagram.relations;
 
     const selectedRelation = controller.diagram.relations.find((relation) => relation.id === selected.id);
@@ -260,6 +277,26 @@ export function SvgCanvas({ controller, svgRef: externalSvgRef }: SvgCanvasProps
       controller.updateGroup(drag.id, {
         x: controller.snapToGrid ? snapValue(nextX, gridSize) : nextX,
         y: controller.snapToGrid ? snapValue(nextY, gridSize) : nextY,
+      });
+    }
+
+    if (drag.kind === "group-label") {
+      const group = controller.diagram.groups.find((item) => item.id === drag.id);
+      if (!group) return;
+      const nextX = drag.origin.x + point.x - drag.start.x;
+      const nextY = drag.origin.y + point.y - drag.start.y;
+      const labelPosition = clampGroupLabelPosition(
+        {
+          x: controller.snapToGrid ? snapValue(nextX, gridSize) : nextX,
+          y: controller.snapToGrid ? snapValue(nextY, gridSize) : nextY,
+        },
+        group.width,
+        group.height,
+      );
+
+      controller.updateGroup(drag.id, {
+        labelX: labelPosition.x,
+        labelY: labelPosition.y,
       });
     }
 
@@ -524,6 +561,18 @@ export function SvgCanvas({ controller, svgRef: externalSvgRef }: SvgCanvasProps
                 origin: { x: item.x, y: item.y },
               });
             }}
+            onLabelPointerDown={(event, item) => {
+              controller.setSelected({ type: "group", id: item.id });
+              beginSvgDrag(event, {
+                kind: "group-label",
+                id: item.id,
+                start: toSvgPoint(event),
+                origin: {
+                  x: Number.isFinite(item.labelX) ? item.labelX : GROUP_LABEL_DEFAULT_X,
+                  y: Number.isFinite(item.labelY) ? item.labelY : GROUP_LABEL_DEFAULT_Y,
+                },
+              });
+            }}
             onResizePointerDown={(event, item, corner) => {
               controller.setSelected({ type: "group", id: item.id });
               beginSvgDrag(event, {
@@ -541,6 +590,23 @@ export function SvgCanvas({ controller, svgRef: externalSvgRef }: SvgCanvasProps
           const fromTable = tableMap.get(sourceRelation.fromTable);
           const toTable = tableMap.get(sourceRelation.toTable);
           if (!fromTable || !toTable) return null;
+          const highlightedByTable =
+            selected?.type === "table" &&
+            selected.id === sourceRelation.toTable;
+          const flowDirection = highlightedByTable ? "reverse" : "forward";
+          const flowSourceTable = flowDirection === "reverse" ? toTable : fromTable;
+          const flowColor = getEffectiveTableVisual(
+            flowSourceTable,
+            controller.diagram.visual.defaultTable,
+            controller.diagram.groups,
+          ).headerColor;
+          const relationColor = sourceRelation.usesTableLineColor
+            ? getEffectiveTableVisual(
+                fromTable,
+                controller.diagram.visual.defaultTable,
+                controller.diagram.groups,
+              ).lineColor
+            : sourceRelation.color;
 
           return (
             <RelationPath
@@ -549,6 +615,10 @@ export function SvgCanvas({ controller, svgRef: externalSvgRef }: SvgCanvasProps
               fromTable={fromTable}
               toTable={toTable}
               selected={selected?.type === "relation" && selected.id === sourceRelation.id}
+              color={relationColor}
+              highlighted={highlightedByTable}
+              flowDirection={flowDirection}
+              flowColor={flowColor}
               renderedPath={relationPaths.get(sourceRelation.id)}
               onSelect={(item) => controller.setSelected({ type: "relation", id: item.id })}
               onAddViaPoint={(item, event) => addRelationViaPoint(item.id, event)}
@@ -730,6 +800,14 @@ function getTableGroupVisual(table: TableModel, groups: GroupModel[]): TableVisu
   )?.tableVisual;
 }
 
+function getEffectiveTableVisual(
+  table: TableModel,
+  defaultVisual: TableVisual,
+  groups: GroupModel[],
+): TableVisual {
+  return getTableGroupVisual(table, groups) ?? (table.usesDefaultStyle ? defaultVisual : table.visual);
+}
+
 function resizeBoxFromCorner(
   origin: ResizeOrigin,
   corner: ResizeHandle,
@@ -765,6 +843,13 @@ function resizeBoxFromCorner(
     y: top,
     width: right - left,
     height: bottom - top,
+  };
+}
+
+function clampGroupLabelPosition(position: Point, groupWidth: number, groupHeight: number): Point {
+  return {
+    x: clamp(position.x, 6, Math.max(6, groupWidth - 6)),
+    y: clamp(position.y, 16, Math.max(16, groupHeight - 8)),
   };
 }
 

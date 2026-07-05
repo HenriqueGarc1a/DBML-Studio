@@ -1,4 +1,5 @@
 import type { PointerEvent } from "react";
+import { GROUP_LABEL_DEFAULT_X, GROUP_LABEL_DEFAULT_Y } from "../model/defaults";
 import type { GroupModel } from "../model/types";
 import { ResizeHandles, type ResizeHandle } from "./ResizeHandles";
 
@@ -6,10 +7,16 @@ interface GroupNodeProps {
   group: GroupModel;
   selected: boolean;
   onPointerDown: (event: PointerEvent<SVGGElement>, group: GroupModel) => void;
+  onLabelPointerDown: (event: PointerEvent<SVGElement>, group: GroupModel) => void;
   onResizePointerDown: (event: PointerEvent<SVGRectElement>, group: GroupModel, handle: ResizeHandle) => void;
 }
 
-export function GroupNode({ group, selected, onPointerDown, onResizePointerDown }: GroupNodeProps) {
+export function GroupNode({ group, selected, onPointerDown, onLabelPointerDown, onResizePointerDown }: GroupNodeProps) {
+  const labelHitboxWidth = Math.max(80, group.label.length * 8 + 18);
+  const labelX = Number.isFinite(group.labelX) ? group.labelX : GROUP_LABEL_DEFAULT_X;
+  const labelY = Number.isFinite(group.labelY) ? group.labelY : GROUP_LABEL_DEFAULT_Y;
+  const textColor = group.textColor || group.borderColor;
+
   return (
     <g
       className={`group-node${selected ? " is-selected" : ""}`}
@@ -26,7 +33,21 @@ export function GroupNode({ group, selected, onPointerDown, onResizePointerDown 
         strokeWidth={selected ? 2 : 1.4}
         strokeDasharray={selected ? "8 5" : undefined}
       />
-      <text x={12} y={24} fill={group.borderColor} className="group-label">
+      <rect
+        x={labelX - 8}
+        y={labelY - 18}
+        width={labelHitboxWidth}
+        height={26}
+        className="group-label-hitbox"
+        onPointerDown={(event) => onLabelPointerDown(event, group)}
+      />
+      <text
+        x={labelX}
+        y={labelY}
+        fill={textColor}
+        className="group-label"
+        onPointerDown={(event) => onLabelPointerDown(event, group)}
+      >
         {group.label}
       </text>
       {selected && (

@@ -1,4 +1,5 @@
 import type { DiagramModel, GroupModel, RelationModel, TableModel, TableVisual } from "../model/types";
+import { GROUP_LABEL_DEFAULT_X, GROUP_LABEL_DEFAULT_Y } from "../model/defaults";
 import { hexToRgb } from "../utils/color";
 import { getRelationGeometry } from "../utils/geometry";
 
@@ -35,6 +36,10 @@ export function exportTikz(diagram: DiagramModel): string {
 }
 
 function exportGroup(group: GroupModel): string {
+  const labelX = Number.isFinite(group.labelX) ? group.labelX : GROUP_LABEL_DEFAULT_X;
+  const labelY = Number.isFinite(group.labelY) ? group.labelY : GROUP_LABEL_DEFAULT_Y;
+  const textColor = group.textColor || group.borderColor;
+
   return [
     `\\filldraw[fill=${tikzColor(group.backgroundColor)}, fill opacity=${round(
       group.opacity,
@@ -43,9 +48,9 @@ function exportGroup(group: GroupModel): string {
     `(${round(group.x)},${round(group.y)}) rectangle (${round(group.x + group.width)},${round(
       group.y + group.height,
     )});`,
-    `\\node[anchor=north west, text=${tikzColor(group.borderColor)}] at (${round(
-      group.x + 12,
-    )},${round(group.y + 12)}) {${escapeLatex(group.label)}};`,
+    `\\node[anchor=west, text=${tikzColor(textColor)}] at (${round(
+      group.x + labelX,
+    )},${round(group.y + labelY)}) {${escapeLatex(group.label)}};`,
   ].join("\n");
 }
 

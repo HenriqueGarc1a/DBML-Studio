@@ -26,6 +26,7 @@ const table: TableModel = {
     borderColor: "#64748b",
     textColor: "#172033",
     headerColor: "#dbeafe",
+    lineColor: "#64748b",
     opacity: 1,
   },
   usesDefaultStyle: false,

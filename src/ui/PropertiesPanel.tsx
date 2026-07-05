@@ -1,4 +1,4 @@
-import { ChevronDown, ChevronLeft, ChevronRight, Minus, Plus, RotateCcw, Route, Trash2 } from "lucide-react";
+import { ChevronDown, ChevronLeft, ChevronRight, Eraser, Link2, Minus, Plus, RotateCcw, Route, Trash2 } from "lucide-react";
 import { useEffect, useState, type ChangeEvent, type ReactNode } from "react";
 import type { DiagramController } from "../editor/useDiagramController";
 import { DIAGRAM_MAX_GRID_SIZE, DIAGRAM_MIN_GRID_SIZE } from "../model/defaults";
@@ -10,6 +10,7 @@ import type {
   Direction,
   LineStyle,
   Point,
+  RelationModel,
   SavedColor,
   TableModel,
   TableVisual,
@@ -56,6 +57,27 @@ export function PropertiesPanel({ controller, collapsed, onToggle }: PropertiesP
       {!collapsed && !selection && (
         <section className="property-section">
           <h3>Diagrama</h3>
+          <CollapsibleGroup id="diagram.summary" title="Resumo">
+            <div className="diagram-summary">
+              <div>
+                <strong>{controller.diagram.tables.length}</strong>
+                <span>tabelas</span>
+              </div>
+              <div>
+                <strong>{controller.diagram.relations.length}</strong>
+                <span>linhas</span>
+              </div>
+              <div>
+                <strong>{controller.diagram.groups.length}</strong>
+                <span>grupos</span>
+              </div>
+            </div>
+            {!controller.diagram.tables.length && (
+              <div className="empty-state compact">Nenhuma tabela criada ainda.</div>
+            )}
+            <div className="empty-state compact">Selecione uma linha, tabela ou grupo para editar.</div>
+          </CollapsibleGroup>
+          <DiagramRelationsList controller={controller} />
           <CollapsibleGroup id="diagram.canvas" title="Canvas">
             <ColorField
               label="Fundo"
@@ -132,7 +154,15 @@ export function PropertiesPanel({ controller, collapsed, onToggle }: PropertiesP
           <TableColumnsEditor controller={controller} table={table} />
           <CollapsibleGroup id="table.actions" title="Ações" defaultOpen={false}>
             <div className="button-row">
-              <button type="button" className="secondary-button danger-action" onClick={() => controller.removeTable(table.id)}>
+              <button
+                type="button"
+                className="secondary-button danger-action"
+                onClick={() => {
+                  if (confirmRemoval(`Excluir a tabela "${table.name}" e suas linhas conectadas?`)) {
+                    controller.removeTable(table.id);
+                  }
+                }}
+              >
                 <Trash2 size={16} />
                 Excluir tabela
               </button>
@@ -148,6 +178,8 @@ export function PropertiesPanel({ controller, collapsed, onToggle }: PropertiesP
           <h3>Grupo</h3>
           <CollapsibleGroup id="group.general" title="Geral">
             <TextField label="Título" value={group.label} onChange={(label) => controller.updateGroup(group.id, { label })} />
+            <NumberField label="Título X" value={group.labelX} onChange={(labelX) => controller.updateGroup(group.id, { labelX })} />
+            <NumberField label="Título Y" value={group.labelY} onChange={(labelY) => controller.updateGroup(group.id, { labelY })} />
           </CollapsibleGroup>
           <CollapsibleGroup id="group.layout" title="Layout">
             <NumberField label="X" value={group.x} onChange={(x) => controller.updateGroup(group.id, { x })} />
@@ -166,7 +198,18 @@ export function PropertiesPanel({ controller, collapsed, onToggle }: PropertiesP
               label="Borda"
               value={group.borderColor}
               savedColors={savedColors}
-              onChange={(borderColor) => controller.updateGroup(group.id, { borderColor })}
+              onChange={(borderColor) => {
+                controller.updateGroup(group.id, {
+                  borderColor,
+                  textColor: group.textColor === group.borderColor ? borderColor : group.textColor,
+                });
+              }}
+            />
+            <ColorField
+              label="Texto"
+              value={group.textColor}
+              savedColors={savedColors}
+              onChange={(textColor) => controller.updateGroup(group.id, { textColor })}
             />
             <RangeField label="Opacidade" value={group.opacity} min={0.02} max={0.8} step={0.02} onChange={(opacity) => controller.updateGroup(group.id, { opacity })} />
             <div className="subsection-heading compact-heading">
@@ -190,7 +233,15 @@ export function PropertiesPanel({ controller, collapsed, onToggle }: PropertiesP
               </button>
             </div>
             <div className="button-row">
-              <button type="button" className="secondary-button danger-action" onClick={() => controller.removeGroup(group.id)}>
+              <button
+                type="button"
+                className="secondary-button danger-action"
+                onClick={() => {
+                  if (confirmRemoval(`Excluir o grupo "${group.label}"?`)) {
+                    controller.removeGroup(group.id);
+                  }
+                }}
+              >
                 <Trash2 size={16} />
                 Excluir grupo
               </button>
@@ -199,6 +250,40 @@ export function PropertiesPanel({ controller, collapsed, onToggle }: PropertiesP
         </section>
       )}
     </aside>
+  );
+}
+
+function DiagramRelationsList({ controller }: { controller: DiagramController }) {
+  const tableMap = new Map(controller.diagram.tables.map((table) => [table.id, table]));
+
+  return (
+    <CollapsibleGroup id="diagram.relations" title={`Linhas (${controller.diagram.relations.length})`}>
+      {!controller.diagram.relations.length && (
+        <div className="empty-state compact">Nenhuma linha criada ainda.</div>
+      )}
+      {controller.diagram.relations.length > 0 && (
+        <div className="relation-list">
+          {controller.diagram.relations.map((relation) => (
+            <button
+              key={relation.id}
+              type="button"
+              className="relation-list-item"
+              onClick={() => controller.setSelected({ type: "relation", id: relation.id })}
+              title="Selecionar linha"
+            >
+              <Link2 size={15} />
+              <span className="relation-list-copy">
+                <strong>{relation.label || relationTitle(relation, tableMap)}</strong>
+                <small>{relationEndpointLabel(relation, tableMap)}</small>
+              </span>
+              <span className={`point-count${relation.viaPoints.length ? "" : " is-empty"}`}>
+                {relation.viaPoints.length} pts
+              </span>
+            </button>
+          ))}
+        </div>
+      )}
+    </CollapsibleGroup>
   );
 }
 
@@ -306,6 +391,12 @@ function TableVisualFields({
         value={visual.textColor}
         savedColors={savedColors}
         onChange={(textColor) => onChange({ ...visual, textColor })}
+      />
+      <ColorField
+        label="Linha"
+        value={visual.lineColor}
+        savedColors={savedColors}
+        onChange={(lineColor) => onChange({ ...visual, lineColor })}
       />
       <RangeField
         label="Opacidade"
@@ -522,13 +613,20 @@ function TableColumnsEditor({ controller, table }: { controller: DiagramControll
       }
     >
       <div className="columns-list">
+        {!table.columns.length && (
+          <div className="empty-state compact">Nenhum campo nesta tabela.</div>
+        )}
         {table.columns.map((column) => (
           <ColumnEditor
             key={column.id}
             column={column}
             relationBackedFk={relationBackedForeignKeys.has(column.name)}
             onChange={(patch) => controller.updateColumn(table.id, column.id, patch)}
-            onRemove={() => controller.removeColumn(table.id, column.id)}
+            onRemove={() => {
+              if (confirmRemoval(`Remover o campo "${column.name}"? Linhas ligadas a ele também serão removidas.`)) {
+                controller.removeColumn(table.id, column.id);
+              }
+            }}
           />
         ))}
       </div>
@@ -623,14 +721,29 @@ function RelationProperties({ controller, relationId }: { controller: DiagramCon
   return (
     <section className="property-section">
       <h3>Linha</h3>
+      <div className="selection-context">
+        <strong>{relationTitle(relation, tableMap)}</strong>
+        <span>
+          {relation.viaPoints.length
+            ? `${relation.viaPoints.length} pontos intermediários`
+            : "sem pontos intermediários"}
+        </span>
+      </div>
       <CollapsibleGroup id="relation.general" title="Geral">
         <TextField label="Rótulo" value={relation.label} onChange={(label) => controller.updateRelation(relation.id, { label })} />
-        <ColorField
-          label="Cor"
-          value={relation.color}
-          savedColors={controller.diagram.visual.savedColors}
-          onChange={(color) => controller.updateRelation(relation.id, { color })}
+        <CheckboxField
+          label="Cor tabela"
+          checked={relation.usesTableLineColor}
+          onChange={(usesTableLineColor) => controller.updateRelation(relation.id, { usesTableLineColor })}
         />
+        {!relation.usesTableLineColor && (
+          <ColorField
+            label="Cor"
+            value={relation.color}
+            savedColors={controller.diagram.visual.savedColors}
+            onChange={(color) => controller.updateRelation(relation.id, { color })}
+          />
+        )}
         <NumberField label="Espessura" value={relation.strokeWidth} onChange={(strokeWidth) => controller.updateRelation(relation.id, { strokeWidth })} />
         <RangeField label="Opacidade" value={relation.opacity} min={0.1} max={1} step={0.05} onChange={(opacity) => controller.updateRelation(relation.id, { opacity })} />
       </CollapsibleGroup>
@@ -693,7 +806,12 @@ function RelationProperties({ controller, relationId }: { controller: DiagramCon
           </button>
         </div>
       </CollapsibleGroup>
-      <CollapsibleGroup id="relation.points" title="Pontos" defaultOpen={false}>
+      <CollapsibleGroup id="relation.points" title={`Pontos (${relation.viaPoints.length})`} defaultOpen={false}>
+        <div className={`relation-point-status${relation.viaPoints.length ? "" : " is-empty"}`}>
+          {relation.viaPoints.length
+            ? "A linha usa pontos intermediários para controlar a rota."
+            : "Esta linha não possui pontos intermediários e continua salva com rota automática."}
+        </div>
         <div className="button-row">
           <button type="button" className="secondary-button" onClick={addCenteredPoint}>
             <Plus size={16} />
@@ -708,7 +826,19 @@ function RelationProperties({ controller, relationId }: { controller: DiagramCon
             <Trash2 size={16} />
             Último
           </button>
+          <button
+            type="button"
+            className="secondary-button"
+            disabled={!relation.viaPoints.length}
+            onClick={() => controller.updateRelation(relation.id, { route: "orthogonal", viaPoints: [] })}
+          >
+            <Eraser size={16} />
+            Limpar
+          </button>
         </div>
+        {!relation.viaPoints.length && (
+          <div className="empty-state compact">Esta linha ainda não possui pontos.</div>
+        )}
         {relation.viaPoints.map((point, index) => (
           <PointEditor
             key={`${relation.id}-point-${index}`}
@@ -721,7 +851,15 @@ function RelationProperties({ controller, relationId }: { controller: DiagramCon
       </CollapsibleGroup>
       <CollapsibleGroup id="relation.actions" title="Ações" defaultOpen={false}>
         <div className="button-row">
-          <button type="button" className="secondary-button danger-action" onClick={() => controller.removeRelation(relation.id)}>
+          <button
+            type="button"
+            className="secondary-button danger-action"
+            onClick={() => {
+              if (confirmRemoval("Excluir esta relação?")) {
+                controller.removeRelation(relation.id);
+              }
+            }}
+          >
             <Trash2 size={16} />
             Excluir relação
           </button>
@@ -909,8 +1047,25 @@ function PointEditor({
   );
 }
 
+function relationTitle(relation: RelationModel, tableMap: Map<string, TableModel>): string {
+  const fromTable = tableMap.get(relation.fromTable)?.name ?? relation.fromTable;
+  const toTable = tableMap.get(relation.toTable)?.name ?? relation.toTable;
+  return `${fromTable} -> ${toTable}`;
+}
+
+function relationEndpointLabel(relation: RelationModel, tableMap: Map<string, TableModel>): string {
+  const fromTable = tableMap.get(relation.fromTable)?.name ?? relation.fromTable;
+  const toTable = tableMap.get(relation.toTable)?.name ?? relation.toTable;
+  return `${fromTable}.${relation.fromColumn} -> ${toTable}.${relation.toColumn}`;
+}
+
 function getEffectiveTableVisual(table: TableModel, defaultVisual: TableVisual): TableVisual {
   return table.usesDefaultStyle ? defaultVisual : table.visual;
+}
+
+function confirmRemoval(message: string): boolean {
+  if (typeof window === "undefined" || typeof window.confirm !== "function") return true;
+  return window.confirm(message);
 }
 
 function isHexColor(value: string): boolean {

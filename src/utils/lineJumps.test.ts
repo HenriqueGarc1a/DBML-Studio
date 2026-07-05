@@ -39,4 +39,21 @@ describe("line jumps", () => {
     expect(path).toContain("L 40 50");
     expect(path).toContain("60 50");
   });
+
+  it("rounds orthogonal corners without changing the route direction", () => {
+    const path = buildJumpPath(
+      [
+        { x: 0, y: 0 },
+        { x: 50, y: 0 },
+        { x: 50, y: 50 },
+      ],
+      [],
+      10,
+      10,
+    );
+
+    expect(path).toContain("L 40 0");
+    expect(path).toContain("Q 50 0 50 10");
+    expect(path).toContain("L 50 50");
+  });
 });

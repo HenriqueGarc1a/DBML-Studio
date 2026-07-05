@@ -7,6 +7,8 @@ export const TABLE_MIN_WIDTH = 220;
 export const TABLE_PADDING_X = 18;
 export const GROUP_MIN_WIDTH = 120;
 export const GROUP_MIN_HEIGHT = 90;
+export const GROUP_LABEL_DEFAULT_X = 12;
+export const GROUP_LABEL_DEFAULT_Y = 24;
 export const DIAGRAM_DEFAULT_GRID_SIZE = 4;
 export const DIAGRAM_MIN_GRID_SIZE = 2;
 export const DIAGRAM_MAX_GRID_SIZE = 128;
@@ -26,6 +28,7 @@ export const defaultTableVisual: TableVisual = {
   borderColor: "#4b5f78",
   textColor: "#e5edf7",
   headerColor: "#253142",
+  lineColor: "#94a3b8",
   opacity: 1,
 };
 
@@ -34,6 +37,7 @@ export const defaultGroupTableVisual: TableVisual = {
   borderColor: "#2dd4bf",
   textColor: "#dffcf7",
   headerColor: "#134e4a",
+  lineColor: "#2dd4bf",
   opacity: 1,
 };
 
@@ -85,6 +89,7 @@ export const defaultRelationVisual: Pick<
   | "route"
   | "viaPoints"
   | "color"
+  | "usesTableLineColor"
   | "opacity"
   | "strokeWidth"
   | "style"
@@ -102,6 +107,7 @@ export const defaultRelationVisual: Pick<
   route: "orthogonal",
   viaPoints: [],
   color: "#94a3b8",
+  usesTableLineColor: true,
   opacity: 0.9,
   strokeWidth: 2,
   style: "solid",
@@ -115,8 +121,11 @@ export const defaultGroupVisual: Omit<
   GroupModel,
   "id" | "label" | "x" | "y" | "width" | "height" | "tables"
 > = {
+  labelX: GROUP_LABEL_DEFAULT_X,
+  labelY: GROUP_LABEL_DEFAULT_Y,
   backgroundColor: "#0f766e",
   borderColor: "#0f766e",
+  textColor: "#0f766e",
   opacity: 0.12,
   tableVisual: { ...defaultGroupTableVisual },
 };

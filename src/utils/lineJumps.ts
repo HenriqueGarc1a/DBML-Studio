@@ -13,6 +13,7 @@ export function buildJumpPath(
   points: Point[],
   crossingPolylines: Point[][],
   jumpRadius = 10,
+  cornerRadius = 14,
 ): string {
   if (points.length < 2) return "";
 
@@ -25,14 +26,26 @@ export function buildJumpPath(
     bySegment.set(jump.segmentIndex, current);
   }
 
+  const segmentRanges = getSegmentRanges(points, cornerRadius);
   let path = `M ${round(points[0].x)} ${round(points[0].y)}`;
 
   for (let index = 0; index < points.length - 1; index += 1) {
     const start = points[index];
     const end = points[index + 1];
-    const segmentJumps = (bySegment.get(index) ?? []).sort((a, b) => a.t - b.t);
+    const range = segmentRanges[index];
+    const segmentJumps = (bySegment.get(index) ?? [])
+      .filter((jump) => jump.t > range.startT && jump.t < range.endT)
+      .sort((a, b) => a.t - b.t);
     const vector = normalize({ x: end.x - start.x, y: end.y - start.y });
     const normal = { x: vector.y, y: -vector.x };
+    const segmentStart = interpolate(start, end, range.startT);
+    const segmentEnd = interpolate(start, end, range.endT);
+
+    if (index === 0) {
+      path = `M ${round(segmentStart.x)} ${round(segmentStart.y)}`;
+    } else {
+      path += ` L ${round(segmentStart.x)} ${round(segmentStart.y)}`;
+    }
 
     for (const jump of segmentJumps) {
       const before = {
@@ -52,7 +65,14 @@ export function buildJumpPath(
       path += ` Q ${round(control.x)} ${round(control.y)} ${round(after.x)} ${round(after.y)}`;
     }
 
-    path += ` L ${round(end.x)} ${round(end.y)}`;
+    path += ` L ${round(segmentEnd.x)} ${round(segmentEnd.y)}`;
+
+    const corner = points[index + 1];
+    if (index < points.length - 2) {
+      const nextRange = segmentRanges[index + 1];
+      const nextPoint = interpolate(points[index + 1], points[index + 2], nextRange.startT);
+      path += ` Q ${round(corner.x)} ${round(corner.y)} ${round(nextPoint.x)} ${round(nextPoint.y)}`;
+    }
   }
 
   return path;
@@ -131,6 +151,29 @@ function normalize(point: Point): Point {
   return {
     x: point.x / length,
     y: point.y / length,
+  };
+}
+
+function getSegmentRanges(points: Point[], cornerRadius: number): Array<{ startT: number; endT: number }> {
+  return points.slice(0, -1).map((start, index) => {
+    const end = points[index + 1];
+    const length = distance(start, end);
+    const before = index > 0 ? distance(points[index - 1], start) : 0;
+    const after = index < points.length - 2 ? distance(end, points[index + 2]) : 0;
+    const startTrim = index > 0 ? Math.min(cornerRadius, length / 2, before / 2) : 0;
+    const endTrim = index < points.length - 2 ? Math.min(cornerRadius, length / 2, after / 2) : 0;
+
+    return {
+      startT: length ? startTrim / length : 0,
+      endT: length ? 1 - endTrim / length : 1,
+    };
+  });
+}
+
+function interpolate(start: Point, end: Point, t: number): Point {
+  return {
+    x: start.x + (end.x - start.x) * t,
+    y: start.y + (end.y - start.y) * t,
   };
 }
 

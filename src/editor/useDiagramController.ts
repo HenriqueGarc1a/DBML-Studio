@@ -5,6 +5,8 @@ import {
   defaultGroupVisual,
   defaultRelationVisual,
   defaultTableVisual,
+  GROUP_LABEL_DEFAULT_X,
+  GROUP_LABEL_DEFAULT_Y,
   GROUP_MIN_HEIGHT,
   GROUP_MIN_WIDTH,
   getTableMinHeight,
@@ -931,7 +933,7 @@ export function useDiagramController(): DiagramController {
   const updateGroup = useCallback((id: string, patch: Partial<GroupModel>) => {
     updateDiagramState((current) => ({
       ...current,
-      groups: current.groups.map((group) => (group.id === id ? { ...group, ...patch } : group)),
+      groups: current.groups.map((group) => (group.id === id ? normalizeGroup({ ...group, ...patch }) : group)),
     }));
   }, [updateDiagramState]);
 
@@ -1013,7 +1015,9 @@ export function useDiagramController(): DiagramController {
     diagramChangeSourceRef.current = "ui";
     diagramRef.current = previous;
     setDiagramState(previous);
-    setSelected(undefined);
+    setSelected((currentSelection) =>
+      currentSelection && selectionExists(previous, currentSelection) ? currentSelection : undefined,
+    );
     setSaveMessage("");
     bumpHistoryVersion();
   }, [bumpHistoryVersion]);
@@ -1028,7 +1032,9 @@ export function useDiagramController(): DiagramController {
     diagramChangeSourceRef.current = "ui";
     diagramRef.current = next;
     setDiagramState(next);
-    setSelected(undefined);
+    setSelected((currentSelection) =>
+      currentSelection && selectionExists(next, currentSelection) ? currentSelection : undefined,
+    );
     setSaveMessage("");
     bumpHistoryVersion();
   }, [bumpHistoryVersion]);
@@ -1122,6 +1128,27 @@ function createDiagramVisual(): DiagramModel["visual"] {
 
 function formatDbmlError(error: unknown): string {
   return error instanceof Error ? error.message : "DBML inválido.";
+}
+
+function selectionExists(diagram: DiagramModel, selection: Selection): boolean {
+  if (selection.type === "table") return diagram.tables.some((table) => table.id === selection.id);
+  if (selection.type === "relation") return diagram.relations.some((relation) => relation.id === selection.id);
+  return diagram.groups.some((group) => group.id === selection.id);
+}
+
+function normalizeGroup(group: GroupModel): GroupModel {
+  const labelX = Number.isFinite(group.labelX) ? group.labelX : GROUP_LABEL_DEFAULT_X;
+  const labelY = Number.isFinite(group.labelY) ? group.labelY : GROUP_LABEL_DEFAULT_Y;
+
+  return {
+    ...group,
+    labelX: clamp(labelX, 6, Math.max(6, group.width - 6)),
+    labelY: clamp(labelY, 16, Math.max(16, group.height - 8)),
+  };
+}
+
+function clamp(value: number, min: number, max: number): number {
+  return Math.min(max, Math.max(min, value));
 }
 
 function createColumn(tableName: string, name: string, index: number): ColumnModel {

@@ -9,6 +9,7 @@ const source = `// @diagram
 // tableBorder=#22c55e
 // tableHeader=#14532d
 // tableText=#f8fafc
+// tableLine=#38bdf8
 // tableOpacity=0.9
 // uniqueBadgeBackground=#312e81
 // uniqueBadgeBorder=#a5b4fc
@@ -24,6 +25,7 @@ const source = `// @diagram
 // border=#2563eb
 // header=#dbeafe
 // text=#111827
+// line=#2563eb
 
 Table user {
   id int [pk, not null]
@@ -56,17 +58,21 @@ Ref: project.user_id > user.id
 
 // @group backend
 // label=Backend Core
+// labelX=36
+// labelY=44
 // x=0
 // y=0
 // width=640
 // height=320
 // background=#0f766e
 // border=#0f766e
+// text=#fde68a
 // opacity=0.14
 // tableBackground=#052e2b
 // tableBorder=#14b8a6
 // tableHeader=#115e59
 // tableText=#ccfbf1
+// tableLine=#5eead4
 // tableOpacity=0.88
 // tables=user,project
 `;
@@ -83,6 +89,7 @@ describe("parseDbml", () => {
     expect(diagram.visual.gridColor).toBe("#c7d2fe");
     expect(diagram.visual.gridSize).toBe(12);
     expect(diagram.visual.defaultTable.borderColor).toBe("#22c55e");
+    expect(diagram.visual.defaultTable.lineColor).toBe("#38bdf8");
     expect(diagram.visual.badges.unique.borderColor).toBe("#a5b4fc");
     expect(diagram.visual.savedColors).toEqual([
       { name: "Principal", color: "#22c55e" },
@@ -94,6 +101,7 @@ describe("parseDbml", () => {
     expect(user?.usesDefaultStyle).toBe(false);
     expect(user?.usesGroupStyle).toBe(true);
     expect(user?.visual.borderColor).toBe("#2563eb");
+    expect(user?.visual.lineColor).toBe("#2563eb");
     expect(user?.columns[0].primaryKey).toBe(true);
 
     const project = diagram.tables.find((table) => table.id === "project");
@@ -109,6 +117,7 @@ describe("parseDbml", () => {
       fromCardinality: "one",
       toCardinality: "many",
       color: "#dc2626",
+      usesTableLineColor: false,
       strokeWidth: 3,
       style: "dashed",
       route: "orthogonal",
@@ -122,12 +131,16 @@ describe("parseDbml", () => {
 
     expect(diagram.groups[0]).toMatchObject({
       label: "Backend Core",
+      labelX: 36,
+      labelY: 44,
+      textColor: "#fde68a",
       opacity: 0.14,
       tableVisual: {
         backgroundColor: "#052e2b",
         borderColor: "#14b8a6",
         headerColor: "#115e59",
         textColor: "#ccfbf1",
+        lineColor: "#5eead4",
         opacity: 0.88,
       },
       tables: ["user", "project"],
@@ -158,6 +171,20 @@ Table audit_log {
 
     expect(column?.foreignKey).toBe(true);
     expect(column?.nullable).toBe(false);
+  });
+
+  it("uses the source table line color mode for new plain relations", () => {
+    const diagram = parseDbml(`Table user {
+  id int [pk]
+}
+
+Table project {
+  user_id int
+}
+
+Ref: project.user_id > user.id`);
+
+    expect(diagram.relations[0].usesTableLineColor).toBe(true);
   });
 
   it("rejects unfinished DBML blocks", () => {

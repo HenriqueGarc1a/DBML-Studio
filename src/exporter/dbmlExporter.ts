@@ -1,4 +1,5 @@
 import type { ColumnModel, DiagramModel, GroupModel, RelationModel, TableModel } from "../model/types";
+import { GROUP_LABEL_DEFAULT_X, GROUP_LABEL_DEFAULT_Y } from "../model/defaults";
 import { normalizeRelationSide } from "../utils/geometry";
 
 export function exportDbml(diagram: DiagramModel): string {
@@ -42,6 +43,7 @@ function exportDiagram(diagram: DiagramModel): string {
     `// tableBorder=${visual.defaultTable.borderColor}`,
     `// tableHeader=${visual.defaultTable.headerColor}`,
     `// tableText=${visual.defaultTable.textColor}`,
+    `// tableLine=${visual.defaultTable.lineColor}`,
     `// tableOpacity=${round(visual.defaultTable.opacity, 2)}`,
     ...badgeComments,
     visual.savedColors.length ? `// savedColors=${visual.savedColors.map(exportSavedColor).join(",")}` : "",
@@ -63,6 +65,7 @@ function exportTable(table: TableModel): string {
           `// border=${table.visual.borderColor}`,
           `// header=${table.visual.headerColor}`,
           `// text=${table.visual.textColor}`,
+          `// line=${table.visual.lineColor}`,
           `// opacity=${round(table.visual.opacity, 2)}`,
         ]
       : []),
@@ -143,6 +146,7 @@ function exportRelation(relation: RelationModel, tableMap: Map<string, TableMode
   const comments = [
     `// @line ${relation.id}`,
     `// color=${relation.color}`,
+    `// useTableLineColor=${relation.usesTableLineColor}`,
     `// strokeWidth=${round(relation.strokeWidth, 2)}`,
     `// opacity=${round(relation.opacity, 2)}`,
     `// style=${relation.style}`,
@@ -167,20 +171,28 @@ function exportRelation(relation: RelationModel, tableMap: Map<string, TableMode
 }
 
 function exportGroup(group: GroupModel): string {
+  const labelX = Number.isFinite(group.labelX) ? group.labelX : GROUP_LABEL_DEFAULT_X;
+  const labelY = Number.isFinite(group.labelY) ? group.labelY : GROUP_LABEL_DEFAULT_Y;
+  const textColor = group.textColor || group.borderColor;
+
   return [
     `// @group ${group.id.replace(/^group-/, "")}`,
     `// label=${group.label}`,
+    `// labelX=${round(labelX)}`,
+    `// labelY=${round(labelY)}`,
     `// x=${round(group.x)}`,
     `// y=${round(group.y)}`,
     `// width=${round(group.width)}`,
     `// height=${round(group.height)}`,
     `// background=${group.backgroundColor}`,
     `// border=${group.borderColor}`,
+    `// text=${textColor}`,
     `// opacity=${round(group.opacity, 2)}`,
     `// tableBackground=${group.tableVisual.backgroundColor}`,
     `// tableBorder=${group.tableVisual.borderColor}`,
     `// tableHeader=${group.tableVisual.headerColor}`,
     `// tableText=${group.tableVisual.textColor}`,
+    `// tableLine=${group.tableVisual.lineColor}`,
     `// tableOpacity=${round(group.tableVisual.opacity, 2)}`,
   ].join("\n");
 }

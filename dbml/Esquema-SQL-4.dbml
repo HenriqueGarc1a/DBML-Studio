@@ -6,6 +6,7 @@
 // tableBorder=#4b5f78
 // tableHeader=#253142
 // tableText=#e5edf7
+// tableLine=#94a3b8
 // tableOpacity=1
 // pkBadgeBackground=#3f2d12
 // pkBadgeBorder=#f59e0b
@@ -31,6 +32,7 @@
 // border=#4b5f78
 // header=#253142
 // text=#e5edf7
+// line=#94a3b8
 // opacity=1
 Table ages_user {
   id uuid [pk]
@@ -54,6 +56,7 @@ Table ages_user {
 // border=#4b5f78
 // header=#253142
 // text=#e5edf7
+// line=#94a3b8
 // opacity=1
 Table project {
   id uuid [pk]
@@ -78,6 +81,7 @@ Table project {
 // border=#4b5f78
 // header=#253142
 // text=#e5edf7
+// line=#94a3b8
 // opacity=1
 Table team {
   id uuid [pk]
@@ -96,6 +100,7 @@ Table team {
 // border=#4b5f78
 // header=#253142
 // text=#e5edf7
+// line=#94a3b8
 // opacity=1
 Table class {
   id uuid [pk]
@@ -117,6 +122,7 @@ Table class {
 // border=#4b5f78
 // header=#253142
 // text=#e5edf7
+// line=#94a3b8
 // opacity=1
 Table semester_profile {
   id uuid [pk]
@@ -139,6 +145,7 @@ Table semester_profile {
 // border=#4b5f78
 // header=#253142
 // text=#e5edf7
+// line=#94a3b8
 // opacity=1
 Table lesson {
   id uuid [pk]
@@ -157,6 +164,7 @@ Table lesson {
 // border=#4b5f78
 // header=#253142
 // text=#e5edf7
+// line=#94a3b8
 // opacity=1
 Table otp {
   id uuid [pk]
@@ -177,6 +185,7 @@ Table otp {
 // border=#4b5f78
 // header=#253142
 // text=#e5edf7
+// line=#94a3b8
 // opacity=1
 Table schedule {
   id uuid [pk]
@@ -198,6 +207,7 @@ Table schedule {
 // border=#4b5f78
 // header=#253142
 // text=#e5edf7
+// line=#94a3b8
 // opacity=1
 Table technology {
   id uuid [pk]
@@ -216,6 +226,7 @@ Table technology {
 // border=#4b5f78
 // header=#253142
 // text=#e5edf7
+// line=#94a3b8
 // opacity=1
 Table project_stack {
   id uuid [pk]
@@ -237,6 +248,7 @@ Table project_stack {
 // border=#4b5f78
 // header=#253142
 // text=#e5edf7
+// line=#94a3b8
 // opacity=1
 Table report {
   id uuid [pk]
@@ -259,6 +271,7 @@ Table report {
 // border=#4b5f78
 // header=#253142
 // text=#e5edf7
+// line=#94a3b8
 // opacity=1
 Table examining_board {
   id uuid [pk]
@@ -279,6 +292,7 @@ Table examining_board {
 // border=#4b5f78
 // header=#253142
 // text=#e5edf7
+// line=#94a3b8
 // opacity=1
 Table examining_board_member {
   id uuid [pk]
@@ -297,6 +311,7 @@ Table examining_board_member {
 // border=#4b5f78
 // header=#253142
 // text=#e5edf7
+// line=#94a3b8
 // opacity=1
 Table attendance {
   id uuid [pk]
@@ -315,6 +330,7 @@ Table attendance {
 // border=#4b5f78
 // header=#253142
 // text=#e5edf7
+// line=#94a3b8
 // opacity=1
 Table report_review {
   id uuid [pk]
@@ -335,6 +351,7 @@ Table report_review {
 // border=#4b5f78
 // header=#253142
 // text=#e5edf7
+// line=#94a3b8
 // opacity=1
 Table sprint_report {
   id uuid [pk]
@@ -358,6 +375,7 @@ Table sprint_report {
 // border=#4b5f78
 // header=#253142
 // text=#e5edf7
+// line=#94a3b8
 // opacity=1
 Table hours_report {
   id uuid [pk]
@@ -372,6 +390,7 @@ Table hours_report {
 Ref: team.teacher_id > ages_user.id
 // @line relation-team-teacher_id-ages_user-id-0
 // color=#1D4ED8
+// useTableLineColor=false
 // strokeWidth=4
 // opacity=0.9
 // style=solid
@@ -389,6 +408,7 @@ Ref: team.teacher_id > ages_user.id
 Ref: team.project_id > project.id
 // @line relation-team-project_id-project-id-1
 // color=#0E7490
+// useTableLineColor=false
 // strokeWidth=4
 // opacity=0.9
 // style=solid
@@ -405,6 +425,7 @@ Ref: team.project_id > project.id
 Ref: class.teacher_id > ages_user.id
 // @line relation-class-teacher_id-ages_user-id-2
 // color=#1D4ED8
+// useTableLineColor=false
 // strokeWidth=4
 // opacity=0.9
 // style=solid
@@ -422,6 +443,7 @@ Ref: class.teacher_id > ages_user.id
 Ref: semester_profile.user_id > ages_user.id
 // @line relation-semester_profile-user_id-ages_user-id-3
 // color=#1D4ED8
+// useTableLineColor=false
 // strokeWidth=4
 // opacity=0.9
 // style=solid
@@ -439,6 +461,7 @@ Ref: semester_profile.user_id > ages_user.id
 Ref: semester_profile.team_id > team.id
 // @line relation-semester_profile-team_id-team-id-4
 // color=#0E7490
+// useTableLineColor=false
 // strokeWidth=4
 // opacity=0.9
 // style=solid
@@ -451,11 +474,12 @@ Ref: semester_profile.team_id > team.id
 // startOffsetY=0
 // endOffsetX=0
 // endOffsetY=0
-// via=(624,1622),(624,2184)
+// via=(624,1622),(624,2210)
 
 Ref: semester_profile.class_id > class.id
 // @line relation-semester_profile-class_id-class-id-5
 // color=#94a3b8
+// useTableLineColor=false
 // strokeWidth=2
 // opacity=0.9
 // style=solid
@@ -472,6 +496,7 @@ Ref: semester_profile.class_id > class.id
 Ref: lesson.class_id > class.id
 // @line relation-lesson-class_id-class-id-6
 // color=#047857
+// useTableLineColor=false
 // strokeWidth=4
 // opacity=0.9
 // style=solid
@@ -488,6 +513,7 @@ Ref: lesson.class_id > class.id
 Ref: otp.user_id > ages_user.id
 // @line relation-otp-user_id-ages_user-id-7
 // color=#1D4ED8
+// useTableLineColor=false
 // strokeWidth=4
 // opacity=0.9
 // style=solid
@@ -505,6 +531,7 @@ Ref: otp.user_id > ages_user.id
 Ref: schedule.admin_id > ages_user.id
 // @line relation-schedule-admin_id-ages_user-id-8
 // color=#1D4ED8
+// useTableLineColor=false
 // strokeWidth=4
 // opacity=0.9
 // style=solid
@@ -522,6 +549,7 @@ Ref: schedule.admin_id > ages_user.id
 Ref: project_stack.project_id > project.id
 // @line relation-project_stack-project_id-project-id-9
 // color=#0E7490
+// useTableLineColor=false
 // strokeWidth=4
 // opacity=0.9
 // style=solid
@@ -539,6 +567,7 @@ Ref: project_stack.project_id > project.id
 Ref: project_stack.technology_id > technology.id
 // @line relation-project_stack-technology_id-technology-id-10
 // color=#0E7490
+// useTableLineColor=false
 // strokeWidth=4
 // opacity=0.9
 // style=solid
@@ -556,6 +585,7 @@ Ref: project_stack.technology_id > technology.id
 Ref: report.student_id > semester_profile.id
 // @line relation-report-student_id-semester_profile-id-11
 // color=#1D4ED8
+// useTableLineColor=false
 // strokeWidth=4
 // opacity=0.9
 // style=solid
@@ -573,6 +603,7 @@ Ref: report.student_id > semester_profile.id
 Ref: examining_board.student_id > semester_profile.id
 // @line relation-examining_board-student_id-semester_profile-id-12
 // color=#1D4ED8
+// useTableLineColor=false
 // strokeWidth=4
 // opacity=0.9
 // style=solid
@@ -590,6 +621,7 @@ Ref: examining_board.student_id > semester_profile.id
 Ref: examining_board_member.examining_board_id > examining_board.id
 // @line relation-examining_board_member-examining_board_id-examining_board-id-13
 // color=#7E22CE
+// useTableLineColor=false
 // strokeWidth=4
 // opacity=0.9
 // style=solid
@@ -606,6 +638,7 @@ Ref: examining_board_member.examining_board_id > examining_board.id
 Ref: examining_board_member.teacher_id > ages_user.id
 // @line relation-examining_board_member-teacher_id-ages_user-id-14
 // color=#1D4ED8
+// useTableLineColor=false
 // strokeWidth=4
 // opacity=0.9
 // style=solid
@@ -623,6 +656,7 @@ Ref: examining_board_member.teacher_id > ages_user.id
 Ref: attendance.lesson_id > lesson.id
 // @line relation-attendance-lesson_id-lesson-id-15
 // color=#047857
+// useTableLineColor=false
 // strokeWidth=4
 // opacity=0.9
 // style=solid
@@ -640,6 +674,7 @@ Ref: attendance.lesson_id > lesson.id
 Ref: attendance.student_id > semester_profile.id
 // @line relation-attendance-student_id-semester_profile-id-16
 // color=#1D4ED8
+// useTableLineColor=false
 // strokeWidth=4
 // opacity=0.9
 // style=solid
@@ -657,6 +692,7 @@ Ref: attendance.student_id > semester_profile.id
 Ref: report_review.report_id > report.id
 // @line relation-report_review-report_id-report-id-17
 // color=#B45309
+// useTableLineColor=false
 // strokeWidth=4
 // opacity=0.9
 // style=solid
@@ -674,6 +710,7 @@ Ref: report_review.report_id > report.id
 Ref: sprint_report.report_id > report.id
 // @line relation-sprint_report-report_id-report-id-18
 // color=#B45309
+// useTableLineColor=false
 // strokeWidth=4
 // opacity=0.9
 // style=solid
@@ -691,6 +728,7 @@ Ref: sprint_report.report_id > report.id
 Ref: hours_report.report_id > report.id
 // @line relation-hours_report-report_id-report-id-19
 // color=#B45309
+// useTableLineColor=false
 // strokeWidth=4
 // opacity=0.9
 // style=solid
@@ -707,105 +745,133 @@ Ref: hours_report.report_id > report.id
 
 // @group 0ttxdgu
 // label=Bancas
+// labelX=52
+// labelY=26
 // x=104
 // y=1066
 // width=962
 // height=286
 // background=#3B0764
 // border=#A855F7
-// opacity=0.12
+// text=#A855F7
+// opacity=0.02
 // tableBackground=#111827
 // tableBorder=#9333EA
 // tableHeader=#7E22CE
 // tableText=#F8FAFC
+// tableLine=#2dd4bf
 // tableOpacity=1
 
 // @group fkf7znh
 // label=New Group
+// labelX=52
+// labelY=26
 // x=598
 // y=1768
 // width=1456
 // height=312
 // background=#064E3B
 // border=#10B981
-// opacity=0.12
+// text=#10B981
+// opacity=0.02
 // tableBackground=#111827
 // tableBorder=#059669
 // tableHeader=#047857
 // tableText=#F8FAFC
+// tableLine=#2dd4bf
 // tableOpacity=1
 
 // @group uyvqwj3
 // label=Relatorios
+// labelX=52
+// labelY=26
 // x=1092
 // y=1066
 // width=962
 // height=676
 // background=#451A03
 // border=#F59E0B
-// opacity=0.12
+// text=#F59E0B
+// opacity=0.02
 // tableBackground=#111827
 // tableBorder=#D97706
 // tableHeader=#B45309
 // tableText=#F8FAFC
+// tableLine=#374342
 // tableOpacity=1
 
 // @group ahnhf2y
 // label=New Group
+// labelX=52
+// labelY=26
 // x=104
 // y=1378
 // width=962
 // height=364
 // background=#172554
 // border=#3B82F6
-// opacity=0.12
+// text=#3B82F6
+// opacity=0.02
 // tableBackground=#111827
 // tableBorder=#2563EB
 // tableHeader=#1D4ED8
 // tableText=#F8FAFC
+// tableLine=#2dd4bf
 // tableOpacity=1
 
 // @group eclm489
 // label=New Group
+// labelX=52
+// labelY=26
 // x=598
 // y=2106
 // width=1456
 // height=364
 // background=#164E63
 // border=#06B6D4
-// opacity=0.12
+// text=#06B6D4
+// opacity=0.02
 // tableBackground=#111827
 // tableBorder=#0891B2
 // tableHeader=#0E7490
 // tableText=#F8FAFC
+// tableLine=#2dd4bf
 // tableOpacity=1
 
 // @group j0b37ft
 // label=New Group
+// labelX=52
+// labelY=26
 // x=104
 // y=1768
 // width=468
 // height=312
 // background=#312E81
 // border=#6366F1
-// opacity=0.12
+// text=#6366F1
+// opacity=0.02
 // tableBackground=#111827
 // tableBorder=#4F46E5
 // tableHeader=#4338CA
 // tableText=#F8FAFC
+// tableLine=#2dd4bf
 // tableOpacity=1
 
 // @group 5hw3f2d
 // label=New Group
+// labelX=52
+// labelY=26
 // x=104
 // y=2106
 // width=468
 // height=364
 // background=#4C0519
 // border=#F43F5E
-// opacity=0.12
+// text=#F43F5E
+// opacity=0.02
 // tableBackground=#111827
 // tableBorder=#E11D48
 // tableHeader=#BE123C
 // tableText=#F8FAFC
+// tableLine=#2dd4bf
 // tableOpacity=1

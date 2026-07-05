@@ -2,6 +2,7 @@ import {
   Boxes,
   ChevronLeft,
   ChevronRight,
+  CircleHelp,
   Database,
   FileDown,
   Plus,
@@ -27,6 +28,7 @@ export function App() {
     readStoredBoolean(PROPERTIES_COLLAPSED_STORAGE_KEY, false),
   );
   const [sqlImportOpen, setSqlImportOpen] = useState(false);
+  const [helpOpen, setHelpOpen] = useState(false);
   const [sqlDraft, setSqlDraft] = useState("");
   const [sqlImportError, setSqlImportError] = useState("");
 
@@ -99,7 +101,9 @@ export function App() {
           <Boxes size={22} />
           <div>
             <h1>DBML Studio</h1>
-            <span>{controller.diagram.tables.length} tabelas</span>
+            <span>
+              {controller.diagram.tables.length} tabelas · {controller.diagram.relations.length} linhas
+            </span>
           </div>
         </div>
         <div className="toolbar">
@@ -139,6 +143,15 @@ export function App() {
             <FileDown size={16} />
             Exportar PDF
           </button>
+          <button type="button" onClick={() => setHelpOpen(true)} title="Abrir tutorial">
+            <CircleHelp size={16} />
+            Ajuda
+          </button>
+          {(controller.saveMessage || controller.dbmlError) && (
+            <span className={`toolbar-status${controller.dbmlError ? " is-error" : ""}`} role="status">
+              {controller.dbmlError ? "DBML precisa de ajuste" : controller.saveMessage}
+            </span>
+          )}
         </div>
       </header>
       <main className={`workspace${dbmlCollapsed ? " is-dbml-collapsed" : ""}${propertiesCollapsed ? " is-properties-collapsed" : ""}`}>
@@ -214,6 +227,64 @@ export function App() {
                 <Database size={16} />
                 Criar esquema
               </button>
+            </div>
+          </section>
+        </div>
+      )}
+      {helpOpen && (
+        <div className="modal-backdrop" role="presentation" onMouseDown={() => setHelpOpen(false)}>
+          <section
+            className="modal-panel help-panel"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="help-title"
+            onMouseDown={(event) => event.stopPropagation()}
+          >
+            <div className="modal-heading">
+              <h2 id="help-title">Tutorial do DBML Studio</h2>
+              <button type="button" className="icon-button" title="Fechar" onClick={() => setHelpOpen(false)}>
+                <X size={16} />
+              </button>
+            </div>
+            <div className="help-content">
+              <section className="help-section">
+                <h3>Visão geral</h3>
+                <p>
+                  O DBML Studio transforma DBML ou SQL em um diagrama editável. O painel esquerdo guarda o
+                  texto DBML, o centro mostra o canvas e o painel direito edita o item selecionado.
+                </p>
+              </section>
+              <section className="help-section">
+                <h3>Criar e editar</h3>
+                <ol>
+                  <li>Use Nova tabela no toolbar flutuante para adicionar uma tabela.</li>
+                  <li>Selecione a tabela e adicione campos no grupo Campos.</li>
+                  <li>Ative Nova relação e clique no campo de origem e depois no campo de destino.</li>
+                  <li>Selecione uma linha para mudar cor, espessura, cardinalidade e rota.</li>
+                </ol>
+              </section>
+              <section className="help-section">
+                <h3>Linhas e pontos</h3>
+                <p>
+                  Pontos são dobras manuais da linha. Se todos forem removidos, a linha continua existindo,
+                  salva e selecionável; ela volta para uma rota automática entre os dois campos.
+                </p>
+              </section>
+              <section className="help-section">
+                <h3>Salvar e carregar</h3>
+                <p>
+                  Salvar grava o DBML atual em arquivo. O seletor no topo abre outros diagramas salvos, e o app
+                  também faz autosave local enquanto você trabalha.
+                </p>
+              </section>
+              <section className="help-section">
+                <h3>Dicas rápidas</h3>
+                <ul>
+                  <li>Dê duplo clique em uma linha para inserir um ponto intermediário.</li>
+                  <li>Use Auto rota para reorganizar uma linha sem apagar a relação.</li>
+                  <li>Quando nada estiver selecionado, o painel direito mostra a lista de linhas do diagrama.</li>
+                </ul>
+              </section>
             </div>
           </section>
         </div>

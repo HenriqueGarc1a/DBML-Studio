@@ -68,6 +68,7 @@ describe("exporters", () => {
     expect(dbml).toContain("// gridColor=#cbd5e1");
     expect(dbml).toContain("// gridSize=10");
     expect(dbml).toContain("// tableBackground=#111827");
+    expect(dbml).toContain("// tableLine=#94a3b8");
     expect(dbml).toContain("// uniqueBadgeBorder=#818cf8");
     expect(dbml).toContain("// savedColors=Marca:#22c55e");
     expect(dbml).toContain("// @table user");
@@ -75,12 +76,17 @@ describe("exporters", () => {
     expect(dbml).toContain("// useDefaultStyle=false");
     expect(dbml).toContain("// useGroupStyle=true");
     expect(dbml).toContain("Ref: project.user_id > user.id");
+    expect(dbml).toContain("// useTableLineColor=false");
     expect(dbml).toContain("// style=dashed");
     expect(dbml).toContain("// fromCardinality=one");
     expect(dbml).toContain("// toCardinality=many");
     expect(dbml).toContain("// via=(300,60)");
     expect(dbml).toContain("// @group backend");
+    expect(dbml).toContain("// labelX=12");
+    expect(dbml).toContain("// labelY=24");
+    expect(dbml).toContain("// text=#0f766e");
     expect(dbml).toContain("// tableBorder=#14b8a6");
+    expect(dbml).toContain("// tableLine=#2dd4bf");
   });
 
   it("exports a complete TikZ document with groups, tables and relations", () => {
@@ -95,5 +101,26 @@ describe("exporters", () => {
     expect(tikz).toContain("\\draw[dashed");
     expect(tikz).not.toContain("\\draw[->");
     expect(tikz).toContain("\\end{document}");
+  });
+
+  it("keeps a relation when all manual points are removed and saved", () => {
+    const diagram = parseDbml(source);
+    const relation = diagram.relations[0];
+    diagram.relations[0] = { ...relation, viaPoints: [] };
+
+    const dbml = exportDbml(diagram);
+    const reparsed = parseDbml(dbml);
+
+    expect(dbml).toContain("Ref: project.user_id > user.id");
+    expect(dbml).toContain("// @line");
+    expect(dbml).not.toContain("// via=");
+    expect(reparsed.relations).toHaveLength(1);
+    expect(reparsed.relations[0]).toMatchObject({
+      fromTable: "project",
+      fromColumn: "user_id",
+      toTable: "user",
+      toColumn: "id",
+      viaPoints: [],
+    });
   });
 });

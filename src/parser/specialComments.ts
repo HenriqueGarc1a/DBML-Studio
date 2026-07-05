@@ -17,6 +17,8 @@ import {
   defaultDiagramVisual,
   defaultGroupVisual,
   defaultGroupTableVisual,
+  GROUP_LABEL_DEFAULT_X,
+  GROUP_LABEL_DEFAULT_Y,
   defaultRelationVisual,
   defaultTableVisual,
   normalizeGridSize,
@@ -109,6 +111,7 @@ function blockToDiagramProps(block: CommentBlock): SpecialLayout["diagramProps"]
         borderColor: normalizeHex(props.tableBorder, defaultTableVisual.borderColor),
         headerColor: normalizeHex(props.tableHeader, defaultTableVisual.headerColor),
         textColor: normalizeHex(props.tableText, defaultTableVisual.textColor),
+        lineColor: normalizeHex(props.tableLine, defaultTableVisual.lineColor),
         opacity: clamp(numberOr(props.tableOpacity, defaultTableVisual.opacity), 0, 1),
       },
       badges: {
@@ -137,6 +140,7 @@ function tableBlockToTableProps(block: CommentBlock): TableSpecialProps {
   if ("border" in props) visual.borderColor = normalizeHex(props.border, defaultTableVisual.borderColor);
   if ("header" in props) visual.headerColor = normalizeHex(props.header, defaultTableVisual.headerColor);
   if ("text" in props) visual.textColor = normalizeHex(props.text, defaultTableVisual.textColor);
+  if ("line" in props) visual.lineColor = normalizeHex(props.line, defaultTableVisual.lineColor);
   if ("opacity" in props) visual.opacity = clamp(numberOr(props.opacity, defaultTableVisual.opacity), 0, 1);
 
   const hasOwnVisual = Object.keys(visual).length > 0;
@@ -150,9 +154,13 @@ function tableBlockToTableProps(block: CommentBlock): TableSpecialProps {
 function blockToLineProps(block: CommentBlock): Partial<RelationModel> {
   const props = block.props;
   const color = normalizeHex(props.color, defaultRelationVisual.color);
+  const usesTableLineColor = "useTableLineColor" in props
+    ? parseBoolean(props.useTableLineColor, defaultRelationVisual.usesTableLineColor)
+    : !("color" in props);
 
   return {
     color,
+    usesTableLineColor,
     arrowColor: normalizeHex(props.arrowColor, color),
     fromCardinality: parseCardinality(props.fromCardinality, defaultRelationVisual.fromCardinality),
     toCardinality: parseCardinality(props.toCardinality, defaultRelationVisual.toCardinality),
@@ -175,22 +183,27 @@ function blockToGroup(block: CommentBlock): GroupModel {
   const props = block.props;
   const label = props.label || block.key || "Group";
   const id = makeId("group", block.key || label);
+  const borderColor = normalizeHex(props.border, defaultGroupVisual.borderColor);
 
   return {
     id,
     label,
+    labelX: numberOr(props.labelX, GROUP_LABEL_DEFAULT_X),
+    labelY: numberOr(props.labelY, GROUP_LABEL_DEFAULT_Y),
     x: numberOr(props.x, -40),
     y: numberOr(props.y, -40),
     width: numberOr(props.width, 640),
     height: numberOr(props.height, 360),
     backgroundColor: normalizeHex(props.background, defaultGroupVisual.backgroundColor),
-    borderColor: normalizeHex(props.border, defaultGroupVisual.borderColor),
+    borderColor,
+    textColor: normalizeHex(props.text, borderColor),
     opacity: clamp(numberOr(props.opacity, defaultGroupVisual.opacity), 0, 1),
     tableVisual: {
       backgroundColor: normalizeHex(props.tableBackground, defaultGroupTableVisual.backgroundColor),
       borderColor: normalizeHex(props.tableBorder, defaultGroupTableVisual.borderColor),
       headerColor: normalizeHex(props.tableHeader, defaultGroupTableVisual.headerColor),
       textColor: normalizeHex(props.tableText, defaultGroupTableVisual.textColor),
+      lineColor: normalizeHex(props.tableLine, defaultGroupTableVisual.lineColor),
       opacity: clamp(numberOr(props.tableOpacity, defaultGroupTableVisual.opacity), 0, 1),
     },
     tables: (props.tables || "")

@@ -25,6 +25,7 @@ export interface TableVisual {
   borderColor: string;
   textColor: string;
   headerColor: string;
+  lineColor: string;
   opacity: number;
 }
 
@@ -109,6 +110,7 @@ export interface RelationModel {
   route: LineRoute;
   viaPoints: Point[];
   color: string;
+  usesTableLineColor: boolean;
   opacity: number;
   strokeWidth: number;
   style: LineStyle;
@@ -121,6 +123,9 @@ export interface RelationModel {
 export interface GroupModel {
   id: string;
   label: string;
+  labelX: number;
+  labelY: number;
+  textColor: string;
   x: number;
   y: number;
   width: number;
