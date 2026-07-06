@@ -261,7 +261,7 @@ Table report {
 }
 
 // @table examining_board
-// x=650
+// x=624
 // y=1118
 // width=364
 // height=178
@@ -562,7 +562,7 @@ Ref: examining_board.student_id > semester_profile.id
 // to=west
 // fromCardinality=one
 // toCardinality=one
-// via=(624,1482)
+// via=(598,1482)
 
 Ref: examining_board_member.examining_board_id > examining_board.id
 // @line relation-examining_board_member-examining_board_id-examining_board-id-13
@@ -660,6 +660,19 @@ Ref: hours_report.report_id > report.id
 // fromCardinality=one
 // toCardinality=one
 // via=(1586,1338),(1586,1482),(1514,1482)
+
+Ref: report_review.report_id > hours_report.report_id
+// @line relation-report_review-report_id-hours_report-report_id-20
+// color=#94a3b8
+// useTableLineColor=true
+// strokeWidth=4
+// opacity=0.9
+// style=solid
+// route=orthogonal
+// from=east
+// to=west
+// fromCardinality=many
+// toCardinality=one
 
 // @group 0ttxdgu
 // label=Bancas
@@ -791,5 +804,24 @@ Ref: hours_report.report_id > report.id
 // tableBorder=#E11D48
 // tableHeader=#BE123C
 // tableText=#F8FAFC
+// tableLine=#2dd4bf
+// tableOpacity=1
+
+// @group 3bgg7lw
+// label=New Group
+// labelX=12
+// labelY=24
+// x=0
+// y=0
+// width=420
+// height=260
+// background=#0f766e
+// border=#0f766e
+// text=#0f766e
+// opacity=0.12
+// tableBackground=#10231f
+// tableBorder=#2dd4bf
+// tableHeader=#134e4a
+// tableText=#dffcf7
 // tableLine=#2dd4bf
 // tableOpacity=1

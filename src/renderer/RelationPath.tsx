@@ -166,7 +166,7 @@ export function RelationPath({
 }
 
 function cardinalityLabel(value: RelationModel["fromCardinality"]): string {
-  return value === "many" ? "n" : "1";
+  return value === "many" ? "N" : "1";
 }
 
 function getFlowArrowCount(length: number): number {
