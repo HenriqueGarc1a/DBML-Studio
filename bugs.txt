@@ -1,0 +1,1 @@
+a logica que faz as setas esta invertida elas estao saindo da tabela que chegam e indo pra que saem.

@@ -1,6 +1,6 @@
 // @diagram
 // background=#0f172a
-// gridColor=#0f172a
+// gridColor=#1f2a3a
 // gridSize=26
 // tableBackground=#111827
 // tableBorder=#4b5f78
@@ -387,19 +387,18 @@ Table hours_report {
   report_id uuid [not null, unique]
 }
 
-Ref: team.teacher_id > ages_user.id
-// @line relation-team-teacher_id-ages_user-id-0
-// color=#1D4ED8
-// useTableLineColor=false
-// strokeWidth=4
+Ref: ages_user.id > team.teacher_id
+// @line relation-ages_user-id-team-teacher_id-0
+// color=#94a3b8
+// useTableLineColor=true
+// strokeWidth=2
 // opacity=0.9
 // style=solid
 // route=orthogonal
-// from=west
-// to=east
+// from=east
+// to=west
 // fromCardinality=many
 // toCardinality=one
-// via=(546,2212),(546,1482)
 
 Ref: team.project_id > project.id
 // @line relation-team-project_id-project-id-1
@@ -414,38 +413,36 @@ Ref: team.project_id > project.id
 // fromCardinality=one
 // toCardinality=one
 
-Ref: class.teacher_id > ages_user.id
-// @line relation-class-teacher_id-ages_user-id-2
-// color=#1D4ED8
-// useTableLineColor=false
-// strokeWidth=4
+Ref: ages_user.id > class.teacher_id
+// @line relation-ages_user-id-class-teacher_id-2
+// color=#94a3b8
+// useTableLineColor=true
+// strokeWidth=2
 // opacity=0.9
 // style=solid
 // route=orthogonal
-// from=west
-// to=east
+// from=east
+// to=west
 // fromCardinality=many
 // toCardinality=one
-// via=(572,1482)
 
-Ref: semester_profile.user_id > ages_user.id
-// @line relation-semester_profile-user_id-ages_user-id-3
-// color=#1D4ED8
-// useTableLineColor=false
-// strokeWidth=4
+Ref: ages_user.id > semester_profile.user_id
+// @line relation-ages_user-id-semester_profile-user_id-3
+// color=#94a3b8
+// useTableLineColor=true
+// strokeWidth=2
 // opacity=0.9
 // style=solid
 // route=orthogonal
-// from=west
-// to=east
+// from=east
+// to=west
 // fromCardinality=many
 // toCardinality=one
-// via=(598,1482)
 
-Ref: semester_profile.team_id > team.id
-// @line relation-semester_profile-team_id-team-id-4
-// color=#0E7490
-// useTableLineColor=false
+Ref: team.id > semester_profile.team_id
+// @line relation-team-id-semester_profile-team_id-4
+// color=#94a3b8
+// useTableLineColor=true
 // strokeWidth=4
 // opacity=0.9
 // style=solid
@@ -454,13 +451,13 @@ Ref: semester_profile.team_id > team.id
 // to=west
 // fromCardinality=many
 // toCardinality=one
-// via=(624,1622),(624,2210)
+// via=(624,2210),(624,1622)
 
-Ref: semester_profile.class_id > class.id
-// @line relation-semester_profile-class_id-class-id-5
+Ref: class.id > semester_profile.class_id
+// @line relation-class-id-semester_profile-class_id-5
 // color=#94a3b8
-// useTableLineColor=false
-// strokeWidth=2
+// useTableLineColor=true
+// strokeWidth=4
 // opacity=0.9
 // style=solid
 // route=orthogonal
@@ -468,6 +465,7 @@ Ref: semester_profile.class_id > class.id
 // to=east
 // fromCardinality=many
 // toCardinality=one
+// via=(1046,1872),(1046,1650)
 
 Ref: lesson.class_id > class.id
 // @line relation-lesson-class_id-class-id-6
@@ -615,11 +613,11 @@ Ref: attendance.student_id > semester_profile.id
 // opacity=0.9
 // style=solid
 // route=orthogonal
-// from=west
+// from=east
 // to=east
 // fromCardinality=many
 // toCardinality=one
-// via=(1606,1928),(1606,1682),(1046,1682),(1046,1482)
+// via=(2028,1716),(1612,1716),(1118,1612),(1046,1482)
 
 Ref: report_review.report_id > report.id
 // @line relation-report_review-report_id-report-id-17
@@ -661,7 +659,7 @@ Ref: hours_report.report_id > report.id
 // to=east
 // fromCardinality=one
 // toCardinality=one
-// via=(1580,1338),(1586,1482),(1514,1482)
+// via=(1586,1338),(1586,1482),(1514,1482)
 
 // @group 0ttxdgu
 // label=Bancas
@@ -718,7 +716,7 @@ Ref: hours_report.report_id > report.id
 // tableHeader=#B45309
 // tableText=#F8FAFC
 // tableLine=#374342
-// tableOpacity=1
+// tableOpacity=0.95
 
 // @group ahnhf2y
 // label=New Group
@@ -746,7 +744,7 @@ Ref: hours_report.report_id > report.id
 // x=598
 // y=2106
 // width=1456
-// height=364
+// height=390
 // background=#164E63
 // border=#06B6D4
 // text=#06B6D4
@@ -784,7 +782,7 @@ Ref: hours_report.report_id > report.id
 // x=104
 // y=2106
 // width=468
-// height=364
+// height=390
 // background=#4C0519
 // border=#F43F5E
 // text=#F43F5E

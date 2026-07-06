@@ -593,8 +593,8 @@ export function SvgCanvas({ controller, svgRef: externalSvgRef }: SvgCanvasProps
           if (!fromTable || !toTable) return null;
           const highlightedByTable =
             selected?.type === "table" &&
-            selected.id === sourceRelation.toTable;
-          const flowDirection = highlightedByTable ? "reverse" : "forward";
+            selected.id === sourceRelation.fromTable;
+          const flowDirection = highlightedByTable ? "forward": "reverse";
           const flowColor = getRelationFlowColor(
             sourceRelation,
             controller.diagram.tables,
