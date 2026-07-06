@@ -78,7 +78,7 @@ export function parseDbml(source: string): DiagramModel {
     };
   });
   const foreignKeys = new Set(
-    relations.map((relation) => `${relation.toTable}.${relation.toColumn}`),
+    relations.map((relation) => `${relation.fromTable}.${relation.fromColumn}`),
   );
 
   const tablesWithForeignKeys = tables.map((table) => ({
@@ -89,6 +89,7 @@ export function parseDbml(source: string): DiagramModel {
         : column,
     ),
   }));
+
   return {
     id: "diagram-main",
     visual,

@@ -1,0 +1,453 @@
+// @diagram
+// background=#0f172a
+// gridColor=#1f2a3a
+// gridSize=4
+// tableBackground=#111827
+// tableBorder=#4b5f78
+// tableHeader=#253142
+// tableText=#e5edf7
+// tableLine=#94a3b8
+// tableOpacity=1
+// pkBadgeBackground=#3f2d12
+// pkBadgeBorder=#f59e0b
+// pkBadgeText=#fcd34d
+// fkBadgeBackground=#12312e
+// fkBadgeBorder=#2dd4bf
+// fkBadgeText=#99f6e4
+// notNullBadgeBackground=#3b1620
+// notNullBadgeBorder=#fb7185
+// notNullBadgeText=#fecdd3
+// uniqueBadgeBackground=#1e1b4b
+// uniqueBadgeBorder=#818cf8
+// uniqueBadgeText=#c7d2fe
+
+// @table User
+// x=-356
+// y=316
+// width=282
+// height=458
+// useDefaultStyle=true
+// useGroupStyle=false
+Table User {
+  id uuid [pk]
+  full_name String
+  email String
+  password String
+  phone_number String
+  birth_date datetime
+  role Role
+  plan_end_date DateTime
+  streak Int
+  coins Int
+  createdAt DateTime
+  enable Boolean
+  desired_course String
+  desired_exam String
+  last_active DateTime
+}
+
+// @table Exam
+// x=116
+// y=-376
+// width=234
+// height=150
+// useDefaultStyle=true
+// useGroupStyle=false
+Table Exam {
+  id uuid [pk]
+  name String
+  origin String
+  image_url String
+}
+
+// @table ExamDay
+// x=1016
+// y=36
+// width=346
+// height=122
+// useDefaultStyle=true
+// useGroupStyle=false
+Table ExamDay {
+  id uuid [pk]
+  int day
+  exam_id uuid
+}
+
+// @table Attempt
+// x=-320
+// y=-404
+// width=282
+// height=262
+// useDefaultStyle=true
+// useGroupStyle=false
+Table Attempt {
+  id uuid [pk, fk]
+  exam_id uuid
+  user_id uuid
+  time_spent_minutes Int
+  score Int
+  language Language
+  init_time DateTime
+  end_time DateTime
+}
+
+// @table Attempt_day
+// x=504
+// y=-124
+// width=282
+// height=234
+// useDefaultStyle=true
+// useGroupStyle=false
+Table Attempt_day {
+  id uuid [pk]
+  time_spent_minutes Int
+  current_question Int
+  init_time DateTime
+  end_time DateTime
+  exam_day_id uuid
+  attempt_id uuid
+}
+
+// @table Subject
+// x=-272
+// y=1248
+// width=220
+// height=94
+// useDefaultStyle=true
+// useGroupStyle=false
+Table Subject {
+  id uuid [pk]
+  name String
+}
+
+// @table Path
+// x=-288
+// y=928
+// width=274
+// height=206
+// useDefaultStyle=true
+// useGroupStyle=false
+Table Path {
+  id uuid [pk]
+  subject_id uuid
+  name String
+  text String
+  schedule_position Int
+  trail_position Int
+}
+
+// @table StudyDay
+// x=-692
+// y=584
+// width=220
+// height=150
+// useDefaultStyle=true
+// useGroupStyle=false
+Table StudyDay {
+  id uuid [pk]
+  user_id uuid
+  day WeekDay
+  hour Int
+}
+
+// @table StudyLog
+// x=-700
+// y=904
+// width=220
+// height=178
+// useDefaultStyle=true
+// useGroupStyle=false
+Table StudyLog {
+  id uuid [pk]
+  date DateTime
+  done Boolean
+  path_id uuid
+  user_id uuid
+}
+
+// @table Question
+// x=48
+// y=576
+// width=242
+// height=318
+// useDefaultStyle=true
+// useGroupStyle=false
+Table Question {
+  id uuid [pk]
+  path_id uuid
+  exam_day_id uuid
+  text String
+  origin Origin
+  year Int
+  feedback String
+  number Int
+  language Language
+  image_url String
+}
+
+// @table Alternative
+// x=428
+// y=636
+// width=250
+// height=178
+// useDefaultStyle=true
+// useGroupStyle=false
+Table Alternative {
+  id uuid [pk]
+  text String
+  letter char(1)
+  is_correct Boolean
+  question_id uuid
+}
+
+// @table Answer
+// x=-532
+// y=64
+// width=266
+// height=206
+// useDefaultStyle=true
+// useGroupStyle=false
+Table Answer {
+  id uuid [pk]
+  answer_date DateTime
+  alternative_id uuid
+  user_id uuid
+  question_id uuid
+  attempt_day_id uuid
+}
+
+Ref: Question.id > Answer.question_id
+// @line relation-question-id-answer-question_id-0
+// color=#94a3b8
+// useTableLineColor=true
+// strokeWidth=4
+// opacity=0.9
+// style=solid
+// route=orthogonal
+// from=east
+// to=west
+// fromCardinality=many
+// toCardinality=one
+// via=(322,628),(372,628),(372,520)
+
+Ref: Question.id > Alternative.question_id
+// @line relation-question-id-alternative-question_id-1
+// color=#94a3b8
+// useTableLineColor=true
+// strokeWidth=4
+// opacity=0.9
+// style=solid
+// route=orthogonal
+// from=east
+// to=west
+// fromCardinality=many
+// toCardinality=one
+// via=(322,628),(396,628),(396,800)
+
+Ref: Answer.alternative_id > Alternative.id
+// @line relation-answer-alternative_id-alternative-id-2
+// color=#94a3b8
+// useTableLineColor=true
+// strokeWidth=4
+// opacity=0.9
+// style=solid
+// route=orthogonal
+// from=east
+// to=east
+// fromCardinality=many
+// toCardinality=one
+// via=(702,464),(710,464),(710,688)
+
+Ref: Question.path_id > Path.id
+// @line relation-question-path_id-path-id-3
+// color=#94a3b8
+// useTableLineColor=true
+// strokeWidth=4
+// opacity=0.9
+// style=solid
+// route=orthogonal
+// from=west
+// to=east
+// fromCardinality=many
+// toCardinality=one
+// via=(16,656),(18,656),(18,980)
+
+Ref: Path.subject_id > Subject.id
+// @line relation-path-subject_id-subject-id-4
+// color=#94a3b8
+// useTableLineColor=true
+// strokeWidth=4
+// opacity=0.9
+// style=solid
+// route=orthogonal
+// from=east
+// to=east
+// fromCardinality=many
+// toCardinality=one
+// via=(18,1008),(18,1300),(-20,1300)
+
+Ref: StudyDay.user_id > User.id
+// @line relation-studyday-user_id-user-id-5
+// color=#94a3b8
+// useTableLineColor=true
+// strokeWidth=4
+// opacity=0.9
+// style=solid
+// route=orthogonal
+// from=east
+// to=west
+// fromCardinality=many
+// toCardinality=one
+// via=(-440,664),(-388,664),(-388,368)
+
+Ref: StudyLog.user_id > User.id
+// @line relation-studylog-user_id-user-id-6
+// color=#94a3b8
+// useTableLineColor=true
+// strokeWidth=4
+// opacity=0.9
+// style=solid
+// route=orthogonal
+// from=east
+// to=west
+// fromCardinality=many
+// toCardinality=one
+// via=(-448,1068),(-388,1068),(-388,368)
+
+Ref: StudyLog.path_id > Path.id
+// @line relation-studylog-path_id-path-id-7
+// color=#94a3b8
+// useTableLineColor=true
+// strokeWidth=4
+// opacity=0.9
+// style=solid
+// route=orthogonal
+// from=east
+// to=west
+// fromCardinality=many
+// toCardinality=one
+// via=(-448,1040),(-320,1040),(-320,980)
+
+Ref: Question.exam_day_id > ExamDay.id
+// @line relation-question-exam_day_id-examday-id-8
+// color=#94a3b8
+// useTableLineColor=true
+// strokeWidth=4
+// opacity=0.9
+// style=solid
+// route=orthogonal
+// from=east
+// to=west
+// fromCardinality=many
+// toCardinality=one
+// via=(322,684),(322,156),(984,156),(984,88)
+
+Ref: ExamDay.exam_id > Exam.id
+// @line relation-examday-exam_id-exam-id-9
+// color=#94a3b8
+// useTableLineColor=true
+// strokeWidth=4
+// opacity=0.9
+// style=solid
+// route=orthogonal
+// from=west
+// to=east
+// fromCardinality=many
+// toCardinality=one
+// via=(984,144),(382,144),(382,-324)
+
+Ref: Attempt.user_id > User.id
+// @line relation-attempt-user_id-user-id-10
+// color=#94a3b8
+// useTableLineColor=true
+// strokeWidth=4
+// opacity=0.9
+// style=solid
+// route=orthogonal
+// from=west
+// to=east
+// fromCardinality=many
+// toCardinality=one
+// via=(20,-16),(-42,-16),(-42,368)
+
+Ref: Attempt_day.exam_day_id > ExamDay.id
+// @line relation-attempt_day-exam_day_id-examday-id-11
+// color=#94a3b8
+// useTableLineColor=true
+// strokeWidth=4
+// opacity=0.9
+// style=solid
+// route=orthogonal
+// from=east
+// to=west
+// fromCardinality=many
+// toCardinality=one
+// via=(818,68),(984,68),(984,88)
+
+Ref: Attempt_day.attempt_id > Attempt.id
+// @line relation-attempt_day-attempt_id-attempt-id-12
+// color=#94a3b8
+// useTableLineColor=true
+// strokeWidth=4
+// opacity=0.9
+// style=solid
+// route=orthogonal
+// from=west
+// to=east
+// fromCardinality=many
+// toCardinality=one
+// via=(472,96),(366,96),(366,-72)
+
+Ref: Answer.attempt_day_id > Attempt_day.id
+// @line relation-answer-attempt_day_id-attempt_day-id-13
+// color=#94a3b8
+// useTableLineColor=true
+// strokeWidth=4
+// opacity=0.9
+// style=solid
+// route=orthogonal
+// from=east
+// to=east
+// fromCardinality=many
+// toCardinality=one
+// via=(702,548),(818,548),(818,-72)
+
+Ref: User.id > Answer.user_id
+// @line relation-user-id-answer-user_id-14
+// color=#94a3b8
+// useTableLineColor=true
+// strokeWidth=4
+// opacity=0.9
+// style=solid
+// route=orthogonal
+// from=east
+// to=west
+// fromCardinality=many
+// toCardinality=one
+// via=(-42,368),(372,368),(372,492)
+
+Ref: Attempt.exam_id > Exam.id
+// @line relation-attempt-exam_id-exam-id-15
+// color=#94a3b8
+// useTableLineColor=true
+// strokeWidth=4
+// opacity=0.9
+// style=solid
+// route=orthogonal
+// from=east
+// to=west
+// fromCardinality=many
+// toCardinality=one
+
+Ref: Attempt_day.time_spent_minutes > Exam.image_url
+// @line relation-attempt_day-time_spent_minutes-exam-image_url-16
+// color=#94a3b8
+// useTableLineColor=true
+// strokeWidth=4
+// opacity=0.9
+// style=solid
+// route=orthogonal
+// from=west
+// to=east
+// fromCardinality=many
+// toCardinality=one

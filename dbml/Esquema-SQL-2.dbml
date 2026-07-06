@@ -635,6 +635,19 @@ Ref: report.id > hours_report.report_id
 // toCardinality=one
 // via=(3232,-48),(3268,-48),(3268,120)
 
+Ref: examining_board.student_id > examining_board_member.id
+// @line relation-examining_board-student_id-examining_board_member-id-19
+// color=#94a3b8
+// useTableLineColor=true
+// strokeWidth=4
+// opacity=0.9
+// style=solid
+// route=orthogonal
+// from=west
+// to=east
+// fromCardinality=many
+// toCardinality=one
+
 // @group k0mxujg
 // label=OTP
 // labelX=24
