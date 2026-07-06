@@ -99,7 +99,7 @@ export function TableNode({
         return (
           <g key={column.id} transform={`translate(0 ${y})`}>
             {!isLastColumn && (
-              <line x1={0} x2={table.width} y1={TABLE_ROW_HEIGHT} y2={TABLE_ROW_HEIGHT} className="row-line" />
+              <line x1={1} x2={table.width-1} y1={TABLE_ROW_HEIGHT} y2={TABLE_ROW_HEIGHT} className="row-line" />
             )}
             {isRelationSource && (
               <rect

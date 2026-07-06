@@ -22,8 +22,8 @@
 // uniqueBadgeText=#c7d2fe
 
 // @table app_user
-// x=12
-// y=40
+// x=-316
+// y=108
 // width=250
 // height=122
 // useDefaultStyle=true
@@ -35,8 +35,8 @@ Table app_user {
 }
 
 // @table car
-// x=372
-// y=12
+// x=1956
+// y=4
 // width=250
 // height=178
 // useDefaultStyle=true
@@ -61,6 +61,7 @@ Ref: app_user.id > car.user_id
 // to=west
 // fromCardinality=many
 // toCardinality=one
+// via=(480,144)
 
 Ref: app_user.name > car.model
 // @line relation-app_user-name-car-model-1

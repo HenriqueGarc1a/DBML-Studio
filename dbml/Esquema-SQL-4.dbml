@@ -734,7 +734,7 @@ Ref: hours_report.report_id > report.id
 // tableBorder=#2563EB
 // tableHeader=#1D4ED8
 // tableText=#F8FAFC
-// tableLine=#2dd4bf
+// tableLine=#1D4ED8
 // tableOpacity=1
 
 // @group eclm489
