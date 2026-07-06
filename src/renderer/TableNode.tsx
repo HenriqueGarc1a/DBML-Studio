@@ -39,6 +39,16 @@ export function TableNode({
   onResizePointerDown,
 }: TableNodeProps) {
   const visual = groupVisual ?? (table.usesDefaultStyle ? defaultVisual : table.visual);
+  const headerRadius = 6;
+  const headerPath = [
+    `M 0 ${TABLE_HEADER_HEIGHT}`,
+    `V ${headerRadius}`,
+    `Q 0 0 ${headerRadius} 0`,
+    `H ${table.width - headerRadius}`,
+    `Q ${table.width} 0 ${table.width} ${headerRadius}`,
+    `V ${TABLE_HEADER_HEIGHT}`,
+    "Z",
+  ].join(" ");
 
   return (
     <g
@@ -55,12 +65,7 @@ export function TableNode({
         stroke={selected ? "#2dd4bf" : visual.borderColor}
         strokeWidth={selected ? 2.5 : 1.5}
       />
-      <rect
-        width={table.width}
-        height={TABLE_HEADER_HEIGHT}
-        rx={6}
-        fill={visual.headerColor}
-      />
+      <path d={headerPath} fill={visual.headerColor} />
       <path
         d={`M 0 ${TABLE_HEADER_HEIGHT} H ${table.width}`}
         stroke={visual.borderColor}

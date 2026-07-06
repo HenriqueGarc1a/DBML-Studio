@@ -15,6 +15,7 @@ import { SvgCanvas } from "./renderer/SvgCanvas";
 import { PropertiesPanel } from "./ui/PropertiesPanel";
 import { downloadText } from "./utils/download";
 import { saveTextFile, type TextFileHandle } from "./utils/fileSave";
+import { safeGetItem, safeSetItem } from "./utils/storage";
 
 const DBML_COLLAPSED_STORAGE_KEY = "dbml-studio-dbml-collapsed";
 const PROPERTIES_COLLAPSED_STORAGE_KEY = "dbml-studio-properties-collapsed";
@@ -301,21 +302,13 @@ function isEditableTarget(target: EventTarget | null): boolean {
 }
 
 function readStoredBoolean(key: string, fallback: boolean): boolean {
-  try {
-    const stored = localStorage.getItem(key);
-    if (stored === "true") return true;
-    if (stored === "false") return false;
-  } catch {
-    // localStorage may be unavailable in restricted browser contexts.
-  }
+  const stored = safeGetItem(key);
+  if (stored === "true") return true;
+  if (stored === "false") return false;
 
   return fallback;
 }
 
 function writeStoredBoolean(key: string, value: boolean): void {
-  try {
-    localStorage.setItem(key, String(value));
-  } catch {
-    // localStorage may be unavailable in restricted browser contexts.
-  }
+  safeSetItem(key, String(value));
 }

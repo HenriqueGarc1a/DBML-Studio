@@ -103,10 +103,6 @@ export interface RelationModel {
   toColumn: string;
   fromSide: Direction;
   toSide: Direction;
-  startOffsetX: number;
-  startOffsetY: number;
-  endOffsetX: number;
-  endOffsetY: number;
   route: LineRoute;
   viaPoints: Point[];
   color: string;
@@ -114,7 +110,6 @@ export interface RelationModel {
   opacity: number;
   strokeWidth: number;
   style: LineStyle;
-  arrowColor: string;
   fromCardinality: Cardinality;
   toCardinality: Cardinality;
   label: string;

@@ -41,8 +41,6 @@ describe("relation endpoint snapping", () => {
 
     expect(endpoint.side).toBe("west");
     expect(endpoint.point).toEqual({ x: 100, y: 132 });
-    expect(endpoint.offsetX).toBe(0);
-    expect(endpoint.offsetY).toBe(0);
   });
 
   it("keeps endpoints anchored to the relation column row", () => {
@@ -50,7 +48,6 @@ describe("relation endpoint snapping", () => {
 
     expect(endpoint.side).toBe("west");
     expect(endpoint.point).toEqual({ x: 100, y: 132 });
-    expect(endpoint.offsetY).toBe(0);
   });
 
   it("chooses the right table side when dragged near the right edge", () => {
@@ -64,13 +61,7 @@ describe("relation endpoint snapping", () => {
 describe("relation geometry", () => {
   it("anchors relations at the middle of the referenced column row", () => {
     const target = { ...table, id: "account", name: "account", x: 520 };
-    const relation = {
-      ...makeRelation(),
-      startOffsetX: 40,
-      startOffsetY: -20,
-      endOffsetX: -20,
-      endOffsetY: 40,
-    };
+    const relation = makeRelation();
     const geometry = getRelationGeometry(relation, table, target);
 
     expect(geometry.points[0]).toEqual({ x: 340, y: 132 });

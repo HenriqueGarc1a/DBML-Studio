@@ -399,10 +399,6 @@ Ref: team.teacher_id > ages_user.id
 // to=east
 // fromCardinality=many
 // toCardinality=one
-// startOffsetX=0
-// startOffsetY=0
-// endOffsetX=0
-// endOffsetY=0
 // via=(546,2212),(546,1482)
 
 Ref: team.project_id > project.id
@@ -417,10 +413,6 @@ Ref: team.project_id > project.id
 // to=west
 // fromCardinality=one
 // toCardinality=one
-// startOffsetX=0
-// startOffsetY=0
-// endOffsetX=0
-// endOffsetY=0
 
 Ref: class.teacher_id > ages_user.id
 // @line relation-class-teacher_id-ages_user-id-2
@@ -434,10 +426,6 @@ Ref: class.teacher_id > ages_user.id
 // to=east
 // fromCardinality=many
 // toCardinality=one
-// startOffsetX=0
-// startOffsetY=0
-// endOffsetX=0
-// endOffsetY=0
 // via=(572,1482)
 
 Ref: semester_profile.user_id > ages_user.id
@@ -452,10 +440,6 @@ Ref: semester_profile.user_id > ages_user.id
 // to=east
 // fromCardinality=many
 // toCardinality=one
-// startOffsetX=0
-// startOffsetY=0
-// endOffsetX=0
-// endOffsetY=0
 // via=(598,1482)
 
 Ref: semester_profile.team_id > team.id
@@ -470,10 +454,6 @@ Ref: semester_profile.team_id > team.id
 // to=west
 // fromCardinality=many
 // toCardinality=one
-// startOffsetX=0
-// startOffsetY=0
-// endOffsetX=0
-// endOffsetY=0
 // via=(624,1622),(624,2210)
 
 Ref: semester_profile.class_id > class.id
@@ -488,10 +468,6 @@ Ref: semester_profile.class_id > class.id
 // to=east
 // fromCardinality=many
 // toCardinality=one
-// startOffsetX=0
-// startOffsetY=0
-// endOffsetX=0
-// endOffsetY=0
 
 Ref: lesson.class_id > class.id
 // @line relation-lesson-class_id-class-id-6
@@ -505,10 +481,6 @@ Ref: lesson.class_id > class.id
 // to=east
 // fromCardinality=many
 // toCardinality=one
-// startOffsetX=0
-// startOffsetY=0
-// endOffsetX=0
-// endOffsetY=0
 
 Ref: otp.user_id > ages_user.id
 // @line relation-otp-user_id-ages_user-id-7
@@ -522,10 +494,6 @@ Ref: otp.user_id > ages_user.id
 // to=west
 // fromCardinality=many
 // toCardinality=one
-// startOffsetX=0
-// startOffsetY=0
-// endOffsetX=0
-// endOffsetY=0
 // via=(130,1482)
 
 Ref: schedule.admin_id > ages_user.id
@@ -540,10 +508,6 @@ Ref: schedule.admin_id > ages_user.id
 // to=west
 // fromCardinality=many
 // toCardinality=one
-// startOffsetX=0
-// startOffsetY=0
-// endOffsetX=0
-// endOffsetY=0
 // via=(130,1482)
 
 Ref: project_stack.project_id > project.id
@@ -558,10 +522,6 @@ Ref: project_stack.project_id > project.id
 // to=east
 // fromCardinality=many
 // toCardinality=one
-// startOffsetX=0
-// startOffsetY=0
-// endOffsetX=0
-// endOffsetY=0
 // via=(1606,2238),(1540,2238),(1540,2210)
 
 Ref: project_stack.technology_id > technology.id
@@ -576,10 +536,6 @@ Ref: project_stack.technology_id > technology.id
 // to=west
 // fromCardinality=many
 // toCardinality=one
-// startOffsetX=0
-// startOffsetY=0
-// endOffsetX=0
-// endOffsetY=0
 // via=(1580,2240),(1580,2340)
 
 Ref: report.student_id > semester_profile.id
@@ -594,11 +550,7 @@ Ref: report.student_id > semester_profile.id
 // to=east
 // fromCardinality=many
 // toCardinality=one
-// startOffsetX=0
-// startOffsetY=0
-// endOffsetX=0
-// endOffsetY=0
-// via=(1040,1482),(1002,1172),(1002,1456)
+// via=(1112,1510),(1046,1510),(1046,1482)
 
 Ref: examining_board.student_id > semester_profile.id
 // @line relation-examining_board-student_id-semester_profile-id-12
@@ -612,10 +564,6 @@ Ref: examining_board.student_id > semester_profile.id
 // to=west
 // fromCardinality=one
 // toCardinality=one
-// startOffsetX=0
-// startOffsetY=0
-// endOffsetX=0
-// endOffsetY=0
 // via=(624,1482)
 
 Ref: examining_board_member.examining_board_id > examining_board.id
@@ -630,10 +578,6 @@ Ref: examining_board_member.examining_board_id > examining_board.id
 // to=west
 // fromCardinality=many
 // toCardinality=one
-// startOffsetX=0
-// startOffsetY=0
-// endOffsetX=0
-// endOffsetY=0
 
 Ref: examining_board_member.teacher_id > ages_user.id
 // @line relation-examining_board_member-teacher_id-ages_user-id-14
@@ -647,10 +591,6 @@ Ref: examining_board_member.teacher_id > ages_user.id
 // to=west
 // fromCardinality=many
 // toCardinality=one
-// startOffsetX=0
-// startOffsetY=0
-// endOffsetX=0
-// endOffsetY=0
 // via=(130,1226),(130,1482)
 
 Ref: attendance.lesson_id > lesson.id
@@ -665,10 +605,6 @@ Ref: attendance.lesson_id > lesson.id
 // to=east
 // fromCardinality=many
 // toCardinality=one
-// startOffsetX=0
-// startOffsetY=0
-// endOffsetX=0
-// endOffsetY=0
 // via=(1580,1900),(1560,1872),(1514,1872)
 
 Ref: attendance.student_id > semester_profile.id
@@ -679,15 +615,11 @@ Ref: attendance.student_id > semester_profile.id
 // opacity=0.9
 // style=solid
 // route=orthogonal
-// from=east
+// from=west
 // to=east
 // fromCardinality=many
 // toCardinality=one
-// startOffsetX=0
-// startOffsetY=0
-// endOffsetX=0
-// endOffsetY=0
-// via=(2028,1716),(1040,1482),(1002,1456)
+// via=(1606,1928),(1606,1682),(1046,1682),(1046,1482)
 
 Ref: report_review.report_id > report.id
 // @line relation-report_review-report_id-report-id-17
@@ -701,10 +633,6 @@ Ref: report_review.report_id > report.id
 // to=west
 // fromCardinality=one
 // toCardinality=one
-// startOffsetX=0
-// startOffsetY=0
-// endOffsetX=0
-// endOffsetY=0
 // via=(1118,1482)
 
 Ref: sprint_report.report_id > report.id
@@ -719,10 +647,6 @@ Ref: sprint_report.report_id > report.id
 // to=east
 // fromCardinality=one
 // toCardinality=one
-// startOffsetX=0
-// startOffsetY=0
-// endOffsetX=0
-// endOffsetY=0
 // via=(1580,1678),(1586,1482),(1514,1482)
 
 Ref: hours_report.report_id > report.id
@@ -737,10 +661,6 @@ Ref: hours_report.report_id > report.id
 // to=east
 // fromCardinality=one
 // toCardinality=one
-// startOffsetX=0
-// startOffsetY=0
-// endOffsetX=0
-// endOffsetY=0
 // via=(1580,1338),(1586,1482),(1514,1482)
 
 // @group 0ttxdgu

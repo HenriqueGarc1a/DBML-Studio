@@ -4,6 +4,19 @@ Data da análise: 2026-07-05
 
 Este relatório foi feito para virar prompt nas próximas sessões. A ideia é deixar claro o que vale mudar, tirar ou adicionar, sem depender de lembrar tudo de cabeça.
 
+## Atualização desta rodada
+
+Implementado em 2026-07-05:
+
+- `@group` agora exporta `tables=` e o roundtrip preserva `group.tables`.
+- `@line` agora preserva a chave do bloco e aplica metadados por id/id base/assinatura, com fallback por índice só para blocos antigos sem chave.
+- `localStorage` foi centralizado em `src/utils/storage.ts` com helpers seguros.
+- Regras visuais efetivas foram centralizadas em `src/model/visualSelectors.ts`.
+- TikZ passou a usar a cor efetiva da relação quando a linha usa cor da tabela.
+- Campos mortos de relação (`startOffsetX/Y`, `endOffsetX/Y`, `arrowColor`) foram removidos do modelo/export/parser.
+
+Ainda ficam como próximos blocos grandes: performance de drag/autosave/export, E2E, acessibilidade/modal, refatoração dos arquivos monolíticos, menu de exportação, biblioteca de diagramas e compatibilidade DBML oficial.
+
 ## Resumo rápido
 
 O app está funcional e já tem uma base boa: React + TypeScript + SVG, parser/exportador DBML, importação SQL, layout automático, editor visual, grupos, linhas com pontos, undo/redo, autosave, tutorial e export PDF/TikZ.
@@ -61,21 +74,21 @@ Arquivos grandes que merecem ser quebrados depois:
 
 São pontos que podem causar perda de dados, bugs escondidos ou manutenção difícil.
 
-1. Corrigir roundtrip de grupos.
+1. Corrigir roundtrip de grupos. Concluído nesta rodada.
 
-Hoje o parser lê `// tables=user,project` dentro de `@group`, mas o exportador DBML não exporta `tables=` de volta. Isso significa que uma informação lida do DBML pode sumir ao salvar.
+O parser já lia `// tables=user,project` dentro de `@group`; agora o exportador DBML também escreve `tables=` de volta.
 
-Mesmo que hoje o estilo de grupo seja calculado pela posição da tabela dentro do retângulo, o campo `group.tables` existe no modelo e não deveria se perder.
+Mesmo que hoje o estilo de grupo seja calculado pela posição da tabela dentro do retângulo, o campo `group.tables` existe no modelo e agora não se perde no roundtrip.
 
-2. Tornar `@line` independente da ordem.
+2. Tornar `@line` independente da ordem. Concluído nesta rodada.
 
-Hoje `specialComments.ts` coleta `@line` em uma lista e `dbmlParser.ts` aplica por índice nas relações parseadas. Isso pode quebrar quando refs são reordenadas, duplicadas, removidas ou misturadas com refs inline.
+O exportador já escrevia `// @line ${relation.id}`. Agora o parser preserva a key do bloco `@line` e aplica metadados por id/id base/assinatura da relação.
 
-Melhor caminho: usar uma chave estável no `@line`, por exemplo `// @line relation-project-user`, ou parear o bloco `@line` com o `Ref` imediatamente anterior/seguinte, mantendo fallback por índice para DBML antigo.
+O fallback por índice foi mantido apenas para DBML antigo com `// @line` sem chave.
 
-3. Resolver campos mortos ou semi-mortos no modelo.
+3. Resolver campos mortos ou semi-mortos no modelo. Concluído nesta rodada.
 
-Campos que existem, mas quase não têm efeito real:
+Campos removidos do modelo/export/parser:
 
 - `startOffsetX`
 - `startOffsetY`
@@ -83,13 +96,13 @@ Campos que existem, mas quase não têm efeito real:
 - `endOffsetY`
 - `arrowColor`
 
-Hoje os offsets são exportados como zero e a geometria ancora direto na coluna. `arrowColor` existe no modelo/parser/default, mas o desenho usa outras cores. Ou implementa de verdade, ou remove/migra para simplificar.
+A geometria segue ancorando direto na coluna. O `arrowColor` que permanece em `RelationPath.tsx` é só variável local de renderização, não campo persistido do modelo.
 
-4. Colocar `localStorage` atrás de um helper seguro.
+4. Colocar `localStorage` atrás de um helper seguro. Concluído nesta rodada.
 
-Alguns pontos já usam `try/catch`, mas o controller ainda acessa `localStorage` diretamente em vários lugares. Em navegador restrito isso pode quebrar.
+Foi criado `src/utils/storage.ts` e os acessos diretos em `useDiagramController.ts`, `App.tsx` e `PropertiesPanel.tsx` foram substituídos.
 
-Criar algo tipo `src/utils/storage.ts`:
+Helpers criados:
 
 - `safeGetItem`
 - `safeSetItem`
@@ -158,6 +171,8 @@ Criar `src/model/visualSelectors.ts` com:
 - `getGroupForTable`
 
 Isso reduz bugs quando cor global/grupo/tabela/linha mudam.
+
+Essa extração deveria vir antes de mexidas maiores em exportação, porque `SvgCanvas.tsx`, `PropertiesPanel.tsx`, `tikzExporter.ts` e `pdfExport.ts` precisam concordar sobre a mesma cor efetiva.
 
 5. Dividir `styles.css`.
 
@@ -336,18 +351,16 @@ Hoje várias relações entre as mesmas tabelas podem ficar sobrepostas. Ideias:
 - rotas paralelas sem sobreposição;
 - prioridade para evitar atravessar grupos/tabelas.
 
-3. Implementar ou remover offsets.
+3. Offsets persistidos. Concluído nesta rodada.
 
-Se quiser endpoints arrastáveis de verdade, implementar offsets:
+Os campos `startOffsetX/Y` e `endOffsetX/Y` foram removidos do modelo/export/parser porque não tinham efeito real. Se um dia endpoints arrastáveis livres virarem feature, reintroduzir isso como uma implementação nova, com:
 
-- usar `startOffsetX/Y` e `endOffsetX/Y` na geometria;
 - persistir os valores reais;
+- usar os offsets na geometria;
 - permitir reset;
 - testar DBML roundtrip.
 
-Se não quiser isso, remover do modelo/export para deixar simples.
-
-4. Unificar cor de linha/seta/export.
+4. Unificar cor de linha/seta/export. Parcialmente concluído nesta rodada.
 
 Criar selectors:
 
@@ -356,7 +369,7 @@ Criar selectors:
 - cor da seta no PDF;
 - cor da linha no TikZ.
 
-Hoje o TikZ usa `relation.color`, mesmo quando a relação usa cor da tabela. Isso pode deixar export visual diferente do canvas.
+Canvas, painel e TikZ agora usam `src/model/visualSelectors.ts`. O PDF já recebe a cor de fluxo pelos atributos exportados pelo canvas; ainda vale testar mais combinações de PDF quando o menu de exportação for criado.
 
 ## Exportação: melhorias úteis
 
@@ -437,21 +450,21 @@ Também considerar transformar `docs/system-report.tex` em Markdown ou manter os
 
 ## Coisas para tirar ou simplificar
 
-1. Tirar duplicação de visual efetivo.
+1. Tirar duplicação de visual efetivo. Concluído nesta rodada.
 
-Não deixar `getEffectiveTableVisual` duplicado em canvas, painel e exportadores.
+`getEffectiveTableVisual` e regras relacionadas foram movidas para `src/model/visualSelectors.ts`.
 
-2. Tirar lógica de storage espalhada.
+2. Tirar lógica de storage espalhada. Concluído nesta rodada.
 
-Centralizar `localStorage`, fetch de workspace e fallback de download.
+`localStorage` foi centralizado em `src/utils/storage.ts`. Fetch de workspace e fallback de download continuam separados por responsabilidade.
 
-3. Tirar campos não usados do modelo, se não forem implementados.
+3. Tirar campos não usados do modelo, se não forem implementados. Concluído nesta rodada.
 
-Principalmente offsets e `arrowColor`.
+Offsets e `arrowColor` persistido foram removidos.
 
-4. Tirar acoplamento entre parser e ordem das relações.
+4. Tirar acoplamento entre parser e ordem das relações. Concluído nesta rodada.
 
-`@line` por índice é frágil.
+`@line` agora usa chave/id base/assinatura quando disponível e só cai para índice em blocos antigos sem chave.
 
 5. Evitar aumentar ainda mais arquivos monolíticos.
 
@@ -470,6 +483,16 @@ Qualquer feature nova grande deveria primeiro criar componente/hook/helper próp
 - Undo/redo com batch para drag.
 - Cores salvas no modelo do diagrama.
 
+## Dependências práticas entre prompts
+
+Algumas tarefas ficam melhores se vierem antes de outras:
+
+- Prompt 1 antes do Prompt 5: primeiro proteger roundtrip do formato próprio, depois ampliar DBML oficial.
+- Prompt 8 antes do Prompt 6: exportação SVG/PNG/PDF/TikZ deve usar a mesma cor efetiva do canvas.
+- Prompt 11 antes do Prompt 7 e do Prompt 2: storage seguro facilita biblioteca de diagramas e refatoração do controller.
+- Prompt 4 depois de pelo menos parte do Prompt 9: E2E fica mais estável quando botões e modais têm labels/foco previsíveis.
+- Prompt 3 antes de features visuais grandes: evita deixar drag/autosave mais caros enquanto novas telas entram.
+
 ## Prompts prontos para próximas sessões
 
 ### Prompt 1 - Corrigir roundtrip de metadados
@@ -480,12 +503,15 @@ Você é um engenheiro frontend/fullstack sênior neste repo. Quero corrigir pro
 Tarefas:
 - Fazer `@group` exportar e reimportar `tables=` corretamente.
 - Fazer `@line` não depender apenas da ordem das relações.
-- Usar a chave do bloco `@line` quando existir e manter fallback para arquivos antigos.
+- Em `specialComments.ts`, preservar a key do bloco `@line`.
+- Em `dbmlParser.ts`, aplicar metadados de linha por id/assinatura da relação quando existir.
+- Manter fallback por índice para arquivos antigos com `// @line` sem chave.
 - Adicionar testes de parse/export/reparse cobrindo grupos com `tables=` e múltiplas relações reordenadas.
 - Rodar typecheck, testes e build.
 
 Critério de aceite:
 - Salvar e reabrir DBML não perde `group.tables`.
+- `exportDbml(parseDbml(source))` preserva `// tables=...` em grupos.
 - Comentários de linha continuam aplicados na relação correta mesmo com refs reordenadas.
 - DBML antigo continua funcionando.
 ```
@@ -642,16 +668,55 @@ Requisitos:
 - preservar o modal atual apenas se fizer sentido como atalho rápido.
 ```
 
+### Prompt 11 - Centralizar storage seguro
+
+```text
+Centralizar os acessos a storage e persistência local sem mudar comportamento.
+
+Tarefas:
+- Criar `src/utils/storage.ts` com helpers seguros para `localStorage`.
+- Substituir acessos diretos em `useDiagramController.ts`, `App.tsx` e `PropertiesPanel.tsx`.
+- Adicionar `readJson`/`writeJson` com fallback quando storage estiver indisponível.
+- Manter compatibilidade com as chaves atuais.
+- Adicionar testes unitários para storage indisponível, JSON inválido e escrita bem-sucedida.
+
+Critério de aceite:
+- O app não quebra quando `localStorage.getItem/setItem` lança erro.
+- Preferências e biblioteca de diagramas continuam sendo lidas das mesmas chaves.
+- Typecheck, testes e build passam.
+```
+
+### Prompt 12 - Criar README e alinhar docs
+
+```text
+Criar um README.md enxuto para o DBML Studio e alinhar a documentação existente.
+
+Conteúdo mínimo:
+- o que é o app;
+- como instalar e rodar;
+- scripts disponíveis;
+- como importar SQL e editar DBML;
+- como salvar/exportar;
+- como funcionam os comentários especiais `@diagram`, `@table`, `@line` e `@group`;
+- limitações conhecidas;
+- link para `docs/system-report.tex` e `docs/relatorio-proximos-prompts.md`.
+
+Não transformar o README em landing page. Ele deve ser útil para manutenção e onboarding.
+```
+
 ## Ordem sugerida para próximas sessões
 
 1. Prompt 1: corrigir roundtrip de metadados.
-2. Prompt 8: centralizar visual selectors.
-3. Prompt 3: performance de drag/autosave/export.
-4. Prompt 4: testes E2E.
-5. Prompt 2: refatorar controller.
-6. Prompt 6 ou 7, dependendo se você quiser priorizar export ou gestão de arquivos.
-7. Prompt 5: parser DBML mais completo.
-8. Prompt 9 e 10: acessibilidade e ajuda dedicada.
+2. Prompt 11: centralizar storage seguro.
+3. Prompt 8: centralizar visual selectors.
+4. Prompt 3: performance de drag/autosave/export.
+5. Prompt 9: acessibilidade e modal.
+6. Prompt 4: testes E2E.
+7. Prompt 2: refatorar controller.
+8. Prompt 6 ou 7, dependendo se você quiser priorizar export ou gestão de arquivos.
+9. Prompt 5: parser DBML mais completo.
+10. Prompt 10: ajuda dedicada.
+11. Prompt 12: README e docs, em qualquer momento que você quiser facilitar onboarding.
 
 ## Checklist de validação para qualquer próxima mudança
 
@@ -673,4 +738,3 @@ Validar manualmente:
 - exportar PDF;
 - abrir Ajuda;
 - testar painel em tela menor.
-

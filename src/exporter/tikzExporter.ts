@@ -1,5 +1,6 @@
 import type { DiagramModel, GroupModel, RelationModel, TableModel, TableVisual } from "../model/types";
 import { GROUP_LABEL_DEFAULT_X, GROUP_LABEL_DEFAULT_Y } from "../model/defaults";
+import { getEffectiveTableVisual, getRelationColor } from "../model/visualSelectors";
 import { hexToRgb } from "../utils/color";
 import { getRelationGeometry } from "../utils/geometry";
 
@@ -7,13 +8,17 @@ export function exportTikz(diagram: DiagramModel): string {
   const tableMap = new Map(diagram.tables.map((table) => [table.id, table]));
   const groups = diagram.groups.map(exportGroup).join("\n\n");
   const tables = diagram.tables
-    .map((table) => exportTable(table, diagram.visual.defaultTable, getTableGroupVisual(table, diagram.groups)))
+    .map((table) => exportTable(
+      table,
+      getEffectiveTableVisual(table, diagram.visual.defaultTable, diagram.groups),
+    ))
     .join("\n\n");
   const relations = diagram.relations
     .map((relation) => {
       const fromTable = tableMap.get(relation.fromTable);
       const toTable = tableMap.get(relation.toTable);
-      return fromTable && toTable ? exportRelation(relation, fromTable, toTable) : "";
+      const color = getRelationColor(relation, diagram.tables, diagram.visual.defaultTable, diagram.groups);
+      return fromTable && toTable ? exportRelation(relation, fromTable, toTable, color) : "";
     })
     .filter(Boolean)
     .join("\n");
@@ -54,8 +59,7 @@ function exportGroup(group: GroupModel): string {
   ].join("\n");
 }
 
-function exportTable(table: TableModel, defaultVisual: TableModel["visual"], groupVisual?: TableVisual): string {
-  const visual = groupVisual ?? (table.usesDefaultStyle ? defaultVisual : table.visual);
+function exportTable(table: TableModel, visual: TableVisual): string {
   const rows = [
     `\\textbf{${escapeLatex(table.name)}}`,
     ...table.columns.map((column) => {
@@ -86,22 +90,7 @@ function exportTable(table: TableModel, defaultVisual: TableModel["visual"], gro
   ].join("\n");
 }
 
-function getTableGroupVisual(table: TableModel, groups: GroupModel[]): TableVisual | undefined {
-  if (!table.usesGroupStyle) return undefined;
-  const center = {
-    x: table.x + table.width / 2,
-    y: table.y + table.height / 2,
-  };
-
-  return [...groups].reverse().find((group) =>
-    center.x >= group.x &&
-    center.x <= group.x + group.width &&
-    center.y >= group.y &&
-    center.y <= group.y + group.height,
-  )?.tableVisual;
-}
-
-function exportRelation(relation: RelationModel, fromTable: TableModel, toTable: TableModel): string {
+function exportRelation(relation: RelationModel, fromTable: TableModel, toTable: TableModel, color: string): string {
   const geometry = getRelationGeometry(relation, fromTable, toTable);
   const dash = relation.style === "dashed" ? "dashed" : relation.style === "dotted" ? "dotted" : "solid";
   const path = geometry.points
@@ -114,7 +103,7 @@ function exportRelation(relation: RelationModel, fromTable: TableModel, toTable:
   return `\\draw[${dash}, line width=${round(
     relation.strokeWidth,
   2,
-)}pt, draw=${tikzColor(relation.color)}, opacity=${round(relation.opacity, 2)}] ${path}${label};`;
+)}pt, draw=${tikzColor(color)}, opacity=${round(relation.opacity, 2)}] ${path}${label};`;
 }
 
 function tikzColor(hex: string): string {

@@ -155,10 +155,6 @@ function exportRelation(relation: RelationModel, tableMap: Map<string, TableMode
     `// to=${normalizeRelationSide(relation.toSide)}`,
     `// fromCardinality=${relation.fromCardinality}`,
     `// toCardinality=${relation.toCardinality}`,
-    `// startOffsetX=0`,
-    `// startOffsetY=0`,
-    `// endOffsetX=0`,
-    `// endOffsetY=0`,
     relation.label ? `// label=${relation.label}` : "",
     relation.viaPoints.length
       ? `// via=${relation.viaPoints.map((point) => `(${round(point.x)},${round(point.y)})`).join(",")}`
@@ -194,7 +190,8 @@ function exportGroup(group: GroupModel): string {
     `// tableText=${group.tableVisual.textColor}`,
     `// tableLine=${group.tableVisual.lineColor}`,
     `// tableOpacity=${round(group.tableVisual.opacity, 2)}`,
-  ].join("\n");
+    group.tables.length ? `// tables=${group.tables.join(",")}` : "",
+  ].filter(Boolean).join("\n");
 }
 
 function formatIdentifier(value: string): string {

@@ -18,7 +18,7 @@ import type {
   TableModel,
 } from "../model/types";
 import { makeId, slugify } from "../utils/id";
-import { parseSpecialComments } from "./specialComments";
+import { parseSpecialComments, type LineSpecialProps } from "./specialComments";
 
 interface Block {
   name: string;
@@ -50,18 +50,33 @@ export function parseDbml(source: string): DiagramModel {
     ...parseRefLines(source),
     ...parseInlineColumnRefs(tables),
   ]);
-  const relations = parsedRelations.map((relation, index) => ({
-    id: makeId(
+  const lineLookup = createLineSpecialLookup(special.lineProps);
+  const relations = parsedRelations.map((relation, index) => {
+    const relationIdBase = makeId(
+      "relation",
+      `${relation.fromTable}-${relation.fromColumn}-${relation.toTable}-${relation.toColumn}`,
+    );
+    const relationId = makeId(
       "relation",
       `${relation.fromTable}-${relation.fromColumn}-${relation.toTable}-${relation.toColumn}`,
       index,
-    ),
-    ...defaultRelationVisual,
-    ...relation,
-    fromTable: slugify(relation.fromTable),
-    toTable: slugify(relation.toTable),
-    ...(special.lineProps[index] ?? {}),
-  }));
+    );
+    const lineProps = getLineSpecialProps(lineLookup, {
+      id: relationId,
+      baseId: relationIdBase,
+      signature: relationSignature(relation),
+      index,
+    });
+
+    return {
+      id: relationId,
+      ...defaultRelationVisual,
+      ...relation,
+      fromTable: slugify(relation.fromTable),
+      toTable: slugify(relation.toTable),
+      ...(lineProps ?? {}),
+    };
+  });
   const foreignKeys = new Set(relations.map((relation) => `${relation.fromTable}.${relation.fromColumn}`));
   const tablesWithForeignKeys = tables.map((table) => ({
     ...table,
@@ -78,6 +93,92 @@ export function parseDbml(source: string): DiagramModel {
     groups: special.groups,
     enums,
     source,
+  };
+}
+
+interface LineSpecialLookup {
+  byKey: Map<string, Partial<RelationModel>>;
+  byBaseKey: Map<string, Partial<RelationModel>>;
+  bySignature: Map<string, Partial<RelationModel>>;
+  unkeyedByIndex: Array<Partial<RelationModel> | undefined>;
+}
+
+function createLineSpecialLookup(lineProps: LineSpecialProps[]): LineSpecialLookup {
+  const lookup: LineSpecialLookup = {
+    byKey: new Map(),
+    byBaseKey: new Map(),
+    bySignature: new Map(),
+    unkeyedByIndex: [],
+  };
+
+  lineProps.forEach((item, index) => {
+    const key = item.key.trim();
+    if (!key) {
+      lookup.unkeyedByIndex[index] = item.props;
+      return;
+    }
+
+    lookup.byKey.set(key, item.props);
+
+    const baseKey = stripGeneratedRelationIndex(key);
+    if (baseKey !== key) {
+      lookup.byBaseKey.set(baseKey, item.props);
+    }
+
+    const signature = normalizeRelationSignatureKey(key);
+    if (signature) {
+      lookup.bySignature.set(signature, item.props);
+    }
+  });
+
+  return lookup;
+}
+
+function getLineSpecialProps(
+  lookup: LineSpecialLookup,
+  relation: { id: string; baseId: string; signature: string; index: number },
+): Partial<RelationModel> | undefined {
+  return (
+    lookup.byKey.get(relation.id) ??
+    lookup.byBaseKey.get(relation.baseId) ??
+    lookup.bySignature.get(relation.signature) ??
+    lookup.unkeyedByIndex[relation.index]
+  );
+}
+
+function stripGeneratedRelationIndex(key: string): string {
+  return /^relation-.+-\d+$/.test(key) ? key.replace(/-\d+$/, "") : key;
+}
+
+function relationSignature(relation: ParsedRelation): string {
+  return `${slugify(relation.fromTable)}.${slugify(relation.fromColumn)}>${slugify(
+    relation.toTable,
+  )}.${slugify(relation.toColumn)}`;
+}
+
+function normalizeRelationSignatureKey(key: string): string | undefined {
+  const clean = key.trim().replace(/^relation:/i, "").replace(/\s+/g, "");
+  const parts = clean.split(">");
+  if (parts.length !== 2) return undefined;
+
+  const from = parseSignatureEndpoint(parts[0]);
+  const to = parseSignatureEndpoint(parts[1]);
+  if (!from || !to) return undefined;
+
+  return `${from.table}.${from.column}>${to.table}.${to.column}`;
+}
+
+function parseSignatureEndpoint(value: string): ParsedEndpoint | undefined {
+  const parts = value.split(".");
+  if (parts.length < 2) return undefined;
+
+  const column = cleanIdentifier(parts.pop() || "");
+  const table = cleanIdentifier(parts.join("."));
+  if (!table || !column) return undefined;
+
+  return {
+    table: slugify(table),
+    column: slugify(column),
   };
 }
 

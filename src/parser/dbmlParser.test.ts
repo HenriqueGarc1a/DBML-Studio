@@ -187,6 +187,47 @@ Ref: project.user_id > user.id`);
     expect(diagram.relations[0].usesTableLineColor).toBe(true);
   });
 
+  it("applies keyed line comments to the matching relation after refs are reordered", () => {
+    const diagram = parseDbml(`Table user {
+  id int [pk]
+}
+
+Table project {
+  id int [pk]
+  user_id int
+}
+
+Table audit_log {
+  id int [pk]
+  user_id int
+}
+
+Ref: project.user_id > user.id
+// @line relation-project-user_id-user-id-1
+// color=#2563eb
+// strokeWidth=4
+
+Ref: audit_log.user_id > user.id
+// @line relation-audit_log-user_id-user-id-0
+// color=#dc2626
+// style=dashed
+`);
+
+    const projectRelation = diagram.relations.find((relation) => relation.fromTable === "project");
+    const auditRelation = diagram.relations.find((relation) => relation.fromTable === "audit_log");
+
+    expect(projectRelation).toMatchObject({
+      color: "#2563eb",
+      strokeWidth: 4,
+      style: "solid",
+    });
+    expect(auditRelation).toMatchObject({
+      color: "#dc2626",
+      strokeWidth: 2,
+      style: "dashed",
+    });
+  });
+
   it("rejects unfinished DBML blocks", () => {
     expect(() => parseDbml(`Table broken {
   id int [pk]

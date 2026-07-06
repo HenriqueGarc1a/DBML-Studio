@@ -22,7 +22,12 @@ import {
   getTableMinHeight,
   TABLE_MIN_WIDTH,
 } from "../model/defaults";
-import type { GroupModel, Point, TableModel, TableVisual } from "../model/types";
+import type { Point, TableModel } from "../model/types";
+import {
+  getRelationColor,
+  getRelationFlowColor,
+  getTableGroupVisual,
+} from "../model/visualSelectors";
 import {
   getRelationGeometry,
   getTableBounds,
@@ -343,13 +348,9 @@ export function SvgCanvas({ controller, svgRef: externalSvgRef }: SvgCanvasProps
       controller.updateRelation(relation.id, drag.endpoint === "start"
         ? {
             fromSide: endpoint.side,
-            startOffsetX: endpoint.offsetX,
-            startOffsetY: endpoint.offsetY,
           }
         : {
             toSide: endpoint.side,
-            endOffsetX: endpoint.offsetX,
-            endOffsetY: endpoint.offsetY,
           });
     }
   };
@@ -594,24 +595,26 @@ export function SvgCanvas({ controller, svgRef: externalSvgRef }: SvgCanvasProps
             selected?.type === "table" &&
             selected.id === sourceRelation.toTable;
           const flowDirection = highlightedByTable ? "reverse" : "forward";
-          const flowSourceTable = flowDirection === "reverse" ? toTable : fromTable;
-          const flowColor = getEffectiveTableVisual(
-            flowSourceTable,
+          const flowColor = getRelationFlowColor(
+            sourceRelation,
+            controller.diagram.tables,
             controller.diagram.visual.defaultTable,
             controller.diagram.groups,
-          ).headerColor;
-          const exportFlowColor = getEffectiveTableVisual(
-            toTable,
+            flowDirection,
+          );
+          const exportFlowColor = getRelationFlowColor(
+            sourceRelation,
+            controller.diagram.tables,
             controller.diagram.visual.defaultTable,
             controller.diagram.groups,
-          ).headerColor;
-          const relationColor = sourceRelation.usesTableLineColor
-            ? getEffectiveTableVisual(
-                fromTable,
-                controller.diagram.visual.defaultTable,
-                controller.diagram.groups,
-              ).lineColor
-            : sourceRelation.color;
+            "reverse",
+          );
+          const relationColor = getRelationColor(
+            sourceRelation,
+            controller.diagram.tables,
+            controller.diagram.visual.defaultTable,
+            controller.diagram.groups,
+          );
 
           return (
             <RelationPath
@@ -790,29 +793,6 @@ function resizeTableWidthFromHandle(
     width: right - left,
     height,
   };
-}
-
-function getTableGroupVisual(table: TableModel, groups: GroupModel[]): TableVisual | undefined {
-  if (!table.usesGroupStyle) return undefined;
-  const center = {
-    x: table.x + table.width / 2,
-    y: table.y + table.height / 2,
-  };
-
-  return [...groups].reverse().find((group) =>
-    center.x >= group.x &&
-    center.x <= group.x + group.width &&
-    center.y >= group.y &&
-    center.y <= group.y + group.height,
-  )?.tableVisual;
-}
-
-function getEffectiveTableVisual(
-  table: TableModel,
-  defaultVisual: TableVisual,
-  groups: GroupModel[],
-): TableVisual {
-  return getTableGroupVisual(table, groups) ?? (table.usesDefaultStyle ? defaultVisual : table.visual);
 }
 
 function resizeBoxFromCorner(

@@ -87,6 +87,9 @@ describe("exporters", () => {
     expect(dbml).toContain("// text=#0f766e");
     expect(dbml).toContain("// tableBorder=#14b8a6");
     expect(dbml).toContain("// tableLine=#2dd4bf");
+    expect(dbml).toContain("// tables=user,project");
+
+    expect(parseDbml(dbml).groups[0].tables).toEqual(["user", "project"]);
   });
 
   it("exports a complete TikZ document with groups, tables and relations", () => {
@@ -101,6 +104,24 @@ describe("exporters", () => {
     expect(tikz).toContain("\\draw[dashed");
     expect(tikz).not.toContain("\\draw[->");
     expect(tikz).toContain("\\end{document}");
+  });
+
+  it("exports TikZ relations with the effective table line color", () => {
+    const tikz = exportTikz(parseDbml(`// @diagram
+// tableLine=#123456
+
+Table user {
+  id int [pk]
+}
+
+Table project {
+  user_id int
+}
+
+Ref: project.user_id > user.id
+`));
+
+    expect(tikz).toContain("draw={rgb,255:red,18;green,52;blue,86}");
   });
 
   it("keeps a relation when all manual points are removed and saved", () => {

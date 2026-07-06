@@ -29,6 +29,7 @@ import { parseDbml } from "../parser/dbmlParser";
 import { listWorkspaceDbml, saveWorkspaceDbml, sendWorkspaceDbmlBeacon } from "../utils/fileSave";
 import { makeId, slugify, uniqueId } from "../utils/id";
 import { organizeRelationRoute } from "../utils/relationRouting";
+import { readJson, safeGetItem, safeSetItem, writeJson } from "../utils/storage";
 import { demoDbml } from "./demoDbml";
 
 export interface DiagramController {
@@ -188,7 +189,7 @@ export function useDiagramController(): DiagramController {
     }
 
     commitDiagramLibrary(nextDiagrams, id);
-    localStorage.setItem(LEGACY_SAVED_DBML_KEY, dbml);
+    safeSetItem(LEGACY_SAVED_DBML_KEY, dbml);
 
     if (!options.silent) {
       setSaveMessage(`Salvo ${new Date(now).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}`);
@@ -328,7 +329,7 @@ export function useDiagramController(): DiagramController {
         const previousActiveId = activeDiagramIdRef.current;
         const previousFilename =
           diagramsRef.current.find((item) => item.id === previousActiveId)?.filename ??
-          localStorage.getItem(ACTIVE_DIAGRAM_FILENAME_STORAGE_KEY);
+          safeGetItem(ACTIVE_DIAGRAM_FILENAME_STORAGE_KEY);
         const active =
           nextDiagrams.find((item) => item.id === previousActiveId) ??
           nextDiagrams.find((item) => item.filename === previousFilename) ??
@@ -877,10 +878,6 @@ export function useDiagramController(): DiagramController {
               ...defaultRelationVisual,
               fromSide: defaultRelationVisual.fromSide,
               toSide: defaultRelationVisual.toSide,
-              startOffsetX: 0,
-              startOffsetY: 0,
-              endOffsetX: 0,
-              endOffsetY: 0,
               viaPoints: [],
             };
       }),
@@ -1209,10 +1206,6 @@ function tidyRelationGeometry(relation: RelationModel, tables: TableModel[]): Re
     fromSide: route.fromSide,
     toSide: route.toSide,
     route: "orthogonal",
-    startOffsetX: 0,
-    startOffsetY: 0,
-    endOffsetX: 0,
-    endOffsetY: 0,
     viaPoints: route.viaPoints,
   };
 }
@@ -1256,7 +1249,7 @@ function hasManualForeignKeySetting(column: ColumnModel): boolean {
 
 function loadDiagramLibrary(): DiagramLibrary {
   const stored = readStoredDiagrams();
-  const legacyDbml = localStorage.getItem(LEGACY_SAVED_DBML_KEY);
+  const legacyDbml = safeGetItem(LEGACY_SAVED_DBML_KEY);
 
   const diagrams = stored.length
     ? stored
@@ -1269,8 +1262,8 @@ function loadDiagramLibrary(): DiagramLibrary {
           filename: dbmlFilename("Diagrama 1"),
         },
       ];
-  const activeId = localStorage.getItem(ACTIVE_DIAGRAM_STORAGE_KEY);
-  const activeFilename = localStorage.getItem(ACTIVE_DIAGRAM_FILENAME_STORAGE_KEY);
+  const activeId = safeGetItem(ACTIVE_DIAGRAM_STORAGE_KEY);
+  const activeFilename = safeGetItem(ACTIVE_DIAGRAM_FILENAME_STORAGE_KEY);
   const activeDiagram =
     diagrams.find((item) => item.id === activeId) ??
     diagrams.find((item) => item.filename === activeFilename) ??
@@ -1285,34 +1278,27 @@ function loadDiagramLibrary(): DiagramLibrary {
 }
 
 function readStoredDiagrams(): SavedDiagram[] {
-  try {
-    const raw = localStorage.getItem(DIAGRAMS_STORAGE_KEY);
-    if (!raw) return [];
+  const parsed = readJson<unknown>(DIAGRAMS_STORAGE_KEY, []);
+  if (!Array.isArray(parsed)) return [];
 
-    const parsed = JSON.parse(raw);
-    if (!Array.isArray(parsed)) return [];
-
-    return parsed
-      .filter(isStoredDiagram)
-      .map((item) => ({
-        id: item.id,
-        name: normalizeDiagramName(item.name),
-        dbml: migrateDarkOnlyDbml(item.dbml),
-        updatedAt: item.updatedAt,
-        filename: item.filename ?? dbmlFilename(item.name),
-      }));
-  } catch {
-    return [];
-  }
+  return parsed
+    .filter(isStoredDiagram)
+    .map((item) => ({
+      id: item.id,
+      name: normalizeDiagramName(item.name),
+      dbml: migrateDarkOnlyDbml(item.dbml),
+      updatedAt: item.updatedAt,
+      filename: item.filename ?? dbmlFilename(item.name),
+    }));
 }
 
 function writeDiagramLibrary(diagrams: SavedDiagram[], activeDiagramId: string): void {
   const active = diagrams.find((item) => item.id === activeDiagramId);
 
-  localStorage.setItem(DIAGRAMS_STORAGE_KEY, JSON.stringify(diagrams));
-  localStorage.setItem(ACTIVE_DIAGRAM_STORAGE_KEY, activeDiagramId);
+  writeJson(DIAGRAMS_STORAGE_KEY, diagrams);
+  safeSetItem(ACTIVE_DIAGRAM_STORAGE_KEY, activeDiagramId);
   if (active?.filename) {
-    localStorage.setItem(ACTIVE_DIAGRAM_FILENAME_STORAGE_KEY, active.filename);
+    safeSetItem(ACTIVE_DIAGRAM_FILENAME_STORAGE_KEY, active.filename);
   }
 }
 

@@ -31,12 +31,17 @@ export interface SpecialLayout {
     visual?: Partial<DiagramVisual>;
   };
   tableProps: Map<string, TableSpecialProps>;
-  lineProps: Array<Partial<RelationModel>>;
+  lineProps: LineSpecialProps[];
   groups: GroupModel[];
 }
 
 export interface TableSpecialProps extends Partial<Omit<TableModel, "visual">> {
   visual?: Partial<TableVisual>;
+}
+
+export interface LineSpecialProps {
+  key: string;
+  props: Partial<RelationModel>;
 }
 
 interface CommentBlock {
@@ -73,7 +78,7 @@ export function parseSpecialComments(source: string): SpecialLayout {
   }
 
   const tableProps = new Map<string, TableSpecialProps>();
-  const lineProps: Array<Partial<RelationModel>> = [];
+  const lineProps: LineSpecialProps[] = [];
   const groups: GroupModel[] = [];
   const diagramProps: SpecialLayout["diagramProps"] = {};
 
@@ -87,7 +92,10 @@ export function parseSpecialComments(source: string): SpecialLayout {
     }
 
     if (block.kind === "line") {
-      lineProps.push(blockToLineProps(block));
+      lineProps.push({
+        key: block.key,
+        props: blockToLineProps(block),
+      });
     }
 
     if (block.kind === "group") {
@@ -161,7 +169,6 @@ function blockToLineProps(block: CommentBlock): Partial<RelationModel> {
   return {
     color,
     usesTableLineColor,
-    arrowColor: normalizeHex(props.arrowColor, color),
     fromCardinality: parseCardinality(props.fromCardinality, defaultRelationVisual.fromCardinality),
     toCardinality: parseCardinality(props.toCardinality, defaultRelationVisual.toCardinality),
     strokeWidth: numberOr(props.strokeWidth, defaultRelationVisual.strokeWidth),
@@ -170,10 +177,6 @@ function blockToLineProps(block: CommentBlock): Partial<RelationModel> {
     route: parseLineRoute(props.route, defaultRelationVisual.route),
     fromSide: parseRelationSide(props.from, defaultRelationVisual.fromSide),
     toSide: parseRelationSide(props.to, defaultRelationVisual.toSide),
-    startOffsetX: 0,
-    startOffsetY: 0,
-    endOffsetX: 0,
-    endOffsetY: 0,
     label: props.label ?? defaultRelationVisual.label,
     viaPoints: parseViaPoints(props.via),
   };

@@ -82,10 +82,6 @@ export const defaultRelationVisual: Pick<
   RelationModel,
   | "fromSide"
   | "toSide"
-  | "startOffsetX"
-  | "startOffsetY"
-  | "endOffsetX"
-  | "endOffsetY"
   | "route"
   | "viaPoints"
   | "color"
@@ -93,17 +89,12 @@ export const defaultRelationVisual: Pick<
   | "opacity"
   | "strokeWidth"
   | "style"
-  | "arrowColor"
   | "fromCardinality"
   | "toCardinality"
   | "label"
 > = {
   fromSide: "east",
   toSide: "west",
-  startOffsetX: 0,
-  startOffsetY: 0,
-  endOffsetX: 0,
-  endOffsetY: 0,
   route: "orthogonal",
   viaPoints: [],
   color: "#94a3b8",
@@ -111,7 +102,6 @@ export const defaultRelationVisual: Pick<
   opacity: 0.9,
   strokeWidth: 2,
   style: "solid",
-  arrowColor: "#94a3b8",
   fromCardinality: "many",
   toCardinality: "one",
   label: "",

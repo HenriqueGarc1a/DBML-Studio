@@ -15,8 +15,10 @@ import type {
   TableModel,
   TableVisual,
 } from "../model/types";
+import { getEffectiveTableVisual } from "../model/visualSelectors";
 import { getRelationGeometry } from "../utils/geometry";
 import { snapPoint } from "../utils/grid";
+import { safeGetItem, safeSetItem } from "../utils/storage";
 
 interface PropertiesPanelProps {
   controller: DiagramController;
@@ -129,7 +131,13 @@ export function PropertiesPanel({ controller, collapsed, onToggle }: PropertiesP
                   usesGroupStyle: usesDefaultStyle ? false : table.usesGroupStyle,
                   visual: usesDefaultStyle
                     ? table.visual
-                    : { ...getEffectiveTableVisual(table, controller.diagram.visual.defaultTable) },
+                    : {
+                        ...getEffectiveTableVisual(
+                          table,
+                          controller.diagram.visual.defaultTable,
+                          controller.diagram.groups,
+                        ),
+                      },
                 });
               }}
             />
@@ -311,11 +319,7 @@ function CollapsibleGroup({
   };
 
   useEffect(() => {
-    try {
-      localStorage.setItem(`${PROPERTY_GROUP_STORAGE_PREFIX}${id}`, open ? "open" : "closed");
-    } catch {
-      // localStorage may be unavailable in restricted browser contexts.
-    }
+    safeSetItem(`${PROPERTY_GROUP_STORAGE_PREFIX}${id}`, open ? "open" : "closed");
   }, [id, open]);
 
   return (
@@ -774,22 +778,14 @@ function RelationProperties({ controller, relationId }: { controller: DiagramCon
           value={relation.fromSide === "west" ? "west" : "east"}
           options={["west", "east"]}
           labels={{ east: "Direita", west: "Esquerda" }}
-          onChange={(fromSide) => controller.updateRelation(relation.id, {
-            fromSide,
-            startOffsetX: 0,
-            startOffsetY: 0,
-          })}
+          onChange={(fromSide) => controller.updateRelation(relation.id, { fromSide })}
         />
         <SelectField<Direction>
           label="Destino"
           value={relation.toSide === "west" ? "west" : "east"}
           options={["west", "east"]}
           labels={{ east: "Direita", west: "Esquerda" }}
-          onChange={(toSide) => controller.updateRelation(relation.id, {
-            toSide,
-            endOffsetX: 0,
-            endOffsetY: 0,
-          })}
+          onChange={(toSide) => controller.updateRelation(relation.id, { toSide })}
         />
         <div className="button-row">
           <button type="button" className="secondary-button" onClick={() => controller.tidyRelation(relation.id)}>
@@ -1059,10 +1055,6 @@ function relationEndpointLabel(relation: RelationModel, tableMap: Map<string, Ta
   return `${fromTable}.${relation.fromColumn} -> ${toTable}.${relation.toColumn}`;
 }
 
-function getEffectiveTableVisual(table: TableModel, defaultVisual: TableVisual): TableVisual {
-  return table.usesDefaultStyle ? defaultVisual : table.visual;
-}
-
 function confirmRemoval(message: string): boolean {
   if (typeof window === "undefined" || typeof window.confirm !== "function") return true;
   return window.confirm(message);
@@ -1073,13 +1065,9 @@ function isHexColor(value: string): boolean {
 }
 
 function readStoredGroupOpen(id: string, fallback: boolean): boolean {
-  try {
-    const stored = localStorage.getItem(`${PROPERTY_GROUP_STORAGE_PREFIX}${id}`);
-    if (stored === "open") return true;
-    if (stored === "closed") return false;
-  } catch {
-    // localStorage may be unavailable in restricted browser contexts.
-  }
+  const stored = safeGetItem(`${PROPERTY_GROUP_STORAGE_PREFIX}${id}`);
+  if (stored === "open") return true;
+  if (stored === "closed") return false;
 
   return fallback;
 }

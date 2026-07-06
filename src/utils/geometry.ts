@@ -64,13 +64,11 @@ export function snapRelationEndpoint(
   table: TableModel,
   columnName: string,
   point: Point,
-  snapToGrid: boolean,
-  gridSize?: number,
+  _snapToGrid: boolean,
+  _gridSize?: number,
 ): {
   side: Direction;
   point: Point;
-  offsetX: number;
-  offsetY: number;
 } {
   const side = sideForPoint(table, point);
   const anchor = getColumnPoint(table, columnName, side);
@@ -78,8 +76,6 @@ export function snapRelationEndpoint(
   return {
     side,
     point: anchor,
-    offsetX: 0,
-    offsetY: 0,
   };
 }
 
