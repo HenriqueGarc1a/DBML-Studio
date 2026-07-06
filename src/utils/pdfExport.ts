@@ -69,8 +69,6 @@ export async function exportDiagramPdf(
 
   const layout = getPdfImageLayout(dimensions, pageWidth, pageHeight, margin);
 
-  addImagePage(pdf, allFlowPng, layout);
-  pdf.addPage([pageWidth, pageHeight], orientation);
   addImagePage(pdf, normalPng, layout);
   pdf.save(filename);
   return true;

@@ -1,7 +1,7 @@
 // @diagram
 // background=#0f172a
 // gridColor=#1f2a3a
-// gridSize=4
+// gridSize=20
 // tableBackground=#111827
 // tableBorder=#4b5f78
 // tableHeader=#253142
@@ -22,12 +22,18 @@
 // uniqueBadgeText=#c7d2fe
 
 // @table ages_user
-// x=60
-// y=773
-// width=282
+// x=2280
+// y=740
+// width=380
 // height=262
-// useDefaultStyle=true
-// useGroupStyle=false
+// useDefaultStyle=false
+// useGroupStyle=true
+// background=#111827
+// border=#4b5f78
+// header=#253142
+// text=#e5edf7
+// line=#94a3b8
+// opacity=1
 Table ages_user {
   id uuid [pk]
   email varchar(255) [not null]
@@ -40,12 +46,18 @@ Table ages_user {
 }
 
 // @table project
-// x=12
-// y=413
-// width=330
+// x=3300
+// y=740
+// width=380
 // height=290
-// useDefaultStyle=true
-// useGroupStyle=false
+// useDefaultStyle=false
+// useGroupStyle=true
+// background=#111827
+// border=#4b5f78
+// header=#253142
+// text=#e5edf7
+// line=#94a3b8
+// opacity=1
 Table project {
   id uuid [pk]
   description text [not null]
@@ -59,12 +71,18 @@ Table project {
 }
 
 // @table team
-// x=468
-// y=565.6
-// width=226
+// x=2820
+// y=740
+// width=380
 // height=122
-// useDefaultStyle=true
-// useGroupStyle=false
+// useDefaultStyle=false
+// useGroupStyle=true
+// background=#111827
+// border=#4b5f78
+// header=#253142
+// text=#e5edf7
+// line=#94a3b8
+// opacity=1
 Table team {
   id uuid [pk]
   teacher_id uuid [not null]
@@ -72,12 +90,18 @@ Table team {
 }
 
 // @table class
-// x=473.3
-// y=819.7
-// width=242
+// x=2820
+// y=380
+// width=380
 // height=206
-// useDefaultStyle=true
-// useGroupStyle=false
+// useDefaultStyle=false
+// useGroupStyle=true
+// background=#111827
+// border=#4b5f78
+// header=#253142
+// text=#e5edf7
+// line=#94a3b8
+// opacity=1
 Table class {
   id uuid [pk]
   number int [not null]
@@ -88,29 +112,41 @@ Table class {
 }
 
 // @table semester_profile
-// x=836
-// y=592
-// width=346
+// x=2280
+// y=380
+// width=380
 // height=234
-// useDefaultStyle=true
-// useGroupStyle=false
+// useDefaultStyle=false
+// useGroupStyle=true
+// background=#111827
+// border=#4b5f78
+// header=#253142
+// text=#e5edf7
+// line=#94a3b8
+// opacity=1
 Table semester_profile {
   id uuid [pk]
   grade numeric(4,2)
   ages_role ages_role [not null]
   student_status semester_status [not null]
   user_id uuid [not null]
-  team_id uuid [not null]
   class_id uuid [not null]
+  team_id uuid [not null]
 }
 
 // @table lesson
-// x=899
-// y=896
-// width=220
+// x=3300
+// y=380
+// width=380
 // height=122
-// useDefaultStyle=true
-// useGroupStyle=false
+// useDefaultStyle=false
+// useGroupStyle=true
+// background=#111827
+// border=#4b5f78
+// header=#253142
+// text=#e5edf7
+// line=#94a3b8
+// opacity=1
 Table lesson {
   id uuid [pk]
   date timestamp [not null]
@@ -118,12 +154,18 @@ Table lesson {
 }
 
 // @table otp
-// x=452
-// y=317.6
-// width=266
+// x=1720
+// y=740
+// width=380
 // height=178
-// useDefaultStyle=true
-// useGroupStyle=false
+// useDefaultStyle=false
+// useGroupStyle=true
+// background=#111827
+// border=#4b5f78
+// header=#253142
+// text=#e5edf7
+// line=#94a3b8
+// opacity=1
 Table otp {
   id uuid [pk]
   user_id uuid [not null]
@@ -133,12 +175,18 @@ Table otp {
 }
 
 // @table schedule
-// x=452
-// y=1095.7
-// width=274
+// x=1720
+// y=380
+// width=380
 // height=206
-// useDefaultStyle=true
-// useGroupStyle=false
+// useDefaultStyle=false
+// useGroupStyle=true
+// background=#111827
+// border=#4b5f78
+// header=#253142
+// text=#e5edf7
+// line=#94a3b8
+// opacity=1
 Table schedule {
   id uuid [pk]
   admin_id uuid [not null]
@@ -149,12 +197,18 @@ Table schedule {
 }
 
 // @table technology
-// x=76
-// y=105.3
-// width=266
+// x=3780
+// y=920
+// width=380
 // height=122
-// useDefaultStyle=true
-// useGroupStyle=false
+// useDefaultStyle=false
+// useGroupStyle=true
+// background=#111827
+// border=#4b5f78
+// header=#253142
+// text=#e5edf7
+// line=#94a3b8
+// opacity=1
 Table technology {
   id uuid [pk]
   name varchar(255) [not null]
@@ -162,12 +216,18 @@ Table technology {
 }
 
 // @table project_stack
-// x=452
-// y=125.6
-// width=250
+// x=3780
+// y=740
+// width=380
 // height=122
-// useDefaultStyle=true
-// useGroupStyle=false
+// useDefaultStyle=false
+// useGroupStyle=true
+// background=#111827
+// border=#4b5f78
+// header=#253142
+// text=#e5edf7
+// line=#94a3b8
+// opacity=1
 Table project_stack {
   id uuid [pk]
   project_id uuid [not null]
@@ -178,12 +238,18 @@ Table project_stack {
 }
 
 // @table report
-// x=1292
-// y=316
-// width=298
-// height=234
-// useDefaultStyle=true
-// useGroupStyle=false
+// x=2820
+// y=-100
+// width=380
+// height=318
+// useDefaultStyle=false
+// useGroupStyle=true
+// background=#111827
+// border=#4b5f78
+// header=#253142
+// text=#e5edf7
+// line=#94a3b8
+// opacity=1
 Table report {
   id uuid [pk]
   student_id uuid [not null]
@@ -192,15 +258,24 @@ Table report {
   grade numeric(4,2)
   type report_type [not null]
   url_archive varchar(255)
+  comment text
+  correction_url varchar(255)
+  revision_date timestap
 }
 
 // @table examining_board
-// x=1316
-// y=620
-// width=250
+// x=2280
+// y=-100
+// width=380
 // height=178
-// useDefaultStyle=true
-// useGroupStyle=false
+// useDefaultStyle=false
+// useGroupStyle=true
+// background=#111827
+// border=#4b5f78
+// header=#253142
+// text=#e5edf7
+// line=#94a3b8
+// opacity=1
 Table examining_board {
   id uuid [pk]
   date date [not null]
@@ -210,12 +285,18 @@ Table examining_board {
 }
 
 // @table examining_board_member
-// x=1700
-// y=1230.3
-// width=290
+// x=1740
+// y=-100
+// width=380
 // height=122
-// useDefaultStyle=true
-// useGroupStyle=false
+// useDefaultStyle=false
+// useGroupStyle=true
+// background=#111827
+// border=#4b5f78
+// header=#253142
+// text=#e5edf7
+// line=#94a3b8
+// opacity=1
 Table examining_board_member {
   id uuid [pk]
   examining_board_id uuid [not null]
@@ -223,40 +304,37 @@ Table examining_board_member {
 }
 
 // @table attendance
-// x=1292
-// y=875.7
-// width=226
+// x=3780
+// y=380
+// width=380
 // height=122
-// useDefaultStyle=true
-// useGroupStyle=false
+// useDefaultStyle=false
+// useGroupStyle=true
+// background=#111827
+// border=#4b5f78
+// header=#253142
+// text=#e5edf7
+// line=#94a3b8
+// opacity=1
 Table attendance {
   id uuid [pk]
   lesson_id uuid [not null]
   student_id uuid [not null]
 }
 
-// @table report_review
-// x=1700
-// y=344
-// width=322
-// height=178
-// useDefaultStyle=true
-// useGroupStyle=false
-Table report_review {
-  id uuid [pk]
-  comment text [not null]
-  correction_url varchar(255) [not null]
-  revision_date timestamp [not null]
-  report_id uuid [not null, unique]
-}
-
 // @table sprint_report
-// x=1700
-// y=12
-// width=306
+// x=3780
+// y=-100
+// width=380
 // height=262
-// useDefaultStyle=true
-// useGroupStyle=false
+// useDefaultStyle=false
+// useGroupStyle=true
+// background=#111827
+// border=#4b5f78
+// header=#253142
+// text=#e5edf7
+// line=#94a3b8
+// opacity=1
 Table sprint_report {
   id uuid [pk]
   activity_completed text [not null]
@@ -269,12 +347,18 @@ Table sprint_report {
 }
 
 // @table hours_report
-// x=1700
-// y=592
-// width=330
+// x=3300
+// y=-100
+// width=380
 // height=234
-// useDefaultStyle=true
-// useGroupStyle=false
+// useDefaultStyle=false
+// useGroupStyle=true
+// background=#111827
+// border=#4b5f78
+// header=#253142
+// text=#e5edf7
+// line=#94a3b8
+// opacity=1
 Table hours_report {
   id uuid [pk]
   activities text
@@ -295,8 +379,9 @@ Ref: ages_user.id > team.teacher_id
 // route=orthogonal
 // from=east
 // to=west
-// fromCardinality=many
-// toCardinality=one
+// fromCardinality=one
+// toCardinality=many
+// via=(2692,792),(2700,820)
 
 Ref: project.id > team.project_id
 // @line relation-project-id-team-project_id-1
@@ -306,10 +391,11 @@ Ref: project.id > team.project_id
 // opacity=0.9
 // style=solid
 // route=orthogonal
-// from=east
-// to=west
+// from=west
+// to=east
 // fromCardinality=many
 // toCardinality=one
+// via=(3328,792),(3232,792),(3232,848)
 
 Ref: ages_user.id > class.teacher_id
 // @line relation-ages_user-id-class-teacher_id-2
@@ -321,8 +407,9 @@ Ref: ages_user.id > class.teacher_id
 // route=orthogonal
 // from=east
 // to=west
-// fromCardinality=many
-// toCardinality=one
+// fromCardinality=one
+// toCardinality=many
+// via=(2692,792),(2700,640),(2788,544)
 
 Ref: ages_user.id > semester_profile.user_id
 // @line relation-ages_user-id-semester_profile-user_id-3
@@ -332,10 +419,11 @@ Ref: ages_user.id > semester_profile.user_id
 // opacity=0.9
 // style=solid
 // route=orthogonal
-// from=east
+// from=west
 // to=west
-// fromCardinality=many
-// toCardinality=one
+// fromCardinality=one
+// toCardinality=many
+// via=(2240,872),(2240,544)
 
 Ref: team.id > semester_profile.team_id
 // @line relation-team-id-semester_profile-team_id-4
@@ -345,10 +433,11 @@ Ref: team.id > semester_profile.team_id
 // opacity=0.9
 // style=solid
 // route=orthogonal
-// from=east
-// to=west
-// fromCardinality=many
-// toCardinality=one
+// from=west
+// to=east
+// fromCardinality=one
+// toCardinality=many
+// via=(2788,792),(2740,600),(2692,600)
 
 Ref: class.id > semester_profile.class_id
 // @line relation-class-id-semester_profile-class_id-5
@@ -358,10 +447,11 @@ Ref: class.id > semester_profile.class_id
 // opacity=0.9
 // style=solid
 // route=orthogonal
-// from=east
-// to=west
-// fromCardinality=many
-// toCardinality=one
+// from=west
+// to=east
+// fromCardinality=one
+// toCardinality=many
+// via=(2848,432),(2800,460),(2740,480),(2740,572)
 
 Ref: class.id > lesson.class_id
 // @line relation-class-id-lesson-class_id-6
@@ -373,8 +463,9 @@ Ref: class.id > lesson.class_id
 // route=orthogonal
 // from=east
 // to=west
-// fromCardinality=many
-// toCardinality=one
+// fromCardinality=one
+// toCardinality=many
+// via=(3292,432),(3308,432),(3308,488)
 
 Ref: ages_user.id > otp.user_id
 // @line relation-ages_user-id-otp-user_id-7
@@ -384,10 +475,11 @@ Ref: ages_user.id > otp.user_id
 // opacity=0.9
 // style=solid
 // route=orthogonal
-// from=east
-// to=west
-// fromCardinality=many
-// toCardinality=one
+// from=west
+// to=east
+// fromCardinality=one
+// toCardinality=many
+// via=(2240,792),(2180,820)
 
 Ref: ages_user.id > schedule.admin_id
 // @line relation-ages_user-id-schedule-admin_id-8
@@ -397,10 +489,11 @@ Ref: ages_user.id > schedule.admin_id
 // opacity=0.9
 // style=solid
 // route=orthogonal
-// from=east
-// to=west
-// fromCardinality=many
-// toCardinality=one
+// from=west
+// to=east
+// fromCardinality=one
+// toCardinality=many
+// via=(2240,792),(2180,820),(2180,460)
 
 Ref: project.id > project_stack.project_id
 // @line relation-project-id-project_stack-project_id-9
@@ -414,6 +507,7 @@ Ref: project.id > project_stack.project_id
 // to=west
 // fromCardinality=many
 // toCardinality=one
+// via=(3772,792),(3808,792),(3808,820)
 
 Ref: technology.id > project_stack.technology_id
 // @line relation-technology-id-project_stack-technology_id-10
@@ -424,9 +518,10 @@ Ref: technology.id > project_stack.technology_id
 // style=solid
 // route=orthogonal
 // from=east
-// to=west
+// to=east
 // fromCardinality=many
 // toCardinality=one
+// via=(4192,972),(4192,848)
 
 Ref: semester_profile.id > report.student_id
 // @line relation-semester_profile-id-report-student_id-11
@@ -438,8 +533,9 @@ Ref: semester_profile.id > report.student_id
 // route=orthogonal
 // from=east
 // to=west
-// fromCardinality=many
-// toCardinality=one
+// fromCardinality=one
+// toCardinality=many
+// via=(2740,432),(2740,280),(2740,-20)
 
 Ref: semester_profile.id > examining_board.student_id
 // @line relation-semester_profile-id-examining_board-student_id-12
@@ -449,10 +545,11 @@ Ref: semester_profile.id > examining_board.student_id
 // opacity=0.9
 // style=solid
 // route=orthogonal
-// from=east
+// from=west
 // to=west
-// fromCardinality=many
+// fromCardinality=one
 // toCardinality=one
+// via=(2692,432),(2200,64)
 
 Ref: examining_board.id > examining_board_member.examining_board_id
 // @line relation-examining_board-id-examining_board_member-examining_board_id-13
@@ -462,10 +559,11 @@ Ref: examining_board.id > examining_board_member.examining_board_id
 // opacity=0.9
 // style=solid
 // route=orthogonal
-// from=east
-// to=west
-// fromCardinality=many
-// toCardinality=one
+// from=west
+// to=east
+// fromCardinality=one
+// toCardinality=many
+// via=(2248,-48),(2200,-20),(2152,-20)
 
 Ref: ages_user.id > examining_board_member.teacher_id
 // @line relation-ages_user-id-examining_board_member-teacher_id-14
@@ -475,10 +573,11 @@ Ref: ages_user.id > examining_board_member.teacher_id
 // opacity=0.9
 // style=solid
 // route=orthogonal
-// from=east
-// to=west
-// fromCardinality=many
-// toCardinality=one
+// from=west
+// to=east
+// fromCardinality=one
+// toCardinality=many
+// via=(2240,792),(2180,820),(2180,8)
 
 Ref: lesson.id > attendance.lesson_id
 // @line relation-lesson-id-attendance-lesson_id-15
@@ -490,8 +589,9 @@ Ref: lesson.id > attendance.lesson_id
 // route=orthogonal
 // from=east
 // to=west
-// fromCardinality=many
-// toCardinality=one
+// fromCardinality=one
+// toCardinality=many
+// via=(3752,432),(3788,432),(3788,460)
 
 Ref: semester_profile.id > attendance.student_id
 // @line relation-semester_profile-id-attendance-student_id-16
@@ -502,25 +602,13 @@ Ref: semester_profile.id > attendance.student_id
 // style=solid
 // route=orthogonal
 // from=east
-// to=west
-// fromCardinality=many
-// toCardinality=one
-
-Ref: report.id > report_review.report_id
-// @line relation-report-id-report_review-report_id-17
-// color=#94a3b8
-// useTableLineColor=true
-// strokeWidth=4
-// opacity=0.9
-// style=solid
-// route=orthogonal
-// from=east
-// to=west
-// fromCardinality=many
-// toCardinality=one
+// to=east
+// fromCardinality=one
+// toCardinality=many
+// via=(2692,432),(2740,300),(4200,360),(4200,488)
 
 Ref: report.id > sprint_report.report_id
-// @line relation-report-id-sprint_report-report_id-18
+// @line relation-report-id-sprint_report-report_id-17
 // color=#94a3b8
 // useTableLineColor=true
 // strokeWidth=4
@@ -529,11 +617,12 @@ Ref: report.id > sprint_report.report_id
 // route=orthogonal
 // from=east
 // to=west
-// fromCardinality=many
+// fromCardinality=one
 // toCardinality=one
+// via=(3232,-48),(3240,180),(3748,152),(3748,148)
 
 Ref: report.id > hours_report.report_id
-// @line relation-report-id-hours_report-report_id-19
+// @line relation-report-id-hours_report-report_id-18
 // color=#94a3b8
 // useTableLineColor=true
 // strokeWidth=4
@@ -542,5 +631,139 @@ Ref: report.id > hours_report.report_id
 // route=orthogonal
 // from=east
 // to=west
-// fromCardinality=many
+// fromCardinality=one
 // toCardinality=one
+// via=(3232,-48),(3268,-48),(3268,120)
+
+// @group k0mxujg
+// label=OTP
+// labelX=24
+// labelY=28
+// x=1660
+// y=680
+// width=500
+// height=400
+// background=#0f766e
+// border=#0f766e
+// text=#08fde8
+// opacity=0.02
+// tableBackground=#10231f
+// tableBorder=#2dd4bf
+// tableHeader=#134e4a
+// tableText=#dffcf7
+// tableLine=#2dd4bf
+// tableOpacity=1
+
+// @group coe9t2c
+// label=Projetos
+// labelX=12
+// labelY=24
+// x=2760
+// y=680
+// width=1460
+// height=400
+// background=#1d4ed8
+// border=#1d4ed8
+// text=#7dd3fc
+// opacity=0.02
+// tableBackground=#0f172a
+// tableBorder=#60a5fa
+// tableHeader=#1e3a8a
+// tableText=#dbeafe
+// tableLine=#60a5fa
+// tableOpacity=1
+
+// @group 3r8x0p1
+// label=Bancas
+// labelX=12
+// labelY=24
+// x=1660
+// y=-160
+// width=1060
+// height=440
+// background=#7e22ce
+// border=#7e22ce
+// text=#d8b4fe
+// opacity=0.02
+// tableBackground=#1e102f
+// tableBorder=#c084fc
+// tableHeader=#581c87
+// tableText=#f3e8ff
+// tableLine=#c084fc
+// tableOpacity=1
+
+// @group jt6bg65
+// label=Relatorios
+// labelX=12
+// labelY=24
+// x=2760
+// y=-160
+// width=1460
+// height=440
+// background=#be185d
+// border=#be185d
+// text=#f9a8d4
+// opacity=0.02
+// tableBackground=#2a0f1d
+// tableBorder=#f472b6
+// tableHeader=#831843
+// tableText=#fce7f3
+// tableLine=#f472b6
+// tableOpacity=1
+
+// @group vhvyf8s
+// label=Chamadas
+// labelX=12
+// labelY=24
+// x=2760
+// y=320
+// width=1460
+// height=340
+// background=#c2410c
+// border=#c2410c
+// text=#fdba74
+// opacity=0.02
+// tableBackground=#25150b
+// tableBorder=#fb923c
+// tableHeader=#7c2d12
+// tableText=#ffedd5
+// tableLine=#fb923c
+// tableOpacity=1
+
+// @group hfx9bld
+// label=Usuarios
+// labelX=24
+// labelY=28
+// x=2220
+// y=320
+// width=500
+// height=760
+// background=#15803d
+// border=#15803d
+// text=#86efac
+// opacity=0.02
+// tableBackground=#0f2318
+// tableBorder=#4ade80
+// tableHeader=#14532d
+// tableText=#dcfce7
+// tableLine=#4ade80
+// tableOpacity=1
+
+// @group ss1jz4o
+// label=Admin
+// labelX=24
+// labelY=28
+// x=1660
+// y=320
+// width=500
+// height=340
+// background=#b91c1c
+// border=#b91c1c
+// text=#fca5a5
+// opacity=0.02
+// tableBackground=#2a1010
+// tableBorder=#f87171
+// tableHeader=#7f1d1d
+// tableText=#fee2e2
+// tableLine=#f87171
+// tableOpacity=1
