@@ -57,7 +57,7 @@ export async function exportDiagramPdf(
   const allFlowPng = await svgToPng(svg, dimensions, { variant: "all-flow" });
   const normalPng = await svgToPng(svg, dimensions);
   const { jsPDF } = await import("jspdf");
-  const margin = 24;
+  const margin = 0;
   const pageWidth = Math.max(320, dimensions.width);
   const pageHeight = Math.max(240, dimensions.height);
   const orientation = pageWidth >= pageHeight ? "landscape" : "portrait";

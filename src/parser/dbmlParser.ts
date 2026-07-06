@@ -77,14 +77,18 @@ export function parseDbml(source: string): DiagramModel {
       ...(lineProps ?? {}),
     };
   });
-  const foreignKeys = new Set(relations.map((relation) => `${relation.fromTable}.${relation.fromColumn}`));
+  const foreignKeys = new Set(
+    relations.map((relation) => `${relation.toTable}.${relation.toColumn}`),
+  );
+
   const tablesWithForeignKeys = tables.map((table) => ({
     ...table,
     columns: table.columns.map((column) =>
-      foreignKeys.has(`${table.id}.${column.name}`) ? { ...column, foreignKey: true } : column,
+      foreignKeys.has(`${table.id}.${column.name}`)
+        ? { ...column, foreignKey: true }
+        : column,
     ),
   }));
-
   return {
     id: "diagram-main",
     visual,
