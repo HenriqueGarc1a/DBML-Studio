@@ -235,7 +235,7 @@ function formatRefs(table: SqlTable): string[] {
   return table.foreignKeys.flatMap((foreignKey) =>
     foreignKey.columns.map((column, index) => {
       const refColumn = foreignKey.refColumns[index] ?? foreignKey.refColumns[0] ?? "id";
-      return `Ref: ${formatIdentifier(table.name)}.${formatIdentifier(column)} > ${formatIdentifier(
+      return `Ref: ${formatIdentifier(table.name)}.${formatIdentifier(column)} < ${formatIdentifier(
         foreignKey.refTable,
       )}.${formatIdentifier(refColumn)}`;
     }),

@@ -1,0 +1,15 @@
+Table app_user {
+  id int [pk]
+  name varchar(100) [not null]
+  email varchar(150) [not null, unique]
+}
+
+Table car {
+  id int [pk]
+  model varchar(100) [not null]
+  brand varchar(100) [not null]
+  year int [not null]
+  user_id int [not null]
+}
+
+Ref: car.user_id < app_user.id

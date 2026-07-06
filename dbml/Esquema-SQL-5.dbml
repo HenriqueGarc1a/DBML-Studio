@@ -1,0 +1,63 @@
+// @diagram
+// background=#0f172a
+// gridColor=#1f2a3a
+// gridSize=4
+// tableBackground=#111827
+// tableBorder=#4b5f78
+// tableHeader=#253142
+// tableText=#e5edf7
+// tableLine=#94a3b8
+// tableOpacity=1
+// pkBadgeBackground=#3f2d12
+// pkBadgeBorder=#f59e0b
+// pkBadgeText=#fcd34d
+// fkBadgeBackground=#12312e
+// fkBadgeBorder=#2dd4bf
+// fkBadgeText=#99f6e4
+// notNullBadgeBackground=#3b1620
+// notNullBadgeBorder=#fb7185
+// notNullBadgeText=#fecdd3
+// uniqueBadgeBackground=#1e1b4b
+// uniqueBadgeBorder=#818cf8
+// uniqueBadgeText=#c7d2fe
+
+// @table app_user
+// x=372
+// y=40
+// width=250
+// height=122
+// useDefaultStyle=true
+// useGroupStyle=false
+Table app_user {
+  id int [pk]
+  name varchar(100) [not null]
+  email varchar(150) [not null, unique]
+}
+
+// @table car
+// x=12
+// y=12
+// width=250
+// height=178
+// useDefaultStyle=true
+// useGroupStyle=false
+Table car {
+  id int [pk]
+  model varchar(100) [not null]
+  brand varchar(100) [not null]
+  year int [not null]
+  user_id int [not null]
+}
+
+Ref: car.user_id > app_user.id
+// @line relation-car-user_id-app_user-id-0
+// color=#94a3b8
+// useTableLineColor=true
+// strokeWidth=2
+// opacity=0.9
+// style=solid
+// route=orthogonal
+// from=east
+// to=west
+// fromCardinality=many
+// toCardinality=one
