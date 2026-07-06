@@ -100,7 +100,7 @@ export const defaultRelationVisual: Pick<
   color: "#94a3b8",
   usesTableLineColor: true,
   opacity: 0.9,
-  strokeWidth: 2,
+  strokeWidth: 4,
   style: "solid",
   fromCardinality: "many",
   toCardinality: "one",
