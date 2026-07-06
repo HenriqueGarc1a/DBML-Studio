@@ -347,8 +347,8 @@ Table sprint_report {
 }
 
 // @table hours_report
-// x=3300
-// y=-100
+// x=3320
+// y=-120
 // width=380
 // height=234
 // useDefaultStyle=false
@@ -381,7 +381,7 @@ Ref: ages_user.id > team.teacher_id
 // to=west
 // fromCardinality=one
 // toCardinality=many
-// via=(2692,792),(2700,820)
+// via=(2692,792),(2788,792),(2788,820)
 
 Ref: project.id > team.project_id
 // @line relation-project-id-team-project_id-1
@@ -395,7 +395,7 @@ Ref: project.id > team.project_id
 // to=east
 // fromCardinality=many
 // toCardinality=one
-// via=(3328,792),(3232,792),(3232,848)
+// via=(3268,792),(3232,792),(3232,848)
 
 Ref: ages_user.id > class.teacher_id
 // @line relation-ages_user-id-class-teacher_id-2
@@ -409,7 +409,7 @@ Ref: ages_user.id > class.teacher_id
 // to=west
 // fromCardinality=one
 // toCardinality=many
-// via=(2692,792),(2700,640),(2788,544)
+// via=(2692,792),(2788,792),(2740,544)
 
 Ref: ages_user.id > semester_profile.user_id
 // @line relation-ages_user-id-semester_profile-user_id-3
@@ -419,11 +419,11 @@ Ref: ages_user.id > semester_profile.user_id
 // opacity=0.9
 // style=solid
 // route=orthogonal
-// from=west
-// to=west
+// from=east
+// to=east
 // fromCardinality=one
 // toCardinality=many
-// via=(2240,872),(2240,544)
+// via=(2692,792),(2692,544)
 
 Ref: team.id > semester_profile.team_id
 // @line relation-team-id-semester_profile-team_id-4
@@ -437,7 +437,7 @@ Ref: team.id > semester_profile.team_id
 // to=east
 // fromCardinality=one
 // toCardinality=many
-// via=(2788,792),(2740,600),(2692,600)
+// via=(2788,792),(2692,792),(2692,600)
 
 Ref: class.id > semester_profile.class_id
 // @line relation-class-id-semester_profile-class_id-5
@@ -451,7 +451,7 @@ Ref: class.id > semester_profile.class_id
 // to=east
 // fromCardinality=one
 // toCardinality=many
-// via=(2848,432),(2800,460),(2740,480),(2740,572)
+// via=(2788,432),(2692,432),(2692,572)
 
 Ref: class.id > lesson.class_id
 // @line relation-class-id-lesson-class_id-6
@@ -465,7 +465,7 @@ Ref: class.id > lesson.class_id
 // to=west
 // fromCardinality=one
 // toCardinality=many
-// via=(3292,432),(3308,432),(3308,488)
+// via=(3232,432),(3268,432),(3268,488)
 
 Ref: ages_user.id > otp.user_id
 // @line relation-ages_user-id-otp-user_id-7
@@ -479,7 +479,7 @@ Ref: ages_user.id > otp.user_id
 // to=east
 // fromCardinality=one
 // toCardinality=many
-// via=(2240,792),(2180,820)
+// via=(2248,792),(2132,792),(2132,820)
 
 Ref: ages_user.id > schedule.admin_id
 // @line relation-ages_user-id-schedule-admin_id-8
@@ -493,7 +493,7 @@ Ref: ages_user.id > schedule.admin_id
 // to=east
 // fromCardinality=one
 // toCardinality=many
-// via=(2240,792),(2180,820),(2180,460)
+// via=(2248,792),(2132,792),(2132,460)
 
 Ref: project.id > project_stack.project_id
 // @line relation-project-id-project_stack-project_id-9
@@ -507,7 +507,7 @@ Ref: project.id > project_stack.project_id
 // to=west
 // fromCardinality=many
 // toCardinality=one
-// via=(3772,792),(3808,792),(3808,820)
+// via=(3712,792),(3748,792),(3748,820)
 
 Ref: technology.id > project_stack.technology_id
 // @line relation-technology-id-project_stack-technology_id-10
@@ -535,7 +535,7 @@ Ref: semester_profile.id > report.student_id
 // to=west
 // fromCardinality=one
 // toCardinality=many
-// via=(2740,432),(2740,280),(2740,-20)
+// via=(2692,432),(2788,432),(2788,-20)
 
 Ref: semester_profile.id > examining_board.student_id
 // @line relation-semester_profile-id-examining_board-student_id-12
@@ -545,11 +545,11 @@ Ref: semester_profile.id > examining_board.student_id
 // opacity=0.9
 // style=solid
 // route=orthogonal
-// from=west
-// to=west
+// from=east
+// to=east
 // fromCardinality=one
 // toCardinality=one
-// via=(2692,432),(2200,64)
+// via=(2692,432),(2692,64)
 
 Ref: examining_board.id > examining_board_member.examining_board_id
 // @line relation-examining_board-id-examining_board_member-examining_board_id-13
@@ -563,7 +563,7 @@ Ref: examining_board.id > examining_board_member.examining_board_id
 // to=east
 // fromCardinality=one
 // toCardinality=many
-// via=(2248,-48),(2200,-20),(2152,-20)
+// via=(2248,-48),(2152,-48),(2152,-20)
 
 Ref: ages_user.id > examining_board_member.teacher_id
 // @line relation-ages_user-id-examining_board_member-teacher_id-14
@@ -577,7 +577,7 @@ Ref: ages_user.id > examining_board_member.teacher_id
 // to=east
 // fromCardinality=one
 // toCardinality=many
-// via=(2240,792),(2180,820),(2180,8)
+// via=(2248,792),(2152,792),(2152,8)
 
 Ref: lesson.id > attendance.lesson_id
 // @line relation-lesson-id-attendance-lesson_id-15
@@ -591,7 +591,7 @@ Ref: lesson.id > attendance.lesson_id
 // to=west
 // fromCardinality=one
 // toCardinality=many
-// via=(3752,432),(3788,432),(3788,460)
+// via=(3712,432),(3748,432),(3748,460)
 
 Ref: semester_profile.id > attendance.student_id
 // @line relation-semester_profile-id-attendance-student_id-16
@@ -602,10 +602,10 @@ Ref: semester_profile.id > attendance.student_id
 // style=solid
 // route=orthogonal
 // from=east
-// to=east
+// to=west
 // fromCardinality=one
 // toCardinality=many
-// via=(2692,432),(2740,300),(4200,360),(4200,488)
+// via=(2692,432),(2692,362),(3748,362),(3748,488)
 
 Ref: report.id > sprint_report.report_id
 // @line relation-report-id-sprint_report-report_id-17
@@ -619,7 +619,7 @@ Ref: report.id > sprint_report.report_id
 // to=west
 // fromCardinality=one
 // toCardinality=one
-// via=(3232,-48),(3240,180),(3748,152),(3748,148)
+// via=(3232,-48),(3232,152),(3748,152),(3748,148)
 
 Ref: report.id > hours_report.report_id
 // @line relation-report-id-hours_report-report_id-18
@@ -634,19 +634,6 @@ Ref: report.id > hours_report.report_id
 // fromCardinality=one
 // toCardinality=one
 // via=(3232,-48),(3268,-48),(3268,120)
-
-Ref: examining_board.student_id > examining_board_member.id
-// @line relation-examining_board-student_id-examining_board_member-id-19
-// color=#94a3b8
-// useTableLineColor=true
-// strokeWidth=4
-// opacity=0.9
-// style=solid
-// route=orthogonal
-// from=west
-// to=east
-// fromCardinality=many
-// toCardinality=one
 
 // @group k0mxujg
 // label=OTP

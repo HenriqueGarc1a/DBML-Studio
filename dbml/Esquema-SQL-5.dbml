@@ -35,8 +35,8 @@ Table user {
 }
 
 // @table project
-// x=364
-// y=232
+// x=368
+// y=264
 // width=282
 // height=150
 // useDefaultStyle=true
@@ -49,8 +49,8 @@ Table project {
 }
 
 // @table technology
-// x=364
-// y=12
+// x=392
+// y=-40
 // width=282
 // height=150
 // useDefaultStyle=true
@@ -63,8 +63,8 @@ Table technology {
 }
 
 // @table project_stack
-// x=0
-// y=232
+// x=-176
+// y=204
 // width=242
 // height=94
 // useDefaultStyle=true
@@ -128,4 +128,42 @@ Ref: project_stack.id_technology > technology.id_technology
 // to=west
 // fromCardinality=many
 // toCardinality=one
-// via=(-36,64)
+// via=(-244,96)
+
+// @group bgd8y5b
+// label=New Group
+// labelX=12
+// labelY=24
+// x=-496
+// y=56
+// width=620
+// height=400
+// background=#0f766e
+// border=#0f766e
+// text=#0f766e
+// opacity=0.12
+// tableBackground=#10231f
+// tableBorder=#2dd4bf
+// tableHeader=#134e4a
+// tableText=#dffcf7
+// tableLine=#2dd4bf
+// tableOpacity=1
+
+// @group aofrocq
+// label=New Group
+// labelX=12
+// labelY=24
+// x=736
+// y=-84
+// width=620
+// height=496
+// background=#0f766e
+// border=#0f766e
+// text=#0f766e
+// opacity=0.12
+// tableBackground=#10231f
+// tableBorder=#9e1aa8
+// tableHeader=#134e4a
+// tableText=#dffcf7
+// tableLine=#2dd4bf
+// tableOpacity=1

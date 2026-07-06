@@ -1,0 +1,521 @@
+// @diagram
+// background=#0f172a
+// gridColor=#1f2a3a
+// gridSize=4
+// tableBackground=#111827
+// tableBorder=#4b5f78
+// tableHeader=#253142
+// tableText=#e5edf7
+// tableLine=#94a3b8
+// tableOpacity=1
+// pkBadgeBackground=#3f2d12
+// pkBadgeBorder=#f59e0b
+// pkBadgeText=#fcd34d
+// fkBadgeBackground=#12312e
+// fkBadgeBorder=#2dd4bf
+// fkBadgeText=#99f6e4
+// notNullBadgeBackground=#3b1620
+// notNullBadgeBorder=#fb7185
+// notNullBadgeText=#fecdd3
+// uniqueBadgeBackground=#1e1b4b
+// uniqueBadgeBorder=#818cf8
+// uniqueBadgeText=#c7d2fe
+
+// @table ages_user
+// x=2108
+// y=288
+// width=282
+// height=262
+// useDefaultStyle=true
+// useGroupStyle=false
+Table ages_user {
+  id uuid [pk]
+  email varchar(255) [not null]
+  pucrs_id char(8) [not null]
+  name varchar(255) [not null]
+  password varchar(255) [not null]
+  image_url varchar(255)
+  course course [not null]
+  type user_type [not null]
+}
+
+// @table project
+// x=1976
+// y=968
+// width=330
+// height=290
+// useDefaultStyle=true
+// useGroupStyle=false
+Table project {
+  id uuid [pk]
+  description text [not null]
+  git_lab varchar(255)
+  name varchar(255) [not null]
+  active boolean [not null]
+  group_photo_url varchar(255)
+  year int [not null]
+  semester semester [not null]
+  logo_url varchar(255)
+}
+
+// @table team
+// x=1372
+// y=915.3
+// width=226
+// height=122
+// useDefaultStyle=true
+// useGroupStyle=false
+Table team {
+  id uuid [pk]
+  teacher_id uuid [not null]
+  project_id uuid [not null]
+}
+
+// @table class
+// x=1350.7
+// y=63.7
+// width=242
+// height=206
+// useDefaultStyle=true
+// useGroupStyle=false
+Table class {
+  id uuid [pk]
+  number int [not null]
+  year int [not null]
+  semester semester [not null]
+  teacher_id uuid [not null]
+  active boolean [not null]
+}
+
+// @table semester_profile
+// x=924
+// y=404
+// width=346
+// height=234
+// useDefaultStyle=true
+// useGroupStyle=false
+Table semester_profile {
+  id uuid [pk]
+  grade numeric(4,2)
+  ages_role ages_role [not null]
+  student_status semester_status [not null]
+  user_id uuid [not null]
+  team_id uuid [not null]
+  class_id uuid [not null]
+}
+
+// @table lesson
+// x=947
+// y=71.3
+// width=220
+// height=122
+// useDefaultStyle=true
+// useGroupStyle=false
+Table lesson {
+  id uuid [pk]
+  date timestamp [not null]
+  class_id uuid [not null]
+}
+
+// @table otp
+// x=1348
+// y=391.3
+// width=266
+// height=178
+// useDefaultStyle=true
+// useGroupStyle=false
+Table otp {
+  id uuid [pk]
+  user_id uuid [not null]
+  expires_at timestamp [not null]
+  token varchar(255) [not null]
+  used boolean [not null]
+}
+
+// @table schedule
+// x=1340
+// y=639.3
+// width=274
+// height=206
+// useDefaultStyle=true
+// useGroupStyle=false
+Table schedule {
+  id uuid [pk]
+  admin_id uuid [not null]
+  event char(10) [not null]
+  event_date timestamp [not null]
+  event_period char(10) [not null]
+  event_time time(0) [not null]
+}
+
+// @table technology
+// x=1724
+// y=1260
+// width=266
+// height=122
+// useDefaultStyle=true
+// useGroupStyle=false
+Table technology {
+  id uuid [pk]
+  name varchar(255) [not null]
+  type technology_type [not null]
+}
+
+// @table project_stack
+// x=1364
+// y=1239.7
+// width=250
+// height=122
+// useDefaultStyle=true
+// useGroupStyle=false
+Table project_stack {
+  id uuid [pk]
+  project_id uuid [not null]
+  technology_id uuid [not null]
+  indexes {
+    (project_id, technology_id) [unique]
+  }
+}
+
+// @table report
+// x=512
+// y=648
+// width=322
+// height=318
+// useDefaultStyle=true
+// useGroupStyle=false
+Table report {
+  id uuid [pk]
+  student_id uuid [not null]
+  create_date timestamp [not null]
+  edit_date timestamp [not null]
+  grade numeric(4,2)
+  type report_type [not null]
+  url_archive varchar(255)
+  comment text
+  correction_url varchar(255)
+  revision_date timestamp
+}
+
+// @table examining_board
+// x=488
+// y=291.3
+// width=250
+// height=178
+// useDefaultStyle=true
+// useGroupStyle=false
+Table examining_board {
+  id uuid [pk]
+  date date [not null]
+  grade numeric(4,2) [not null]
+  room varchar(255) [not null]
+  student_id uuid [not null]
+}
+
+// @table examining_board_member
+// x=52
+// y=12
+// width=290
+// height=122
+// useDefaultStyle=true
+// useGroupStyle=false
+Table examining_board_member {
+  id uuid [pk]
+  examining_board_id uuid [not null]
+  teacher_id uuid [not null]
+}
+
+// @table attendance
+// x=548
+// y=91.7
+// width=226
+// height=122
+// useDefaultStyle=true
+// useGroupStyle=false
+Table attendance {
+  id uuid [pk]
+  lesson_id uuid [not null]
+  student_id uuid [not null]
+}
+
+// @table sprint_report
+// x=36
+// y=832.3
+// width=306
+// height=262
+// useDefaultStyle=true
+// useGroupStyle=false
+Table sprint_report {
+  id uuid [pk]
+  activity_completed text [not null]
+  learned_lessons text [not null]
+  next_steps text [not null]
+  predicted_activity text [not null]
+  problems_encountered text [not null]
+  sprint sprint [not null]
+  report_id uuid [not null, unique]
+}
+
+// @table hours_report
+// x=12
+// y=528.3
+// width=330
+// height=234
+// useDefaultStyle=true
+// useGroupStyle=false
+Table hours_report {
+  id uuid [pk]
+  activities text
+  entry_time timestamp [not null]
+  exit_time timestamp
+  rejection_justification text
+  approved boolean [not null]
+  report_id uuid [not null, unique]
+}
+
+Ref: team.teacher_id > ages_user.id
+// @line relation-team-teacher_id-ages_user-id-0
+// color=#94a3b8
+// useTableLineColor=true
+// strokeWidth=4
+// opacity=0.9
+// style=solid
+// route=orthogonal
+// from=east
+// to=west
+// fromCardinality=many
+// toCardinality=one
+
+Ref: team.project_id > project.id
+// @line relation-team-project_id-project-id-1
+// color=#94a3b8
+// useTableLineColor=true
+// strokeWidth=4
+// opacity=0.9
+// style=solid
+// route=orthogonal
+// from=east
+// to=west
+// fromCardinality=many
+// toCardinality=one
+
+Ref: class.teacher_id > ages_user.id
+// @line relation-class-teacher_id-ages_user-id-2
+// color=#94a3b8
+// useTableLineColor=true
+// strokeWidth=4
+// opacity=0.9
+// style=solid
+// route=orthogonal
+// from=east
+// to=west
+// fromCardinality=many
+// toCardinality=one
+
+Ref: semester_profile.user_id > ages_user.id
+// @line relation-semester_profile-user_id-ages_user-id-3
+// color=#94a3b8
+// useTableLineColor=true
+// strokeWidth=4
+// opacity=0.9
+// style=solid
+// route=orthogonal
+// from=east
+// to=west
+// fromCardinality=many
+// toCardinality=one
+
+Ref: semester_profile.team_id > team.id
+// @line relation-semester_profile-team_id-team-id-4
+// color=#94a3b8
+// useTableLineColor=true
+// strokeWidth=4
+// opacity=0.9
+// style=solid
+// route=orthogonal
+// from=east
+// to=west
+// fromCardinality=many
+// toCardinality=one
+
+Ref: semester_profile.class_id > class.id
+// @line relation-semester_profile-class_id-class-id-5
+// color=#94a3b8
+// useTableLineColor=true
+// strokeWidth=4
+// opacity=0.9
+// style=solid
+// route=orthogonal
+// from=east
+// to=west
+// fromCardinality=many
+// toCardinality=one
+
+Ref: lesson.class_id > class.id
+// @line relation-lesson-class_id-class-id-6
+// color=#94a3b8
+// useTableLineColor=true
+// strokeWidth=4
+// opacity=0.9
+// style=solid
+// route=orthogonal
+// from=east
+// to=west
+// fromCardinality=many
+// toCardinality=one
+
+Ref: otp.user_id > ages_user.id
+// @line relation-otp-user_id-ages_user-id-7
+// color=#94a3b8
+// useTableLineColor=true
+// strokeWidth=4
+// opacity=0.9
+// style=solid
+// route=orthogonal
+// from=east
+// to=west
+// fromCardinality=many
+// toCardinality=one
+
+Ref: schedule.admin_id > ages_user.id
+// @line relation-schedule-admin_id-ages_user-id-8
+// color=#94a3b8
+// useTableLineColor=true
+// strokeWidth=4
+// opacity=0.9
+// style=solid
+// route=orthogonal
+// from=east
+// to=west
+// fromCardinality=many
+// toCardinality=one
+
+Ref: project_stack.project_id > project.id
+// @line relation-project_stack-project_id-project-id-9
+// color=#94a3b8
+// useTableLineColor=true
+// strokeWidth=4
+// opacity=0.9
+// style=solid
+// route=orthogonal
+// from=east
+// to=west
+// fromCardinality=many
+// toCardinality=one
+
+Ref: project_stack.technology_id > technology.id
+// @line relation-project_stack-technology_id-technology-id-10
+// color=#94a3b8
+// useTableLineColor=true
+// strokeWidth=4
+// opacity=0.9
+// style=solid
+// route=orthogonal
+// from=east
+// to=west
+// fromCardinality=many
+// toCardinality=one
+
+Ref: report.student_id > semester_profile.id
+// @line relation-report-student_id-semester_profile-id-11
+// color=#94a3b8
+// useTableLineColor=true
+// strokeWidth=4
+// opacity=0.9
+// style=solid
+// route=orthogonal
+// from=east
+// to=west
+// fromCardinality=many
+// toCardinality=one
+
+Ref: examining_board.student_id > semester_profile.id
+// @line relation-examining_board-student_id-semester_profile-id-12
+// color=#94a3b8
+// useTableLineColor=true
+// strokeWidth=4
+// opacity=0.9
+// style=solid
+// route=orthogonal
+// from=east
+// to=west
+// fromCardinality=many
+// toCardinality=one
+
+Ref: examining_board_member.examining_board_id > examining_board.id
+// @line relation-examining_board_member-examining_board_id-examining_board-id-13
+// color=#94a3b8
+// useTableLineColor=true
+// strokeWidth=4
+// opacity=0.9
+// style=solid
+// route=orthogonal
+// from=east
+// to=west
+// fromCardinality=many
+// toCardinality=one
+
+Ref: examining_board_member.teacher_id > ages_user.id
+// @line relation-examining_board_member-teacher_id-ages_user-id-14
+// color=#94a3b8
+// useTableLineColor=true
+// strokeWidth=4
+// opacity=0.9
+// style=solid
+// route=orthogonal
+// from=east
+// to=west
+// fromCardinality=many
+// toCardinality=one
+
+Ref: attendance.lesson_id > lesson.id
+// @line relation-attendance-lesson_id-lesson-id-15
+// color=#94a3b8
+// useTableLineColor=true
+// strokeWidth=4
+// opacity=0.9
+// style=solid
+// route=orthogonal
+// from=east
+// to=west
+// fromCardinality=many
+// toCardinality=one
+
+Ref: attendance.student_id > semester_profile.id
+// @line relation-attendance-student_id-semester_profile-id-16
+// color=#94a3b8
+// useTableLineColor=true
+// strokeWidth=4
+// opacity=0.9
+// style=solid
+// route=orthogonal
+// from=east
+// to=west
+// fromCardinality=many
+// toCardinality=one
+
+Ref: sprint_report.report_id > report.id
+// @line relation-sprint_report-report_id-report-id-17
+// color=#94a3b8
+// useTableLineColor=true
+// strokeWidth=4
+// opacity=0.9
+// style=solid
+// route=orthogonal
+// from=east
+// to=west
+// fromCardinality=many
+// toCardinality=one
+
+Ref: hours_report.report_id > report.id
+// @line relation-hours_report-report_id-report-id-18
+// color=#94a3b8
+// useTableLineColor=true
+// strokeWidth=4
+// opacity=0.9
+// style=solid
+// route=orthogonal
+// from=east
+// to=west
+// fromCardinality=many
+// toCardinality=one
