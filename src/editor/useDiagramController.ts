@@ -647,7 +647,6 @@ export function useDiagramController(): DiagramController {
       return enforceRelationClearance({
         ...current,
         tables,
-        relations: current.relations.map((relation) => tidyRelationGeometry(relation, tables, current.visual.tableRouteMargin)),
       });
     });
   }, [updateDiagramState]);
@@ -892,11 +891,15 @@ export function useDiagramController(): DiagramController {
   }, [updateDiagramState]);
 
   const updateRelation = useCallback((id: string, patch: Partial<RelationModel>) => {
-    updateDiagramState((current) => enforceRelationClearance({
+    updateDiagramState((current) => ({
       ...current,
-      relations: current.relations.map((relation) =>
-        relation.id === id ? { ...relation, ...patch } : relation,
-      ),
+      relations: current.relations.map((relation) => {
+        if (relation.id !== id) return relation;
+        const candidate = { ...relation, ...patch };
+        return relationKeepsTableMargin(candidate, current.tables, current.visual.tableRouteMargin)
+          ? candidate
+          : tidyRelationGeometry(candidate, current.tables, current.visual.tableRouteMargin);
+      }),
     }));
   }, [updateDiagramState]);
 

@@ -1,6 +1,6 @@
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
-import { mkdir, readdir, readFile, rename, stat, unlink, writeFile } from "node:fs/promises";
+import { mkdir, readdir, readFile, rename, rm, stat, writeFile } from "node:fs/promises";
 import type { IncomingMessage, ServerResponse } from "node:http";
 import path from "node:path";
 
@@ -12,30 +12,32 @@ export default defineConfig({
 });
 
 function dbmlFilesPlugin() {
-  const dbmlDir = path.resolve(process.cwd(), "dbml");
+  const savesDir = path.resolve(process.cwd(), "saves");
+  const legacyDir = path.resolve(process.cwd(), "dbml");
 
   return {
     name: "dbml-files",
     configureServer(server) {
       server.middlewares.use("/__dbml/list", async (_request, response) => {
         try {
-          await mkdir(dbmlDir, { recursive: true });
-          const entries = await readdir(dbmlDir);
+          await migrateLegacySaves(legacyDir, savesDir);
+          await mkdir(savesDir, { recursive: true });
+          const entries = await readdir(savesDir);
           const files = await Promise.all(
             entries
-              .filter((entry) => entry.endsWith(".dbml"))
-              .map(async (filename) => {
-                const filePath = path.join(dbmlDir, filename);
+              .map(async (folder) => {
+                const saveDir = path.join(savesDir, folder);
+                const filePath = path.join(saveDir, "diagram.dbml");
                 const [dbml, stats, uiLayout, preview] = await Promise.all([
                   readFile(filePath, "utf8"),
                   stat(filePath),
-                  readFile(`${filePath}.ui.json`, "utf8").catch(() => undefined),
-                  readFile(`${filePath}.preview.webp`).catch(() => undefined),
+                  readFile(path.join(saveDir, "ui.json"), "utf8").catch(() => undefined),
+                  readFile(path.join(saveDir, "preview.webp")).catch(() => undefined),
                 ]);
 
                 return {
-                  filename,
-                  name: filename.replace(/\.dbml$/i, "").replace(/-/g, " "),
+                  filename: `${folder}.dbml`,
+                  name: folder.replace(/-/g, " "),
                   dbml,
                   uiLayout,
                   previewDataUrl: preview ? `data:image/webp;base64,${preview.toString("base64")}` : undefined,
@@ -68,13 +70,14 @@ function dbmlFilesPlugin() {
             return;
           }
 
-          await mkdir(dbmlDir, { recursive: true });
-          await writeFile(path.join(dbmlDir, filename), contents, "utf8");
+          const saveDir = saveDirectory(savesDir, filename);
+          await mkdir(saveDir, { recursive: true });
+          await writeFile(path.join(saveDir, "diagram.dbml"), contents, "utf8");
           if (uiLayout?.trim()) {
-            await writeFile(path.join(dbmlDir, `${filename}.ui.json`), uiLayout, "utf8");
+            await writeFile(path.join(saveDir, "ui.json"), uiLayout, "utf8");
           }
           const preview = previewDataUrl?.match(/^data:image\/webp;base64,(.+)$/)?.[1];
-          if (preview) await writeFile(path.join(dbmlDir, `${filename}.preview.webp`), Buffer.from(preview, "base64"));
+          if (preview) await writeFile(path.join(saveDir, "preview.webp"), Buffer.from(preview, "base64"));
           sendJson(response, 200, { filename });
         } catch (error) {
           sendJson(response, 500, { error: formatError(error) });
@@ -91,9 +94,7 @@ function dbmlFilesPlugin() {
           const from = safeDbmlFilename(String(body.from ?? ""));
           const to = safeDbmlFilename(String(body.to ?? ""));
           if (from !== to) {
-            await rename(path.join(dbmlDir, from), path.join(dbmlDir, to));
-            await rename(path.join(dbmlDir, `${from}.ui.json`), path.join(dbmlDir, `${to}.ui.json`)).catch(() => undefined);
-            await rename(path.join(dbmlDir, `${from}.preview.webp`), path.join(dbmlDir, `${to}.preview.webp`)).catch(() => undefined);
+            await rename(saveDirectory(savesDir, from), saveDirectory(savesDir, to));
           }
           sendJson(response, 200, { filename: to });
         } catch (error) {
@@ -109,9 +110,7 @@ function dbmlFilesPlugin() {
         try {
           const body = await readJsonBody(request);
           const filename = safeDbmlFilename(String(body.filename ?? ""));
-          await unlink(path.join(dbmlDir, filename));
-          await unlink(path.join(dbmlDir, `${filename}.ui.json`)).catch(() => undefined);
-          await unlink(path.join(dbmlDir, `${filename}.preview.webp`)).catch(() => undefined);
+          await rm(saveDirectory(savesDir, filename), { recursive: true, force: true });
           sendJson(response, 200, { filename });
         } catch (error) {
           sendJson(response, 500, { error: formatError(error) });
@@ -119,6 +118,24 @@ function dbmlFilesPlugin() {
       });
     },
   };
+}
+
+function saveDirectory(root: string, filename: string): string {
+  return path.join(root, filename.replace(/\.dbml$/i, ""));
+}
+
+async function migrateLegacySaves(legacyDir: string, savesDir: string): Promise<void> {
+  const entries = await readdir(legacyDir).catch(() => [] as string[]);
+  const filenames = entries.filter((entry) => entry.endsWith(".dbml"));
+  if (!filenames.length) return;
+  await mkdir(savesDir, { recursive: true });
+  await Promise.all(filenames.map(async (filename) => {
+    const target = saveDirectory(savesDir, filename);
+    await mkdir(target, { recursive: true });
+    await rename(path.join(legacyDir, filename), path.join(target, "diagram.dbml")).catch(() => undefined);
+    await rename(path.join(legacyDir, `${filename}.ui.json`), path.join(target, "ui.json")).catch(() => undefined);
+    await rename(path.join(legacyDir, `${filename}.preview.webp`), path.join(target, "preview.webp")).catch(() => undefined);
+  }));
 }
 
 function safeDbmlFilename(value: string): string {

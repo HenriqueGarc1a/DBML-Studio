@@ -17,11 +17,10 @@ import {
 import {
   getRelationGeometry,
   getTableBounds,
-  moveRelationCorner,
-  moveRelationSegment,
 } from "../utils/geometry";
 import { snapValue } from "../utils/grid";
 import { buildJumpPath } from "../utils/lineJumps";
+import { snapCornerEdit, snapSegmentEdit } from "../utils/safeRelationEditing";
 import {
   fitViewBoxToAspect,
   panViewBox,
@@ -314,24 +313,31 @@ export function SvgCanvas({ controller, svgRef: externalSvgRef }: SvgCanvasProps
     }
 
     if (drag.kind === "relation-segment") {
+      const relation = controller.diagram.relations.find((item) => item.id === drag.id);
+      if (!relation) return;
       const rawDelta = drag.horizontal ? point.y - drag.start.y : point.x - drag.start.x;
       const delta = controller.snapToGrid ? snapValue(rawDelta, gridSize) : rawDelta;
       controller.updateRelation(drag.id, {
         route: "orthogonal",
-        viaPoints: moveRelationSegment(drag.points, drag.segmentIndex, delta),
+        viaPoints: snapSegmentEdit(
+          relation, controller.diagram.tables, drag.points, drag.segmentIndex, delta,
+          controller.diagram.visual.tableRouteMargin, controller.snapToGrid ? gridSize : 4,
+        ),
       });
     }
 
     if (drag.kind === "relation-corner") {
+      const relation = controller.diagram.relations.find((item) => item.id === drag.id);
+      if (!relation) return;
+      const desired = {
+        x: controller.snapToGrid ? snapValue(point.x, gridSize) : point.x,
+        y: controller.snapToGrid ? snapValue(point.y, gridSize) : point.y,
+      };
       controller.updateRelation(drag.id, {
         route: "orthogonal",
-        viaPoints: moveRelationCorner(
-          drag.points,
-          drag.pointIndex,
-          {
-            x: controller.snapToGrid ? snapValue(point.x, gridSize) : point.x,
-            y: controller.snapToGrid ? snapValue(point.y, gridSize) : point.y,
-          },
+        viaPoints: snapCornerEdit(
+          relation, controller.diagram.tables, drag.points, drag.pointIndex, desired,
+          controller.diagram.visual.tableRouteMargin, controller.snapToGrid ? gridSize : 4,
         ),
       });
     }
