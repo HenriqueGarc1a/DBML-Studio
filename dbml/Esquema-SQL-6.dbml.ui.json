@@ -41,8 +41,8 @@
     {
       "id": "ages_user",
       "name": "ages_user",
-      "x": 1724,
-      "y": 168,
+      "x": 280,
+      "y": 1472,
       "width": 282,
       "height": 262,
       "visual": {
@@ -70,8 +70,8 @@
     {
       "id": "project",
       "name": "project",
-      "x": 1724,
-      "y": 799,
+      "x": 1133,
+      "y": 1472,
       "width": 330,
       "height": 290,
       "visual": {
@@ -100,8 +100,8 @@
     {
       "id": "team",
       "name": "team",
-      "x": 1372,
-      "y": 815,
+      "x": 1092,
+      "y": 1212,
       "width": 226,
       "height": 122,
       "visual": {
@@ -124,8 +124,8 @@
     {
       "id": "class",
       "name": "class",
-      "x": 1350.6666666666667,
-      "y": 64,
+      "x": 149,
+      "y": 1156,
       "width": 242,
       "height": 206,
       "visual": {
@@ -151,8 +151,8 @@
     {
       "id": "semester_profile",
       "name": "semester_profile",
-      "x": 884,
-      "y": 256,
+      "x": 410,
+      "y": 812,
       "width": 346,
       "height": 234,
       "visual": {
@@ -179,8 +179,8 @@
     {
       "id": "lesson",
       "name": "lesson",
-      "x": 947,
-      "y": 64,
+      "x": 120,
+      "y": 868,
       "width": 220,
       "height": 122,
       "visual": {
@@ -203,8 +203,8 @@
     {
       "id": "otp",
       "name": "otp",
-      "x": 1348,
-      "y": 291,
+      "x": 412,
+      "y": 1184,
       "width": 266,
       "height": 178,
       "visual": {
@@ -229,8 +229,8 @@
     {
       "id": "schedule",
       "name": "schedule",
-      "x": 1340,
-      "y": 539,
+      "x": 748,
+      "y": 1156,
       "width": 274,
       "height": 206,
       "visual": {
@@ -256,8 +256,8 @@
     {
       "id": "technology",
       "name": "technology",
-      "x": 1724,
-      "y": 1159,
+      "x": 1533,
+      "y": 1472,
       "width": 266,
       "height": 122,
       "visual": {
@@ -280,8 +280,8 @@
     {
       "id": "project_stack",
       "name": "project_stack",
-      "x": 1364,
-      "y": 1139,
+      "x": 1499,
+      "y": 1240,
       "width": 250,
       "height": 122,
       "visual": {
@@ -304,8 +304,8 @@
     {
       "id": "report",
       "name": "report",
-      "x": 452,
-      "y": 524,
+      "x": 771,
+      "y": 384,
       "width": 322,
       "height": 318,
       "visual": {
@@ -335,8 +335,8 @@
     {
       "id": "examining_board",
       "name": "examining_board",
-      "x": 488,
-      "y": 276,
+      "x": 451,
+      "y": 454,
       "width": 250,
       "height": 178,
       "visual": {
@@ -361,8 +361,8 @@
     {
       "id": "examining_board_member",
       "name": "examining_board_member",
-      "x": 52,
-      "y": 12,
+      "x": 12,
+      "y": 152,
       "width": 290,
       "height": 122,
       "visual": {
@@ -385,8 +385,8 @@
     {
       "id": "attendance",
       "name": "attendance",
-      "x": 548,
-      "y": 84,
+      "x": 155,
+      "y": 580,
       "width": 226,
       "height": 122,
       "visual": {
@@ -409,8 +409,8 @@
     {
       "id": "sprint_report",
       "name": "sprint_report",
-      "x": 36,
-      "y": 605,
+      "x": 833,
+      "y": 12,
       "width": 306,
       "height": 262,
       "visual": {
@@ -438,8 +438,8 @@
     {
       "id": "hours_report",
       "name": "hours_report",
-      "x": 12,
-      "y": 301,
+      "x": 396,
+      "y": 44,
       "width": 330,
       "height": 234,
       "visual": {
@@ -452,7 +452,7 @@
       },
       "usesDefaultStyle": true,
       "usesGroupStyle": false,
-      "layoutSource": "auto",
+      "layoutSource": "manual",
       "columnOrder": [
         "id",
         "report_id",
@@ -467,21 +467,21 @@
   "relations": [
     {
       "id": "relation-team-teacher_id-ages_user-id-0",
-      "fromSide": "east",
-      "toSide": "west",
+      "fromSide": "west",
+      "toSide": "east",
       "route": "orthogonal",
       "viaPoints": [
         {
-          "x": 1626,
-          "y": 895
+          "x": 1064,
+          "y": 1292
         },
         {
-          "x": 1696,
-          "y": 895
+          "x": 1064,
+          "y": 1524
         },
         {
-          "x": 1696,
-          "y": 220
+          "x": 590,
+          "y": 1524
         }
       ],
       "color": "#94a3b8",
@@ -499,21 +499,21 @@
     },
     {
       "id": "relation-team-project_id-project-id-1",
-      "fromSide": "east",
+      "fromSide": "west",
       "toSide": "west",
       "route": "orthogonal",
       "viaPoints": [
         {
-          "x": 1626,
-          "y": 923
+          "x": 1064,
+          "y": 1320
         },
         {
-          "x": 1696,
-          "y": 923
+          "x": 1064,
+          "y": 1524
         },
         {
-          "x": 1696,
-          "y": 851
+          "x": 1105,
+          "y": 1524
         }
       ],
       "color": "#94a3b8",
@@ -531,21 +531,21 @@
     },
     {
       "id": "relation-class-teacher_id-ages_user-id-2",
-      "fromSide": "east",
+      "fromSide": "west",
       "toSide": "west",
       "route": "orthogonal",
       "viaPoints": [
         {
-          "x": 1620.6666666666667,
-          "y": 144
+          "x": 121,
+          "y": 1236
         },
         {
-          "x": 1696,
-          "y": 144
+          "x": 121,
+          "y": 1524
         },
         {
-          "x": 1696,
-          "y": 220
+          "x": 252,
+          "y": 1524
         }
       ],
       "color": "#94a3b8",
@@ -564,24 +564,24 @@
     {
       "id": "relation-semester_profile-user_id-ages_user-id-3",
       "fromSide": "east",
-      "toSide": "west",
+      "toSide": "east",
       "route": "orthogonal",
       "viaPoints": [
         {
-          "x": 1258,
-          "y": 392
+          "x": 784,
+          "y": 948
         },
         {
-          "x": 1258,
-          "y": 497
+          "x": 1050,
+          "y": 948
         },
         {
-          "x": 1696,
-          "y": 497
+          "x": 1050,
+          "y": 1524
         },
         {
-          "x": 1696,
-          "y": 220
+          "x": 590,
+          "y": 1524
         }
       ],
       "color": "#94a3b8",
@@ -604,16 +604,16 @@
       "route": "orthogonal",
       "viaPoints": [
         {
-          "x": 1258,
-          "y": 364
+          "x": 784,
+          "y": 920
         },
         {
-          "x": 1258,
-          "y": 867
+          "x": 1064,
+          "y": 920
         },
         {
-          "x": 1344,
-          "y": 867
+          "x": 1064,
+          "y": 1264
         }
       ],
       "color": "#94a3b8",
@@ -631,21 +631,25 @@
     },
     {
       "id": "relation-semester_profile-class_id-class-id-5",
-      "fromSide": "east",
+      "fromSide": "west",
       "toSide": "west",
       "route": "orthogonal",
       "viaPoints": [
         {
-          "x": 1258,
-          "y": 336
+          "x": 382,
+          "y": 892
         },
         {
-          "x": 1258,
-          "y": 116
+          "x": 382,
+          "y": 1018
         },
         {
-          "x": 1322.6666666666667,
-          "y": 116
+          "x": 121,
+          "y": 1018
+        },
+        {
+          "x": 121,
+          "y": 1208
         }
       ],
       "color": "#94a3b8",
@@ -663,21 +667,21 @@
     },
     {
       "id": "relation-lesson-class_id-class-id-6",
-      "fromSide": "east",
+      "fromSide": "west",
       "toSide": "west",
       "route": "orthogonal",
       "viaPoints": [
         {
-          "x": 1195,
-          "y": 144
+          "x": 92,
+          "y": 948
         },
         {
-          "x": 1322.6666666666667,
-          "y": 144
+          "x": 92,
+          "y": 1208
         },
         {
-          "x": 1322.6666666666667,
-          "y": 116
+          "x": 121,
+          "y": 1208
         }
       ],
       "color": "#94a3b8",
@@ -696,20 +700,20 @@
     {
       "id": "relation-otp-user_id-ages_user-id-7",
       "fromSide": "east",
-      "toSide": "west",
+      "toSide": "east",
       "route": "orthogonal",
       "viaPoints": [
         {
-          "x": 1642,
-          "y": 371
+          "x": 706,
+          "y": 1264
         },
         {
-          "x": 1696,
-          "y": 371
+          "x": 706,
+          "y": 1524
         },
         {
-          "x": 1696,
-          "y": 220
+          "x": 590,
+          "y": 1524
         }
       ],
       "color": "#94a3b8",
@@ -727,21 +731,21 @@
     },
     {
       "id": "relation-schedule-admin_id-ages_user-id-8",
-      "fromSide": "east",
-      "toSide": "west",
+      "fromSide": "west",
+      "toSide": "east",
       "route": "orthogonal",
       "viaPoints": [
         {
-          "x": 1642,
-          "y": 619
+          "x": 720,
+          "y": 1236
         },
         {
-          "x": 1696,
-          "y": 619
+          "x": 720,
+          "y": 1524
         },
         {
-          "x": 1696,
-          "y": 220
+          "x": 590,
+          "y": 1524
         }
       ],
       "color": "#94a3b8",
@@ -759,21 +763,25 @@
     },
     {
       "id": "relation-project_stack-project_id-project-id-9",
-      "fromSide": "east",
-      "toSide": "west",
+      "fromSide": "west",
+      "toSide": "east",
       "route": "orthogonal",
       "viaPoints": [
         {
-          "x": 1642,
-          "y": 1247
+          "x": 1471,
+          "y": 1348
         },
         {
-          "x": 1696,
-          "y": 1247
+          "x": 1471,
+          "y": 1390
         },
         {
-          "x": 1696,
-          "y": 851
+          "x": 1491,
+          "y": 1390
+        },
+        {
+          "x": 1491,
+          "y": 1524
         }
       ],
       "color": "#94a3b8",
@@ -792,20 +800,20 @@
     {
       "id": "relation-project_stack-technology_id-technology-id-10",
       "fromSide": "east",
-      "toSide": "west",
+      "toSide": "east",
       "route": "orthogonal",
       "viaPoints": [
         {
-          "x": 1642,
-          "y": 1219
+          "x": 1777,
+          "y": 1320
         },
         {
-          "x": 1696,
-          "y": 1219
+          "x": 1827,
+          "y": 1320
         },
         {
-          "x": 1696,
-          "y": 1211
+          "x": 1827,
+          "y": 1524
         }
       ],
       "color": "#94a3b8",
@@ -823,21 +831,25 @@
     },
     {
       "id": "relation-report-student_id-semester_profile-id-11",
-      "fromSide": "east",
-      "toSide": "west",
+      "fromSide": "west",
+      "toSide": "east",
       "route": "orthogonal",
       "viaPoints": [
         {
-          "x": 802,
-          "y": 604
+          "x": 743,
+          "y": 464
         },
         {
-          "x": 856,
-          "y": 604
+          "x": 743,
+          "y": 730
         },
         {
-          "x": 856,
-          "y": 308
+          "x": 784,
+          "y": 730
+        },
+        {
+          "x": 784,
+          "y": 864
         }
       ],
       "color": "#94a3b8",
@@ -856,20 +868,24 @@
     {
       "id": "relation-examining_board-student_id-semester_profile-id-12",
       "fromSide": "east",
-      "toSide": "west",
+      "toSide": "east",
       "route": "orthogonal",
       "viaPoints": [
         {
-          "x": 766,
-          "y": 356
+          "x": 729,
+          "y": 534
         },
         {
-          "x": 856,
-          "y": 356
+          "x": 729,
+          "y": 730
         },
         {
-          "x": 856,
-          "y": 308
+          "x": 784,
+          "y": 730
+        },
+        {
+          "x": 784,
+          "y": 864
         }
       ],
       "color": "#94a3b8",
@@ -892,16 +908,16 @@
       "route": "orthogonal",
       "viaPoints": [
         {
-          "x": 370,
-          "y": 92
+          "x": 330,
+          "y": 232
         },
         {
-          "x": 460,
-          "y": 92
+          "x": 330,
+          "y": 506
         },
         {
-          "x": 460,
-          "y": 328
+          "x": 423,
+          "y": 506
         }
       ],
       "color": "#94a3b8",
@@ -919,25 +935,21 @@
     },
     {
       "id": "relation-examining_board_member-teacher_id-ages_user-id-14",
-      "fromSide": "east",
+      "fromSide": "west",
       "toSide": "west",
       "route": "orthogonal",
       "viaPoints": [
         {
-          "x": 370,
-          "y": 120
+          "x": -16,
+          "y": 260
         },
         {
-          "x": 370,
-          "y": 36
+          "x": -16,
+          "y": 1524
         },
         {
-          "x": 1696,
-          "y": 36
-        },
-        {
-          "x": 1696,
-          "y": 220
+          "x": 252,
+          "y": 1524
         }
       ],
       "color": "#94a3b8",
@@ -955,21 +967,21 @@
     },
     {
       "id": "relation-attendance-lesson_id-lesson-id-15",
-      "fromSide": "east",
+      "fromSide": "west",
       "toSide": "west",
       "route": "orthogonal",
       "viaPoints": [
         {
-          "x": 802,
-          "y": 164
+          "x": 127,
+          "y": 660
         },
         {
-          "x": 919,
-          "y": 164
+          "x": 92,
+          "y": 660
         },
         {
-          "x": 919,
-          "y": 116
+          "x": 92,
+          "y": 920
         }
       ],
       "color": "#94a3b8",
@@ -992,16 +1004,20 @@
       "route": "orthogonal",
       "viaPoints": [
         {
-          "x": 802,
-          "y": 192
+          "x": 409,
+          "y": 688
         },
         {
-          "x": 856,
-          "y": 192
+          "x": 409,
+          "y": 730
         },
         {
-          "x": 856,
-          "y": 308
+          "x": 382,
+          "y": 730
+        },
+        {
+          "x": 382,
+          "y": 864
         }
       ],
       "color": "#94a3b8",
@@ -1020,20 +1036,20 @@
     {
       "id": "relation-sprint_report-report_id-report-id-17",
       "fromSide": "east",
-      "toSide": "west",
+      "toSide": "east",
       "route": "orthogonal",
       "viaPoints": [
         {
-          "x": 370,
-          "y": 685
+          "x": 1167,
+          "y": 92
         },
         {
-          "x": 424,
-          "y": 685
+          "x": 1167,
+          "y": 436
         },
         {
-          "x": 424,
-          "y": 576
+          "x": 1121,
+          "y": 436
         }
       ],
       "color": "#94a3b8",
@@ -1056,16 +1072,20 @@
       "route": "orthogonal",
       "viaPoints": [
         {
-          "x": 370,
-          "y": 381
+          "x": 754,
+          "y": 124
         },
         {
-          "x": 424,
-          "y": 381
+          "x": 754,
+          "y": 306
         },
         {
-          "x": 424,
-          "y": 576
+          "x": 743,
+          "y": 306
+        },
+        {
+          "x": 743,
+          "y": 436
         }
       ],
       "color": "#94a3b8",

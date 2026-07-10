@@ -15,6 +15,7 @@ declare module "node:fs/promises" {
   export function writeFile(path: string, data: string, encoding: "utf8"): Promise<void>;
   export function writeFile(path: string, data: Uint8Array): Promise<void>;
   export function rename(from: string, to: string): Promise<void>;
+  export function unlink(path: string): Promise<void>;
 }
 
 declare module "node:http" {

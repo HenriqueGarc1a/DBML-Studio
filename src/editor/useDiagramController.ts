@@ -28,7 +28,7 @@ import { exportDbml } from "../exporter/dbmlExporter";
 import { applyUiLayout, exportUiLayout } from "../exporter/uiLayoutFile";
 import { sqlToDbml } from "../importer/sqlToDbml";
 import { parseDbml } from "../parser/dbmlParser";
-import { listWorkspaceDbml, renameWorkspaceDbml, saveWorkspaceDbml, sendWorkspaceDbmlBeacon } from "../utils/fileSave";
+import { deleteWorkspaceDbml, listWorkspaceDbml, renameWorkspaceDbml, saveWorkspaceDbml, sendWorkspaceDbmlBeacon } from "../utils/fileSave";
 import { makeId, slugify, uniqueId } from "../utils/id";
 import { organizeRelationRoute, relationKeepsTableMargin } from "../utils/relationRouting";
 import { readJson, safeGetItem, safeSetItem, writeJson } from "../utils/storage";
@@ -59,6 +59,8 @@ export interface DiagramController {
   beginHistoryBatch: () => void;
   endHistoryBatch: () => void;
   setDiagramName: (value: string) => void;
+  renameSavedDiagram: (id: string, value: string) => Promise<boolean>;
+  deleteDiagram: (id: string) => Promise<boolean>;
   createDiagram: () => Promise<void>;
   createDiagramFromSql: (sql: string) => Promise<void>;
   openDiagram: (id: string) => Promise<void>;
@@ -465,6 +467,50 @@ export function useDiagramController(): DiagramController {
     commitDiagramLibrary(nextDiagrams, id);
     setSaveMessage("");
   }, [commitDiagramLibrary]);
+
+  const renameSavedDiagram = useCallback(async (id: string, value: string) => {
+    const record = diagramsRef.current.find((item) => item.id === id);
+    if (!record) return false;
+    const name = normalizeDiagramName(value);
+    const filename = dbmlFilename(name);
+    if (diagramsRef.current.some((item) => item.id !== id && item.filename === filename)) {
+      setSaveMessage("Já existe um esquema com esse nome");
+      return false;
+    }
+    const previousFilename = record.filename ?? dbmlFilename(record.name);
+    const renamed = await renameWorkspaceDbml(previousFilename, filename);
+    if (!renamed) return false;
+    const nextDiagrams = diagramsRef.current.map((item) => item.id === id
+      ? { ...item, name, filename, updatedAt: Date.now() }
+      : item);
+    if (id === activeDiagramIdRef.current) {
+      diagramNameRef.current = name;
+      setDiagramNameState(name);
+    }
+    commitDiagramLibrary(nextDiagrams, activeDiagramIdRef.current);
+    await saveWorkspaceDbml(filename, record.dbml, { uiLayout: record.uiLayout, previewDataUrl: record.previewDataUrl });
+    setSaveMessage(`Renomeado para ${filename}`);
+    return true;
+  }, [commitDiagramLibrary]);
+
+  const deleteDiagram = useCallback(async (id: string) => {
+    if (diagramsRef.current.length <= 1) return false;
+    const record = diagramsRef.current.find((item) => item.id === id);
+    if (!record) return false;
+    const deleted = await deleteWorkspaceDbml(record.filename ?? dbmlFilename(record.name));
+    if (!deleted) return false;
+    const nextDiagrams = diagramsRef.current.filter((item) => item.id !== id);
+    const nextActive = id === activeDiagramIdRef.current ? nextDiagrams[0] : nextDiagrams.find((item) => item.id === activeDiagramIdRef.current) ?? nextDiagrams[0];
+    commitDiagramLibrary(nextDiagrams, nextActive.id);
+    if (id === activeDiagramIdRef.current) {
+      diagramNameRef.current = nextActive.name;
+      setDiagramNameState(nextActive.name);
+      setDbmlText(nextActive.dbml);
+      lastValidDbmlRef.current = nextActive.dbml;
+      await importDbmlText(nextActive.dbml, { resetHistory: true, uiLayout: nextActive.uiLayout });
+    }
+    return true;
+  }, [commitDiagramLibrary, importDbmlText]);
 
   const openDiagram = useCallback(async (id: string) => {
     if (id === activeDiagramIdRef.current) return;
@@ -1167,6 +1213,8 @@ export function useDiagramController(): DiagramController {
     beginHistoryBatch,
     endHistoryBatch,
     setDiagramName: renameDiagram,
+    renameSavedDiagram,
+    deleteDiagram,
     createDiagram,
     createDiagramFromSql,
     openDiagram,

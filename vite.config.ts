@@ -1,6 +1,6 @@
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
-import { mkdir, readdir, readFile, rename, stat, writeFile } from "node:fs/promises";
+import { mkdir, readdir, readFile, rename, stat, unlink, writeFile } from "node:fs/promises";
 import type { IncomingMessage, ServerResponse } from "node:http";
 import path from "node:path";
 
@@ -96,6 +96,23 @@ function dbmlFilesPlugin() {
             await rename(path.join(dbmlDir, `${from}.preview.webp`), path.join(dbmlDir, `${to}.preview.webp`)).catch(() => undefined);
           }
           sendJson(response, 200, { filename: to });
+        } catch (error) {
+          sendJson(response, 500, { error: formatError(error) });
+        }
+      });
+
+      server.middlewares.use("/__dbml/delete", async (request, response) => {
+        if (request.method !== "POST") {
+          sendJson(response, 405, { error: "Method not allowed" });
+          return;
+        }
+        try {
+          const body = await readJsonBody(request);
+          const filename = safeDbmlFilename(String(body.filename ?? ""));
+          await unlink(path.join(dbmlDir, filename));
+          await unlink(path.join(dbmlDir, `${filename}.ui.json`)).catch(() => undefined);
+          await unlink(path.join(dbmlDir, `${filename}.preview.webp`)).catch(() => undefined);
+          sendJson(response, 200, { filename });
         } catch (error) {
           sendJson(response, 500, { error: formatError(error) });
         }

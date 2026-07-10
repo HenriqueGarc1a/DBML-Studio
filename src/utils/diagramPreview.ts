@@ -4,6 +4,17 @@ export async function captureDiagramPreview(svg: SVGSVGElement | null, tables: T
   if (!svg) return undefined;
   const clone = svg.cloneNode(true) as SVGSVGElement;
   clone.querySelectorAll(".relation-edit-handles, .resize-handle, .relation-flow-arrow").forEach((node) => node.remove());
+  const style = document.createElementNS("http://www.w3.org/2000/svg", "style");
+  style.textContent = `
+    .table-title { font: 700 14px Arial, sans-serif; }
+    .column-name { font: 600 12px Arial, sans-serif; }
+    .column-type { font: 12px Arial, sans-serif; text-anchor: end; opacity: .78; }
+    .badge-text { font: 700 9px Arial, sans-serif; text-anchor: middle; }
+    .relation-label, .relation-cardinality { font: 700 11px Arial, sans-serif; }
+    .group-label { font: 800 13px Arial, sans-serif; }
+    .column-hitbox, .group-label-hitbox, .relation-hitbox { display: none; }
+  `;
+  clone.prepend(style);
   clone.setAttribute("width", "640");
   clone.setAttribute("height", "360");
   const bounds = previewBounds(tables);

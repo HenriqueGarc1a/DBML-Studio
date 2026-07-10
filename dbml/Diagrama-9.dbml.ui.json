@@ -1,0 +1,63 @@
+{
+  "version": 1,
+  "visual": {
+    "backgroundColor": "#0f172a",
+    "gridColor": "#1f2a3a",
+    "gridSize": 4,
+    "tableRouteMargin": 28,
+    "defaultTable": {
+      "backgroundColor": "#111827",
+      "borderColor": "#4b5f78",
+      "textColor": "#e5edf7",
+      "headerColor": "#253142",
+      "lineColor": "#94a3b8",
+      "opacity": 1
+    },
+    "badges": {
+      "primaryKey": {
+        "backgroundColor": "#3f2d12",
+        "borderColor": "#f59e0b",
+        "textColor": "#fcd34d"
+      },
+      "foreignKey": {
+        "backgroundColor": "#12312e",
+        "borderColor": "#2dd4bf",
+        "textColor": "#99f6e4"
+      },
+      "notNull": {
+        "backgroundColor": "#3b1620",
+        "borderColor": "#fb7185",
+        "textColor": "#fecdd3"
+      },
+      "unique": {
+        "backgroundColor": "#1e1b4b",
+        "borderColor": "#818cf8",
+        "textColor": "#c7d2fe"
+      }
+    },
+    "savedColors": []
+  },
+  "tables": [
+    {
+      "id": "teste",
+      "name": "Teste",
+      "x": 12,
+      "y": 12,
+      "width": 220,
+      "height": 66,
+      "visual": {
+        "backgroundColor": "#111827",
+        "borderColor": "#4b5f78",
+        "textColor": "#e5edf7",
+        "headerColor": "#253142",
+        "lineColor": "#94a3b8",
+        "opacity": 1
+      },
+      "usesDefaultStyle": true,
+      "usesGroupStyle": false,
+      "layoutSource": "auto"
+    }
+  ],
+  "relations": [],
+  "groups": []
+}

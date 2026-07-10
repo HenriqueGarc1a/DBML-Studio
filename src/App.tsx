@@ -7,7 +7,9 @@ import {
   Database,
   FileDown,
   Plus,
+  Pencil,
   Save,
+  Trash2,
   X,
 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
@@ -38,6 +40,8 @@ export function App() {
   const [sqlDraft, setSqlDraft] = useState("");
   const [sqlImportError, setSqlImportError] = useState("");
   const [screen, setScreen] = useState<"library" | "editor">("library");
+  const [editingDiagramId, setEditingDiagramId] = useState<string | undefined>();
+  const [diagramNameDraft, setDiagramNameDraft] = useState("");
 
   const exportPdf = async () => {
     const { exportDiagramPdf } = await import("./utils/pdfExport");
@@ -137,19 +141,26 @@ export function App() {
           </div>
           <div className="diagram-card-grid">
             {controller.diagrams.map((item) => (
-              <button
-                type="button"
-                key={item.id}
-                className="diagram-card"
-                onClick={() => void controller.openDiagram(item.id).then(() => setScreen("editor"))}
-              >
-                <DiagramPreview dbml={item.dbml} uiLayout={item.uiLayout} previewDataUrl={item.previewDataUrl} />
-                <span className="diagram-card-copy">
-                  <strong>{item.name}</strong>
-                  <small>{item.filename ?? `${item.name}.dbml`}</small>
-                </span>
-                <span className="diagram-card-action">Abrir</span>
-              </button>
+              <article key={item.id} className="diagram-card">
+                <button type="button" className="diagram-card-open" onClick={() => void controller.openDiagram(item.id).then(() => setScreen("editor"))}>
+                  <DiagramPreview dbml={item.dbml} uiLayout={item.uiLayout} previewDataUrl={item.previewDataUrl} />
+                  <span className="diagram-card-copy">
+                    <strong>{item.name}</strong>
+                    <small>{item.filename ?? `${item.name}.dbml`}</small>
+                  </span>
+                  <span className="diagram-card-action">Abrir</span>
+                </button>
+                <button
+                  type="button"
+                  className="diagram-card-edit icon-button"
+                  title="Editar esquema"
+                  aria-label={`Editar ${item.name}`}
+                  onClick={() => {
+                    setEditingDiagramId(item.id);
+                    setDiagramNameDraft(item.name);
+                  }}
+                ><Pencil size={14} /></button>
+              </article>
             ))}
           </div>
         </main>
@@ -169,6 +180,43 @@ export function App() {
             </section>
           </div>
         )}
+        {editingDiagramId && (() => {
+          const item = controller.diagrams.find((diagram) => diagram.id === editingDiagramId);
+          if (!item) return null;
+          return (
+            <div className="modal-backdrop" role="presentation" onMouseDown={() => setEditingDiagramId(undefined)}>
+              <section className="modal-panel diagram-edit-modal" role="dialog" aria-modal="true" aria-labelledby="edit-diagram-title" onMouseDown={(event) => event.stopPropagation()}>
+                <div className="modal-heading">
+                  <h2 id="edit-diagram-title">Editar esquema</h2>
+                  <button type="button" className="icon-button" title="Fechar" onClick={() => setEditingDiagramId(undefined)}><X size={16} /></button>
+                </div>
+                <div className="diagram-edit-body">
+                  <label><span>Nome</span><input value={diagramNameDraft} onChange={(event) => setDiagramNameDraft(event.target.value)} autoFocus /></label>
+                  <small>{item.filename}</small>
+                </div>
+                <div className="modal-actions diagram-edit-actions">
+                  <button
+                    type="button"
+                    className="secondary-button danger-action"
+                    disabled={controller.diagrams.length <= 1}
+                    title={controller.diagrams.length <= 1 ? "Não é possível excluir o único esquema" : "Excluir esquema"}
+                    onClick={() => {
+                      if (window.confirm(`Excluir o esquema "${item.name}"?`)) {
+                        void controller.deleteDiagram(item.id).then((deleted) => deleted && setEditingDiagramId(undefined));
+                      }
+                    }}
+                  ><Trash2 size={15} />Excluir</button>
+                  <button type="button" className="secondary-button" onClick={() => setEditingDiagramId(undefined)}>Cancelar</button>
+                  <button
+                    type="button"
+                    disabled={!diagramNameDraft.trim()}
+                    onClick={() => void controller.renameSavedDiagram(item.id, diagramNameDraft).then((renamed) => renamed && setEditingDiagramId(undefined))}
+                  >Salvar</button>
+                </div>
+              </section>
+            </div>
+          );
+        })()}
       </div>
     );
   }
@@ -194,14 +242,11 @@ export function App() {
             <h1>DBML Studio</h1>
           </div>
         </div>
+        <div className="active-diagram-name" title={controller.diagramFilename}>
+          <Database size={15} />
+          <span>{controller.diagramName}</span>
+        </div>
         <div className="toolbar">
-          <input
-            className="diagram-name-input"
-            value={controller.diagramName}
-            onChange={(event) => controller.setDiagramName(event.target.value)}
-            aria-label="Nome do diagrama"
-            title="Nome do diagrama"
-          />
           <button type="button" onClick={() => void saveDiagram()}>
             <Save size={16} />
             Salvar

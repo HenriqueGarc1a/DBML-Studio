@@ -103,6 +103,20 @@ export async function renameWorkspaceDbml(from: string, to: string): Promise<boo
   }
 }
 
+export async function deleteWorkspaceDbml(filename: string): Promise<boolean> {
+  if (!filename) return false;
+  try {
+    const response = await fetch("/__dbml/delete", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ filename }),
+    });
+    return response.ok;
+  } catch {
+    return false;
+  }
+}
+
 export function sendWorkspaceDbmlBeacon(filename: string, contents: string, uiLayout?: string): boolean {
   if (!contents.trim() || !navigator.sendBeacon) return false;
 
