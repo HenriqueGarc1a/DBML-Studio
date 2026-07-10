@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { defaultRelationVisual } from "../model/defaults";
 import type { RelationModel, TableModel } from "../model/types";
-import { getRelationGeometry, snapRelationEndpoint, snapRelationViaPoint } from "./geometry";
+import { bendRelationSegment, findViaInsertionIndex, getRelationGeometry, moveRelationCorner, moveRelationSegment, nearestRelationSegment, shouldCreateLocalBend, snapRelationEndpoint, snapRelationViaPoint } from "./geometry";
 
 const table: TableModel = {
   id: "user",
@@ -59,6 +59,56 @@ describe("relation endpoint snapping", () => {
 });
 
 describe("relation geometry", () => {
+  it("inserts a clicked control point in spatial route order", () => {
+    const target = { ...table, id: "account", name: "account", x: 700 };
+    const relation = { ...makeRelation(), viaPoints: [{ x: 450, y: 200 }] };
+
+    expect(findViaInsertionIndex(relation, table, target, { x: 380, y: 132 })).toBe(0);
+    expect(findViaInsertionIndex(relation, table, target, { x: 620, y: 200 })).toBe(1);
+  });
+
+  it("moves a whole route segment without exposing control points", () => {
+    const points = [{ x: 100, y: 100 }, { x: 300, y: 100 }, { x: 300, y: 240 }, { x: 500, y: 240 }];
+    const segment = nearestRelationSegment(points, { x: 300, y: 170 });
+    expect(segment).toBe(1);
+    expect(moveRelationSegment(points, segment, 40)).toEqual([
+      { x: 340, y: 100 },
+      { x: 340, y: 240 },
+    ]);
+  });
+
+  it("creates a precise local bend around the grabbed position", () => {
+    const points = [{ x: 100, y: 100 }, { x: 500, y: 100 }];
+    expect(bendRelationSegment(points, 0, { x: 300, y: 100 }, 60, 20)).toEqual([
+      { x: 280, y: 100 },
+      { x: 280, y: 160 },
+      { x: 320, y: 160 },
+      { x: 320, y: 100 },
+    ]);
+  });
+
+  it("uses one smart gesture: long sections bend locally and short sections move", () => {
+    expect(shouldCreateLocalBend([{ x: 0, y: 0 }, { x: 240, y: 0 }], 0)).toBe(true);
+    expect(shouldCreateLocalBend([{ x: 0, y: 0 }, { x: 56, y: 0 }], 0)).toBe(false);
+  });
+
+  it("moves an automatically derived corner using its corner handle", () => {
+    const points = [{ x: 100, y: 100 }, { x: 300, y: 100 }, { x: 300, y: 240 }, { x: 500, y: 240 }];
+    expect(moveRelationCorner(points, 1, { x: 260, y: 140 })).toEqual([
+      { x: 260, y: 140 },
+      { x: 300, y: 240 },
+    ]);
+  });
+
+  it("creates automatic corners when an endpoint segment is dragged", () => {
+    expect(moveRelationSegment([{ x: 100, y: 100 }, { x: 500, y: 100 }], 0, 60)).toEqual([
+      { x: 272, y: 100 },
+      { x: 272, y: 160 },
+      { x: 328, y: 160 },
+      { x: 328, y: 100 },
+    ]);
+  });
+
   it("anchors relations at the middle of the referenced column row", () => {
     const target = { ...table, id: "account", name: "account", x: 520 };
     const relation = makeRelation();

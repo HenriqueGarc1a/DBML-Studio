@@ -78,6 +78,7 @@ export interface TableModel {
   id: string;
   name: string;
   columns: ColumnModel[];
+  columnOrder?: string[];
   x: number;
   y: number;
   width: number;

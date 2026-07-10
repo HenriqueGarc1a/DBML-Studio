@@ -94,7 +94,7 @@ function rankSidePairs(
         fromSide: normalizedFromSide,
         toSide: normalizedToSide,
         viaPoints,
-        clear: pathKeepsTableMargin(points, tables, fromTable.id, toTable.id, margin),
+        clear: !pathHasSelfIntersection(points) && pathKeepsTableMargin(points, tables, fromTable.id, toTable.id, margin),
         score: routeScore(points, points[0], points[points.length - 1]) + index * SIDE_PREFERENCE_PENALTY,
       };
     })
@@ -115,7 +115,42 @@ export function relationKeepsTableMargin(
   const toTable = tables.find((table) => table.id === relation.toTable);
   if (!fromTable || !toTable) return true;
   const points = getRelationGeometry(relation, fromTable, toTable).points;
-  return pathKeepsTableMargin(points, tables, fromTable.id, toTable.id, margin);
+  return !pathHasSelfIntersection(points) && pathKeepsTableMargin(points, tables, fromTable.id, toTable.id, margin);
+}
+
+export function pathHasSelfIntersection(points: Point[]): boolean {
+  for (let first = 0; first < points.length - 1; first += 1) {
+    for (let second = first + 2; second < points.length - 1; second += 1) {
+      if (segmentsIntersect(points[first], points[first + 1], points[second], points[second + 1])) {
+        return true;
+      }
+    }
+  }
+  return false;
+}
+
+function segmentsIntersect(a: Point, b: Point, c: Point, d: Point): boolean {
+  if (a.x === b.x && c.x === d.x) {
+    return a.x === c.x && rangesOverlap(a.y, b.y, c.y, d.y);
+  }
+  if (a.y === b.y && c.y === d.y) {
+    return a.y === c.y && rangesOverlap(a.x, b.x, c.x, d.x);
+  }
+  const verticalA = a.x === b.x;
+  const verticalStart = verticalA ? a : c;
+  const verticalEnd = verticalA ? b : d;
+  const horizontalStart = verticalA ? c : a;
+  const horizontalEnd = verticalA ? d : b;
+  return between(verticalStart.x, horizontalStart.x, horizontalEnd.x) &&
+    between(horizontalStart.y, verticalStart.y, verticalEnd.y);
+}
+
+function rangesOverlap(a: number, b: number, c: number, d: number): boolean {
+  return Math.max(Math.min(a, b), Math.min(c, d)) <= Math.min(Math.max(a, b), Math.max(c, d));
+}
+
+function between(value: number, a: number, b: number): boolean {
+  return value >= Math.min(a, b) && value <= Math.max(a, b);
 }
 
 function pathKeepsTableMargin(

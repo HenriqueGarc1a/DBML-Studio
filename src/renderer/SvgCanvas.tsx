@@ -8,6 +8,7 @@ import {
   Maximize2,
   Redo2,
   Route,
+  Sparkles,
   Table2,
   Undo2,
   ZoomIn,
@@ -31,8 +32,8 @@ import {
 import {
   getRelationGeometry,
   getTableBounds,
-  snapRelationEndpoint,
-  snapRelationViaPoint,
+  moveRelationCorner,
+  moveRelationSegment,
 } from "../utils/geometry";
 import { snapValue } from "../utils/grid";
 import { buildJumpPath } from "../utils/lineJumps";
@@ -89,14 +90,18 @@ type DragState =
       origin: ResizeOrigin;
     }
   | {
-      kind: "via";
+      kind: "relation-segment";
       id: string;
-      index: number;
+      start: Point;
+      points: Point[];
+      segmentIndex: number;
+      horizontal: boolean;
     }
   | {
-      kind: "endpoint";
+      kind: "relation-corner";
       id: string;
-      endpoint: "start" | "end";
+      points: Point[];
+      pointIndex: number;
     }
   | {
       kind: "pan";
@@ -321,38 +326,27 @@ export function SvgCanvas({ controller, svgRef: externalSvgRef }: SvgCanvasProps
       controller.updateGroup(drag.id, next);
     }
 
-    if (drag.kind === "via") {
-      const relation = controller.diagram.relations.find((item) => item.id === drag.id);
-      if (!relation) return;
-      const fromTable = tableMap.get(relation.fromTable);
-      const toTable = tableMap.get(relation.toTable);
-      if (!fromTable || !toTable) return;
-      controller.updateViaPoint(
-        drag.id,
-        drag.index,
-        snapRelationViaPoint(relation, drag.index, point, fromTable, toTable, controller.snapToGrid, gridSize),
-      );
+    if (drag.kind === "relation-segment") {
+      const rawDelta = drag.horizontal ? point.y - drag.start.y : point.x - drag.start.x;
+      const delta = controller.snapToGrid ? snapValue(rawDelta, gridSize) : rawDelta;
+      controller.updateRelation(drag.id, {
+        route: "orthogonal",
+        viaPoints: moveRelationSegment(drag.points, drag.segmentIndex, delta),
+      });
     }
 
-    if (drag.kind === "endpoint") {
-      const relation = controller.diagram.relations.find((item) => item.id === drag.id);
-      if (!relation) return;
-      const table = tableMap.get(drag.endpoint === "start" ? relation.fromTable : relation.toTable);
-      if (!table) return;
-      const endpoint = snapRelationEndpoint(
-        table,
-        drag.endpoint === "start" ? relation.fromColumn : relation.toColumn,
-        point,
-        controller.snapToGrid,
-        gridSize,
-      );
-      controller.updateRelation(relation.id, drag.endpoint === "start"
-        ? {
-            fromSide: endpoint.side,
-          }
-        : {
-            toSide: endpoint.side,
-          });
+    if (drag.kind === "relation-corner") {
+      controller.updateRelation(drag.id, {
+        route: "orthogonal",
+        viaPoints: moveRelationCorner(
+          drag.points,
+          drag.pointIndex,
+          {
+            x: controller.snapToGrid ? snapValue(point.x, gridSize) : point.x,
+            y: controller.snapToGrid ? snapValue(point.y, gridSize) : point.y,
+          },
+        ),
+      });
     }
   };
 
@@ -428,33 +422,6 @@ export function SvgCanvas({ controller, svgRef: externalSvgRef }: SvgCanvasProps
       ...current,
       x: current.x + deltaX * (current.width / width),
     }));
-  };
-
-  const addRelationViaPoint = (relationId: string, event: MouseEvent<SVGPathElement>) => {
-    event.stopPropagation();
-    const relation = controller.diagram.relations.find((item) => item.id === relationId);
-    if (!relation) return;
-    const fromTable = tableMap.get(relation.fromTable);
-    const toTable = tableMap.get(relation.toTable);
-    if (!fromTable || !toTable) return;
-    const point = toSvgPoint(event);
-    const nextRelation = {
-      ...relation,
-      viaPoints: [...relation.viaPoints, point],
-    };
-    controller.addViaPoint(
-      relationId,
-      snapRelationViaPoint(
-        nextRelation,
-        nextRelation.viaPoints.length - 1,
-        point,
-        fromTable,
-        toTable,
-        controller.snapToGrid,
-        gridSize,
-      ),
-    );
-    controller.setSelected({ type: "relation", id: relationId });
   };
 
   const selectRelationField = (table: TableModel, column: TableModel["columns"][number]) => {
@@ -634,15 +601,33 @@ export function SvgCanvas({ controller, svgRef: externalSvgRef }: SvgCanvasProps
               exportFlowDirection="reverse"
               exportFlowColor={exportFlowColor}
               renderedPath={relationPaths.get(sourceRelation.id)}
-              onSelect={(item) => controller.setSelected({ type: "relation", id: item.id })}
-              onAddViaPoint={(item, event) => addRelationViaPoint(item.id, event)}
-              onViaPointerDown={(event, item, index) => {
+              onPathPointerDown={(event, item) => {
+                event.stopPropagation();
+                event.preventDefault();
                 controller.setSelected({ type: "relation", id: item.id });
-                beginSvgDrag(event, { kind: "via", id: item.id, index });
               }}
-              onEndpointPointerDown={(event, item, endpoint) => {
-                controller.setSelected({ type: "relation", id: item.id });
-                beginSvgDrag(event, { kind: "endpoint", id: item.id, endpoint });
+              onSegmentPointerDown={(event, item, segmentIndex) => {
+                const geometry = getRelationGeometry(item, fromTable, toTable);
+                const start = toSvgPoint(event);
+                const a = geometry.points[segmentIndex];
+                const b = geometry.points[segmentIndex + 1];
+                beginSvgDrag(event, {
+                  kind: "relation-segment",
+                  id: item.id,
+                  start,
+                  points: geometry.points,
+                  segmentIndex,
+                  horizontal: Math.abs(b.x - a.x) >= Math.abs(b.y - a.y),
+                });
+              }}
+              onCornerPointerDown={(event, item, pointIndex) => {
+                const geometry = getRelationGeometry(item, fromTable, toTable);
+                beginSvgDrag(event, {
+                  kind: "relation-corner",
+                  id: item.id,
+                  points: geometry.points,
+                  pointIndex,
+                });
               }}
             />
           );
@@ -745,6 +730,17 @@ export function SvgCanvas({ controller, svgRef: externalSvgRef }: SvgCanvasProps
             disabled={!controller.diagram.relations.length}
           >
             <Route size={16} />
+          </button>
+          <button
+            type="button"
+            className="icon-button"
+            title="Auto-arrumar esquema minimizando cruzamentos"
+            onClick={() => void controller.applyAutoLayout().then((laidOut) => {
+              setViewport(fitViewBoxToAspect(getTableBounds(laidOut.tables), canvasSize.width, canvasSize.height));
+            })}
+            disabled={controller.diagram.tables.length < 2}
+          >
+            <Sparkles size={16} />
           </button>
           <button
             type="button"

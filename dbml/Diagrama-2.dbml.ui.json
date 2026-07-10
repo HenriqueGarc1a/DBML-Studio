@@ -1,0 +1,817 @@
+{
+  "version": 1,
+  "visual": {
+    "backgroundColor": "#0f172a",
+    "gridColor": "#1f2a3a",
+    "gridSize": 4,
+    "tableRouteMargin": 28,
+    "defaultTable": {
+      "backgroundColor": "#111827",
+      "borderColor": "#4b5f78",
+      "textColor": "#e5edf7",
+      "headerColor": "#253142",
+      "lineColor": "#94a3b8",
+      "opacity": 1
+    },
+    "badges": {
+      "primaryKey": {
+        "backgroundColor": "#3f2d12",
+        "borderColor": "#f59e0b",
+        "textColor": "#fcd34d"
+      },
+      "foreignKey": {
+        "backgroundColor": "#12312e",
+        "borderColor": "#2dd4bf",
+        "textColor": "#99f6e4"
+      },
+      "notNull": {
+        "backgroundColor": "#3b1620",
+        "borderColor": "#fb7185",
+        "textColor": "#fecdd3"
+      },
+      "unique": {
+        "backgroundColor": "#1e1b4b",
+        "borderColor": "#818cf8",
+        "textColor": "#c7d2fe"
+      }
+    },
+    "savedColors": []
+  },
+  "tables": [
+    {
+      "id": "user",
+      "name": "User",
+      "x": -356,
+      "y": 316,
+      "width": 282,
+      "height": 458,
+      "visual": {
+        "backgroundColor": "#111827",
+        "borderColor": "#4b5f78",
+        "textColor": "#e5edf7",
+        "headerColor": "#253142",
+        "lineColor": "#94a3b8",
+        "opacity": 1
+      },
+      "usesDefaultStyle": true,
+      "usesGroupStyle": false,
+      "layoutSource": "comment"
+    },
+    {
+      "id": "exam",
+      "name": "Exam",
+      "x": 116,
+      "y": -376,
+      "width": 234,
+      "height": 150,
+      "visual": {
+        "backgroundColor": "#111827",
+        "borderColor": "#4b5f78",
+        "textColor": "#e5edf7",
+        "headerColor": "#253142",
+        "lineColor": "#94a3b8",
+        "opacity": 1
+      },
+      "usesDefaultStyle": true,
+      "usesGroupStyle": false,
+      "layoutSource": "comment"
+    },
+    {
+      "id": "examday",
+      "name": "ExamDay",
+      "x": 1016,
+      "y": 36,
+      "width": 346,
+      "height": 122,
+      "visual": {
+        "backgroundColor": "#111827",
+        "borderColor": "#4b5f78",
+        "textColor": "#e5edf7",
+        "headerColor": "#253142",
+        "lineColor": "#94a3b8",
+        "opacity": 1
+      },
+      "usesDefaultStyle": true,
+      "usesGroupStyle": false,
+      "layoutSource": "comment"
+    },
+    {
+      "id": "attempt",
+      "name": "Attempt",
+      "x": -320,
+      "y": -404,
+      "width": 282,
+      "height": 262,
+      "visual": {
+        "backgroundColor": "#111827",
+        "borderColor": "#4b5f78",
+        "textColor": "#e5edf7",
+        "headerColor": "#253142",
+        "lineColor": "#94a3b8",
+        "opacity": 1
+      },
+      "usesDefaultStyle": true,
+      "usesGroupStyle": false,
+      "layoutSource": "comment"
+    },
+    {
+      "id": "attempt_day",
+      "name": "Attempt_day",
+      "x": 504,
+      "y": -124,
+      "width": 282,
+      "height": 234,
+      "visual": {
+        "backgroundColor": "#111827",
+        "borderColor": "#4b5f78",
+        "textColor": "#e5edf7",
+        "headerColor": "#253142",
+        "lineColor": "#94a3b8",
+        "opacity": 1
+      },
+      "usesDefaultStyle": true,
+      "usesGroupStyle": false,
+      "layoutSource": "comment"
+    },
+    {
+      "id": "subject",
+      "name": "Subject",
+      "x": -272,
+      "y": 1248,
+      "width": 220,
+      "height": 94,
+      "visual": {
+        "backgroundColor": "#111827",
+        "borderColor": "#4b5f78",
+        "textColor": "#e5edf7",
+        "headerColor": "#253142",
+        "lineColor": "#94a3b8",
+        "opacity": 1
+      },
+      "usesDefaultStyle": true,
+      "usesGroupStyle": false,
+      "layoutSource": "comment"
+    },
+    {
+      "id": "path",
+      "name": "Path",
+      "x": -288,
+      "y": 928,
+      "width": 274,
+      "height": 206,
+      "visual": {
+        "backgroundColor": "#111827",
+        "borderColor": "#4b5f78",
+        "textColor": "#e5edf7",
+        "headerColor": "#253142",
+        "lineColor": "#94a3b8",
+        "opacity": 1
+      },
+      "usesDefaultStyle": true,
+      "usesGroupStyle": false,
+      "layoutSource": "comment"
+    },
+    {
+      "id": "studyday",
+      "name": "StudyDay",
+      "x": -692,
+      "y": 584,
+      "width": 220,
+      "height": 150,
+      "visual": {
+        "backgroundColor": "#111827",
+        "borderColor": "#4b5f78",
+        "textColor": "#e5edf7",
+        "headerColor": "#253142",
+        "lineColor": "#94a3b8",
+        "opacity": 1
+      },
+      "usesDefaultStyle": true,
+      "usesGroupStyle": false,
+      "layoutSource": "comment"
+    },
+    {
+      "id": "studylog",
+      "name": "StudyLog",
+      "x": -700,
+      "y": 904,
+      "width": 220,
+      "height": 178,
+      "visual": {
+        "backgroundColor": "#111827",
+        "borderColor": "#4b5f78",
+        "textColor": "#e5edf7",
+        "headerColor": "#253142",
+        "lineColor": "#94a3b8",
+        "opacity": 1
+      },
+      "usesDefaultStyle": true,
+      "usesGroupStyle": false,
+      "layoutSource": "comment"
+    },
+    {
+      "id": "question",
+      "name": "Question",
+      "x": 48,
+      "y": 576,
+      "width": 242,
+      "height": 318,
+      "visual": {
+        "backgroundColor": "#111827",
+        "borderColor": "#4b5f78",
+        "textColor": "#e5edf7",
+        "headerColor": "#253142",
+        "lineColor": "#94a3b8",
+        "opacity": 1
+      },
+      "usesDefaultStyle": true,
+      "usesGroupStyle": false,
+      "layoutSource": "comment"
+    },
+    {
+      "id": "alternative",
+      "name": "Alternative",
+      "x": 428,
+      "y": 636,
+      "width": 250,
+      "height": 178,
+      "visual": {
+        "backgroundColor": "#111827",
+        "borderColor": "#4b5f78",
+        "textColor": "#e5edf7",
+        "headerColor": "#253142",
+        "lineColor": "#94a3b8",
+        "opacity": 1
+      },
+      "usesDefaultStyle": true,
+      "usesGroupStyle": false,
+      "layoutSource": "comment"
+    },
+    {
+      "id": "answer",
+      "name": "Answer",
+      "x": -532,
+      "y": 64,
+      "width": 266,
+      "height": 206,
+      "visual": {
+        "backgroundColor": "#111827",
+        "borderColor": "#4b5f78",
+        "textColor": "#e5edf7",
+        "headerColor": "#253142",
+        "lineColor": "#94a3b8",
+        "opacity": 1
+      },
+      "usesDefaultStyle": true,
+      "usesGroupStyle": false,
+      "layoutSource": "comment"
+    }
+  ],
+  "relations": [
+    {
+      "id": "relation-question-id-answer-question_id-0",
+      "fromSide": "west",
+      "toSide": "east",
+      "route": "orthogonal",
+      "viaPoints": [
+        {
+          "x": 20,
+          "y": 628
+        },
+        {
+          "x": 20,
+          "y": 228
+        },
+        {
+          "x": -238,
+          "y": 228
+        }
+      ],
+      "color": "#94a3b8",
+      "usesTableLineColor": true,
+      "opacity": 0.9,
+      "strokeWidth": 4,
+      "style": "solid",
+      "fromCardinality": "many",
+      "toCardinality": "one",
+      "label": "",
+      "fromTable": "question",
+      "fromColumn": "id",
+      "toTable": "answer",
+      "toColumn": "question_id"
+    },
+    {
+      "id": "relation-question-id-alternative-question_id-1",
+      "fromSide": "east",
+      "toSide": "west",
+      "route": "orthogonal",
+      "viaPoints": [
+        {
+          "x": 318,
+          "y": 628
+        },
+        {
+          "x": 400,
+          "y": 628
+        },
+        {
+          "x": 400,
+          "y": 800
+        }
+      ],
+      "color": "#94a3b8",
+      "usesTableLineColor": true,
+      "opacity": 0.9,
+      "strokeWidth": 4,
+      "style": "solid",
+      "fromCardinality": "many",
+      "toCardinality": "one",
+      "label": "",
+      "fromTable": "question",
+      "fromColumn": "id",
+      "toTable": "alternative",
+      "toColumn": "question_id"
+    },
+    {
+      "id": "relation-answer-alternative_id-alternative-id-2",
+      "fromSide": "east",
+      "toSide": "west",
+      "route": "orthogonal",
+      "viaPoints": [
+        {
+          "x": -238,
+          "y": 172
+        },
+        {
+          "x": 400,
+          "y": 172
+        },
+        {
+          "x": 400,
+          "y": 688
+        }
+      ],
+      "color": "#94a3b8",
+      "usesTableLineColor": true,
+      "opacity": 0.9,
+      "strokeWidth": 4,
+      "style": "solid",
+      "fromCardinality": "many",
+      "toCardinality": "one",
+      "label": "",
+      "fromTable": "answer",
+      "fromColumn": "alternative_id",
+      "toTable": "alternative",
+      "toColumn": "id"
+    },
+    {
+      "id": "relation-question-path_id-path-id-3",
+      "fromSide": "west",
+      "toSide": "east",
+      "route": "orthogonal",
+      "viaPoints": [
+        {
+          "x": 20,
+          "y": 656
+        },
+        {
+          "x": 14,
+          "y": 656
+        },
+        {
+          "x": 14,
+          "y": 980
+        }
+      ],
+      "color": "#94a3b8",
+      "usesTableLineColor": true,
+      "opacity": 0.9,
+      "strokeWidth": 4,
+      "style": "solid",
+      "fromCardinality": "many",
+      "toCardinality": "one",
+      "label": "",
+      "fromTable": "question",
+      "fromColumn": "path_id",
+      "toTable": "path",
+      "toColumn": "id"
+    },
+    {
+      "id": "relation-path-subject_id-subject-id-4",
+      "fromSide": "east",
+      "toSide": "east",
+      "route": "orthogonal",
+      "viaPoints": [
+        {
+          "x": 14,
+          "y": 1008
+        },
+        {
+          "x": 14,
+          "y": 1300
+        },
+        {
+          "x": -24,
+          "y": 1300
+        }
+      ],
+      "color": "#94a3b8",
+      "usesTableLineColor": true,
+      "opacity": 0.9,
+      "strokeWidth": 4,
+      "style": "solid",
+      "fromCardinality": "many",
+      "toCardinality": "one",
+      "label": "",
+      "fromTable": "path",
+      "fromColumn": "subject_id",
+      "toTable": "subject",
+      "toColumn": "id"
+    },
+    {
+      "id": "relation-studyday-user_id-user-id-5",
+      "fromSide": "east",
+      "toSide": "west",
+      "route": "orthogonal",
+      "viaPoints": [
+        {
+          "x": -444,
+          "y": 664
+        },
+        {
+          "x": -384,
+          "y": 664
+        },
+        {
+          "x": -384,
+          "y": 368
+        }
+      ],
+      "color": "#94a3b8",
+      "usesTableLineColor": true,
+      "opacity": 0.9,
+      "strokeWidth": 4,
+      "style": "solid",
+      "fromCardinality": "many",
+      "toCardinality": "one",
+      "label": "",
+      "fromTable": "studyday",
+      "fromColumn": "user_id",
+      "toTable": "user",
+      "toColumn": "id"
+    },
+    {
+      "id": "relation-studylog-user_id-user-id-6",
+      "fromSide": "east",
+      "toSide": "west",
+      "route": "orthogonal",
+      "viaPoints": [
+        {
+          "x": -452,
+          "y": 1068
+        },
+        {
+          "x": -384,
+          "y": 1068
+        },
+        {
+          "x": -384,
+          "y": 368
+        }
+      ],
+      "color": "#94a3b8",
+      "usesTableLineColor": true,
+      "opacity": 0.9,
+      "strokeWidth": 4,
+      "style": "solid",
+      "fromCardinality": "many",
+      "toCardinality": "one",
+      "label": "",
+      "fromTable": "studylog",
+      "fromColumn": "user_id",
+      "toTable": "user",
+      "toColumn": "id"
+    },
+    {
+      "id": "relation-studylog-path_id-path-id-7",
+      "fromSide": "east",
+      "toSide": "west",
+      "route": "orthogonal",
+      "viaPoints": [
+        {
+          "x": -452,
+          "y": 1040
+        },
+        {
+          "x": -316,
+          "y": 1040
+        },
+        {
+          "x": -316,
+          "y": 980
+        }
+      ],
+      "color": "#94a3b8",
+      "usesTableLineColor": true,
+      "opacity": 0.9,
+      "strokeWidth": 4,
+      "style": "solid",
+      "fromCardinality": "many",
+      "toCardinality": "one",
+      "label": "",
+      "fromTable": "studylog",
+      "fromColumn": "path_id",
+      "toTable": "path",
+      "toColumn": "id"
+    },
+    {
+      "id": "relation-question-exam_day_id-examday-id-8",
+      "fromSide": "east",
+      "toSide": "west",
+      "route": "orthogonal",
+      "viaPoints": [
+        {
+          "x": 318,
+          "y": 684
+        },
+        {
+          "x": 318,
+          "y": 138
+        },
+        {
+          "x": 988,
+          "y": 138
+        },
+        {
+          "x": 988,
+          "y": 88
+        }
+      ],
+      "color": "#94a3b8",
+      "usesTableLineColor": true,
+      "opacity": 0.9,
+      "strokeWidth": 4,
+      "style": "solid",
+      "fromCardinality": "many",
+      "toCardinality": "one",
+      "label": "",
+      "fromTable": "question",
+      "fromColumn": "exam_day_id",
+      "toTable": "examday",
+      "toColumn": "id"
+    },
+    {
+      "id": "relation-examday-exam_id-exam-id-9",
+      "fromSide": "west",
+      "toSide": "east",
+      "route": "orthogonal",
+      "viaPoints": [
+        {
+          "x": 988,
+          "y": 144
+        },
+        {
+          "x": 378,
+          "y": 144
+        },
+        {
+          "x": 378,
+          "y": -324
+        }
+      ],
+      "color": "#94a3b8",
+      "usesTableLineColor": true,
+      "opacity": 0.9,
+      "strokeWidth": 4,
+      "style": "solid",
+      "fromCardinality": "many",
+      "toCardinality": "one",
+      "label": "",
+      "fromTable": "examday",
+      "fromColumn": "exam_id",
+      "toTable": "exam",
+      "toColumn": "id"
+    },
+    {
+      "id": "relation-attempt-user_id-user-id-10",
+      "fromSide": "east",
+      "toSide": "east",
+      "route": "orthogonal",
+      "viaPoints": [
+        {
+          "x": -10,
+          "y": -296
+        },
+        {
+          "x": -10,
+          "y": 368
+        },
+        {
+          "x": -46,
+          "y": 368
+        }
+      ],
+      "color": "#94a3b8",
+      "usesTableLineColor": true,
+      "opacity": 0.9,
+      "strokeWidth": 4,
+      "style": "solid",
+      "fromCardinality": "many",
+      "toCardinality": "one",
+      "label": "",
+      "fromTable": "attempt",
+      "fromColumn": "user_id",
+      "toTable": "user",
+      "toColumn": "id"
+    },
+    {
+      "id": "relation-attempt_day-exam_day_id-examday-id-11",
+      "fromSide": "east",
+      "toSide": "west",
+      "route": "orthogonal",
+      "viaPoints": [
+        {
+          "x": 814,
+          "y": 68
+        },
+        {
+          "x": 988,
+          "y": 68
+        },
+        {
+          "x": 988,
+          "y": 88
+        }
+      ],
+      "color": "#94a3b8",
+      "usesTableLineColor": true,
+      "opacity": 0.9,
+      "strokeWidth": 4,
+      "style": "solid",
+      "fromCardinality": "many",
+      "toCardinality": "one",
+      "label": "",
+      "fromTable": "attempt_day",
+      "fromColumn": "exam_day_id",
+      "toTable": "examday",
+      "toColumn": "id"
+    },
+    {
+      "id": "relation-attempt_day-attempt_id-attempt-id-12",
+      "fromSide": "west",
+      "toSide": "east",
+      "route": "orthogonal",
+      "viaPoints": [
+        {
+          "x": 476,
+          "y": 96
+        },
+        {
+          "x": -10,
+          "y": 96
+        },
+        {
+          "x": -10,
+          "y": -352
+        }
+      ],
+      "color": "#94a3b8",
+      "usesTableLineColor": true,
+      "opacity": 0.9,
+      "strokeWidth": 4,
+      "style": "solid",
+      "fromCardinality": "many",
+      "toCardinality": "one",
+      "label": "",
+      "fromTable": "attempt_day",
+      "fromColumn": "attempt_id",
+      "toTable": "attempt",
+      "toColumn": "id"
+    },
+    {
+      "id": "relation-answer-attempt_day_id-attempt_day-id-13",
+      "fromSide": "east",
+      "toSide": "west",
+      "route": "orthogonal",
+      "viaPoints": [
+        {
+          "x": -238,
+          "y": 256
+        },
+        {
+          "x": 476,
+          "y": 256
+        },
+        {
+          "x": 476,
+          "y": -72
+        }
+      ],
+      "color": "#94a3b8",
+      "usesTableLineColor": true,
+      "opacity": 0.9,
+      "strokeWidth": 4,
+      "style": "solid",
+      "fromCardinality": "many",
+      "toCardinality": "one",
+      "label": "",
+      "fromTable": "answer",
+      "fromColumn": "attempt_day_id",
+      "toTable": "attempt_day",
+      "toColumn": "id"
+    },
+    {
+      "id": "relation-user-id-answer-user_id-14",
+      "fromSide": "east",
+      "toSide": "east",
+      "route": "orthogonal",
+      "viaPoints": [
+        {
+          "x": -46,
+          "y": 368
+        },
+        {
+          "x": -46,
+          "y": 200
+        },
+        {
+          "x": -238,
+          "y": 200
+        }
+      ],
+      "color": "#94a3b8",
+      "usesTableLineColor": true,
+      "opacity": 0.9,
+      "strokeWidth": 4,
+      "style": "solid",
+      "fromCardinality": "many",
+      "toCardinality": "one",
+      "label": "",
+      "fromTable": "user",
+      "fromColumn": "id",
+      "toTable": "answer",
+      "toColumn": "user_id"
+    },
+    {
+      "id": "relation-attempt-exam_id-exam-id-15",
+      "fromSide": "east",
+      "toSide": "west",
+      "route": "orthogonal",
+      "viaPoints": [
+        {
+          "x": -10,
+          "y": -324
+        },
+        {
+          "x": 88,
+          "y": -324
+        }
+      ],
+      "color": "#94a3b8",
+      "usesTableLineColor": true,
+      "opacity": 0.9,
+      "strokeWidth": 4,
+      "style": "solid",
+      "fromCardinality": "many",
+      "toCardinality": "one",
+      "label": "",
+      "fromTable": "attempt",
+      "fromColumn": "exam_id",
+      "toTable": "exam",
+      "toColumn": "id"
+    },
+    {
+      "id": "relation-attempt_day-time_spent_minutes-exam-image_url-16",
+      "fromSide": "west",
+      "toSide": "east",
+      "route": "orthogonal",
+      "viaPoints": [
+        {
+          "x": 476,
+          "y": -44
+        },
+        {
+          "x": 378,
+          "y": -44
+        },
+        {
+          "x": 378,
+          "y": -240
+        }
+      ],
+      "color": "#94a3b8",
+      "usesTableLineColor": true,
+      "opacity": 0.9,
+      "strokeWidth": 4,
+      "style": "solid",
+      "fromCardinality": "many",
+      "toCardinality": "one",
+      "label": "",
+      "fromTable": "attempt_day",
+      "fromColumn": "time_spent_minutes",
+      "toTable": "exam",
+      "toColumn": "image_url"
+    }
+  ],
+  "groups": []
+}

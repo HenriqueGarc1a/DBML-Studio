@@ -1,6 +1,6 @@
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
-import { mkdir, readdir, readFile, stat, writeFile } from "node:fs/promises";
+import { mkdir, readdir, readFile, rename, stat, writeFile } from "node:fs/promises";
 import type { IncomingMessage, ServerResponse } from "node:http";
 import path from "node:path";
 
@@ -26,10 +26,11 @@ function dbmlFilesPlugin() {
               .filter((entry) => entry.endsWith(".dbml"))
               .map(async (filename) => {
                 const filePath = path.join(dbmlDir, filename);
-                const [dbml, stats, uiLayout] = await Promise.all([
+                const [dbml, stats, uiLayout, preview] = await Promise.all([
                   readFile(filePath, "utf8"),
                   stat(filePath),
                   readFile(`${filePath}.ui.json`, "utf8").catch(() => undefined),
+                  readFile(`${filePath}.preview.webp`).catch(() => undefined),
                 ]);
 
                 return {
@@ -37,6 +38,7 @@ function dbmlFilesPlugin() {
                   name: filename.replace(/\.dbml$/i, "").replace(/-/g, " "),
                   dbml,
                   uiLayout,
+                  previewDataUrl: preview ? `data:image/webp;base64,${preview.toString("base64")}` : undefined,
                   updatedAt: stats.mtimeMs,
                 };
               }),
@@ -59,6 +61,7 @@ function dbmlFilesPlugin() {
           const filename = safeDbmlFilename(String(body.filename ?? ""));
           const contents = String(body.contents ?? "");
           const uiLayout = typeof body.uiLayout === "string" ? body.uiLayout : undefined;
+          const previewDataUrl = typeof body.previewDataUrl === "string" ? body.previewDataUrl : undefined;
 
           if (!filename || !contents.trim()) {
             sendJson(response, 400, { error: "Invalid DBML payload" });
@@ -70,7 +73,29 @@ function dbmlFilesPlugin() {
           if (uiLayout?.trim()) {
             await writeFile(path.join(dbmlDir, `${filename}.ui.json`), uiLayout, "utf8");
           }
+          const preview = previewDataUrl?.match(/^data:image\/webp;base64,(.+)$/)?.[1];
+          if (preview) await writeFile(path.join(dbmlDir, `${filename}.preview.webp`), Buffer.from(preview, "base64"));
           sendJson(response, 200, { filename });
+        } catch (error) {
+          sendJson(response, 500, { error: formatError(error) });
+        }
+      });
+
+      server.middlewares.use("/__dbml/rename", async (request, response) => {
+        if (request.method !== "POST") {
+          sendJson(response, 405, { error: "Method not allowed" });
+          return;
+        }
+        try {
+          const body = await readJsonBody(request);
+          const from = safeDbmlFilename(String(body.from ?? ""));
+          const to = safeDbmlFilename(String(body.to ?? ""));
+          if (from !== to) {
+            await rename(path.join(dbmlDir, from), path.join(dbmlDir, to));
+            await rename(path.join(dbmlDir, `${from}.ui.json`), path.join(dbmlDir, `${to}.ui.json`)).catch(() => undefined);
+            await rename(path.join(dbmlDir, `${from}.preview.webp`), path.join(dbmlDir, `${to}.preview.webp`)).catch(() => undefined);
+          }
+          sendJson(response, 200, { filename: to });
         } catch (error) {
           sendJson(response, 500, { error: formatError(error) });
         }

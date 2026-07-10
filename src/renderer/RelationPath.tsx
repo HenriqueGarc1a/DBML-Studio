@@ -1,4 +1,4 @@
-import type { MouseEvent, PointerEvent } from "react";
+import type { PointerEvent } from "react";
 import type { RelationModel, TableModel } from "../model/types";
 import { getRelationGeometry } from "../utils/geometry";
 import { buildJumpPath } from "../utils/lineJumps";
@@ -15,18 +15,9 @@ interface RelationPathProps {
   exportFlowDirection?: "forward" | "reverse";
   exportFlowColor?: string;
   renderedPath?: string;
-  onSelect: (relation: RelationModel) => void;
-  onAddViaPoint: (relation: RelationModel, event: MouseEvent<SVGPathElement>) => void;
-  onViaPointerDown: (
-    event: PointerEvent<SVGCircleElement>,
-    relation: RelationModel,
-    index: number,
-  ) => void;
-  onEndpointPointerDown: (
-    event: PointerEvent<SVGRectElement>,
-    relation: RelationModel,
-    endpoint: "start" | "end",
-  ) => void;
+  onPathPointerDown: (event: PointerEvent<SVGPathElement>, relation: RelationModel) => void;
+  onSegmentPointerDown: (event: PointerEvent<SVGGElement>, relation: RelationModel, index: number) => void;
+  onCornerPointerDown: (event: PointerEvent<SVGRectElement>, relation: RelationModel, index: number) => void;
 }
 
 export function RelationPath({
@@ -41,10 +32,9 @@ export function RelationPath({
   exportFlowDirection,
   exportFlowColor,
   renderedPath,
-  onSelect,
-  onAddViaPoint,
-  onViaPointerDown,
-  onEndpointPointerDown,
+  onPathPointerDown,
+  onSegmentPointerDown,
+  onCornerPointerDown,
 }: RelationPathProps) {
   const geometry = getRelationGeometry(relation, fromTable, toTable);
   const path = renderedPath ?? geometry.path;
@@ -76,11 +66,7 @@ export function RelationPath({
         stroke="transparent"
         strokeWidth={Math.max(12, relation.strokeWidth + 8)}
         className="relation-hitbox"
-        onPointerDown={(event) => {
-          event.stopPropagation();
-          onSelect(relation);
-        }}
-        onDoubleClick={(event) => onAddViaPoint(relation, event)}
+        onPointerDown={(event) => onPathPointerDown(event, relation)}
       />
       {highlighted && (
         <path
@@ -140,26 +126,41 @@ export function RelationPath({
         {cardinalityLabel(relation.toCardinality)}
       </text>
       {selected && (
-        <>
-          <EndpointHandle
-            point={start}
-            onPointerDown={(event) => onEndpointPointerDown(event, relation, "start")}
-          />
-          <EndpointHandle
-            point={end}
-            onPointerDown={(event) => onEndpointPointerDown(event, relation, "end")}
-          />
-          {relation.viaPoints.map((point, index) => (
-            <circle
-              key={`${relation.id}-${index}`}
-              cx={point.x}
-              cy={point.y}
-              r={6}
-              className="via-handle"
-              onPointerDown={(event) => onViaPointerDown(event, relation, index)}
-            />
+        <g className="relation-edit-handles">
+          {geometry.points.slice(0, -1).map((point, index) => {
+            const next = geometry.points[index + 1];
+            if (Math.hypot(next.x - point.x, next.y - point.y) < 24) return null;
+            const middle = { x: (point.x + next.x) / 2, y: (point.y + next.y) / 2 };
+            const horizontal = Math.abs(next.x - point.x) >= Math.abs(next.y - point.y);
+            return (
+              <g
+                key={`${relation.id}-segment-${index}`}
+                className={`segment-handle is-${horizontal ? "horizontal" : "vertical"}`}
+                transform={`translate(${middle.x} ${middle.y})`}
+                onPointerDown={(event) => onSegmentPointerDown(event, relation, index)}
+              >
+                <title>Arraste para mover este trecho</title>
+                <circle r={6} />
+                <path d={horizontal ? "M -3 0 H 3" : "M 0 -3 V 3"} />
+              </g>
+            );
+          })}
+          {geometry.points.slice(1, -1).map((point, index) => (
+            <rect
+              key={`${relation.id}-corner-${index + 1}`}
+              x={point.x - 5}
+              y={point.y - 5}
+              width={10}
+              height={10}
+              rx={2}
+              transform={`rotate(45 ${point.x} ${point.y})`}
+              className="corner-handle"
+              onPointerDown={(event) => onCornerPointerDown(event, relation, index + 1)}
+            >
+              <title>Arraste para mover esta curva</title>
+            </rect>
           ))}
-        </>
+        </g>
       )}
     </g>
   );
@@ -216,24 +217,4 @@ function cardinalityPoint(endpoint: { x: number; y: number }, neighbor: { x: num
     x: endpoint.x + along.x * 18 + normal.x * 8,
     y: endpoint.y + along.y * 18 + normal.y * 8 + 4,
   };
-}
-
-function EndpointHandle({
-  point,
-  onPointerDown,
-}: {
-  point: { x: number; y: number };
-  onPointerDown: (event: PointerEvent<SVGRectElement>) => void;
-}) {
-  return (
-    <rect
-      x={point.x - 5}
-      y={point.y - 5}
-      width={10}
-      height={10}
-      rx={2}
-      className="endpoint-handle"
-      onPointerDown={onPointerDown}
-    />
-  );
 }

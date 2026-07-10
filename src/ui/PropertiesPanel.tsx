@@ -1,4 +1,4 @@
-import { ChevronDown, ChevronLeft, ChevronRight, Eraser, Link2, Minus, Plus, RotateCcw, Route, Trash2 } from "lucide-react";
+import { ChevronDown, ChevronLeft, ChevronRight, Link2, Minus, Plus, RotateCcw, Route, Trash2 } from "lucide-react";
 import { useEffect, useState, type ChangeEvent, type ReactNode } from "react";
 import type { DiagramController } from "../editor/useDiagramController";
 import { DIAGRAM_MAX_GRID_SIZE, DIAGRAM_MAX_ROUTE_MARGIN, DIAGRAM_MIN_GRID_SIZE, DIAGRAM_MIN_ROUTE_MARGIN } from "../model/defaults";
@@ -9,15 +9,12 @@ import type {
   ColumnModel,
   Direction,
   LineStyle,
-  Point,
   RelationModel,
   SavedColor,
   TableModel,
   TableVisual,
 } from "../model/types";
 import { getEffectiveTableVisual } from "../model/visualSelectors";
-import { getRelationGeometry } from "../utils/geometry";
-import { snapPoint } from "../utils/grid";
 import { safeGetItem, safeSetItem } from "../utils/storage";
 
 interface PropertiesPanelProps {
@@ -715,31 +712,13 @@ function RelationProperties({ controller, relationId }: { controller: DiagramCon
   const relation = controller.diagram.relations.find((item) => item.id === relationId);
   if (!relation) return null;
   const tableMap = new Map(controller.diagram.tables.map((table) => [table.id, table]));
-  const fromTable = tableMap.get(relation.fromTable);
-  const toTable = tableMap.get(relation.toTable);
-
-  const addCenteredPoint = () => {
-    if (!fromTable || !toTable) return;
-    controller.addViaPoint(
-      relation.id,
-      snapPoint(
-        getRelationGeometry(relation, fromTable, toTable).labelPoint,
-        controller.snapToGrid,
-        controller.diagram.visual.gridSize,
-      ),
-    );
-  };
 
   return (
     <section className="property-section">
       <h3>Linha</h3>
       <div className="selection-context">
         <strong>{relationTitle(relation, tableMap)}</strong>
-        <span>
-          {relation.viaPoints.length
-            ? `${relation.viaPoints.length} pontos intermediários`
-            : "sem pontos intermediários"}
-        </span>
+        <span>Arraste qualquer trecho da linha para ajustar a rota.</span>
       </div>
       <CollapsibleGroup id="relation.general" title="Geral">
         <TextField label="Rótulo" value={relation.label} onChange={(label) => controller.updateRelation(relation.id, { label })} />
@@ -760,6 +739,10 @@ function RelationProperties({ controller, relationId }: { controller: DiagramCon
         <RangeField label="Opacidade" value={relation.opacity} min={0.1} max={1} step={0.05} onChange={(opacity) => controller.updateRelation(relation.id, { opacity })} />
       </CollapsibleGroup>
       <CollapsibleGroup id="relation.route" title="Rota" defaultOpen={false}>
+        <div className="relation-point-status">
+          Círculos no meio movem um trecho reto inteiro. Losangos nas curvas reposicionam a curva. Os handles
+          aparecem e se reorganizam automaticamente conforme a linha muda.
+        </div>
         <SelectField<LineStyle>
           label="Estilo"
           value={relation.style}
@@ -809,49 +792,6 @@ function RelationProperties({ controller, relationId }: { controller: DiagramCon
             Reset
           </button>
         </div>
-      </CollapsibleGroup>
-      <CollapsibleGroup id="relation.points" title={`Pontos (${relation.viaPoints.length})`} defaultOpen={false}>
-        <div className={`relation-point-status${relation.viaPoints.length ? "" : " is-empty"}`}>
-          {relation.viaPoints.length
-            ? "A linha usa pontos intermediários para controlar a rota."
-            : "Esta linha não possui pontos intermediários e continua salva com rota automática."}
-        </div>
-        <div className="button-row">
-          <button type="button" className="secondary-button" onClick={addCenteredPoint}>
-            <Plus size={16} />
-            Ponto
-          </button>
-          <button
-            type="button"
-            className="secondary-button"
-            disabled={!relation.viaPoints.length}
-            onClick={() => controller.removeViaPoint(relation.id, relation.viaPoints.length - 1)}
-          >
-            <Trash2 size={16} />
-            Último
-          </button>
-          <button
-            type="button"
-            className="secondary-button"
-            disabled={!relation.viaPoints.length}
-            onClick={() => controller.updateRelation(relation.id, { route: "orthogonal", viaPoints: [] })}
-          >
-            <Eraser size={16} />
-            Limpar
-          </button>
-        </div>
-        {!relation.viaPoints.length && (
-          <div className="empty-state compact">Esta linha ainda não possui pontos.</div>
-        )}
-        {relation.viaPoints.map((point, index) => (
-          <PointEditor
-            key={`${relation.id}-point-${index}`}
-            point={point}
-            label={`P${index + 1}`}
-            onChange={(next) => controller.updateViaPoint(relation.id, index, next)}
-            onRemove={() => controller.removeViaPoint(relation.id, index)}
-          />
-        ))}
       </CollapsibleGroup>
       <CollapsibleGroup id="relation.actions" title="Ações" defaultOpen={false}>
         <div className="button-row">
@@ -1025,29 +965,6 @@ function SelectField<T extends string>({
         ))}
       </select>
     </label>
-  );
-}
-
-function PointEditor({
-  label,
-  point,
-  onChange,
-  onRemove,
-}: {
-  label: string;
-  point: Point;
-  onChange: (point: Point) => void;
-  onRemove: () => void;
-}) {
-  return (
-    <div className="point-editor">
-      <span>{label}</span>
-      <input type="number" value={Number(point.x.toFixed(1))} onChange={(event) => onChange({ ...point, x: Number(event.target.value) })} />
-      <input type="number" value={Number(point.y.toFixed(1))} onChange={(event) => onChange({ ...point, y: Number(event.target.value) })} />
-      <button type="button" className="icon-button" onClick={onRemove} title="Remover ponto">
-        <Trash2 size={15} />
-      </button>
-    </div>
   );
 }
 

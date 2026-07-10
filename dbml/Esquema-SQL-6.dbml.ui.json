@@ -41,8 +41,8 @@
     {
       "id": "ages_user",
       "name": "ages_user",
-      "x": 2108,
-      "y": 288,
+      "x": 1724,
+      "y": 168,
       "width": 282,
       "height": 262,
       "visual": {
@@ -55,13 +55,23 @@
       },
       "usesDefaultStyle": true,
       "usesGroupStyle": false,
-      "layoutSource": "comment"
+      "layoutSource": "auto",
+      "columnOrder": [
+        "id",
+        "email",
+        "pucrs_id",
+        "name",
+        "password",
+        "image_url",
+        "course",
+        "type"
+      ]
     },
     {
       "id": "project",
       "name": "project",
-      "x": 1976,
-      "y": 968,
+      "x": 1724,
+      "y": 799,
       "width": 330,
       "height": 290,
       "visual": {
@@ -74,13 +84,24 @@
       },
       "usesDefaultStyle": true,
       "usesGroupStyle": false,
-      "layoutSource": "comment"
+      "layoutSource": "auto",
+      "columnOrder": [
+        "id",
+        "description",
+        "git_lab",
+        "name",
+        "active",
+        "group_photo_url",
+        "year",
+        "semester",
+        "logo_url"
+      ]
     },
     {
       "id": "team",
       "name": "team",
       "x": 1372,
-      "y": 915.3,
+      "y": 815,
       "width": 226,
       "height": 122,
       "visual": {
@@ -93,13 +114,18 @@
       },
       "usesDefaultStyle": true,
       "usesGroupStyle": false,
-      "layoutSource": "comment"
+      "layoutSource": "auto",
+      "columnOrder": [
+        "id",
+        "teacher_id",
+        "project_id"
+      ]
     },
     {
       "id": "class",
       "name": "class",
-      "x": 1350.7,
-      "y": 63.7,
+      "x": 1350.6666666666667,
+      "y": 64,
       "width": 242,
       "height": 206,
       "visual": {
@@ -112,13 +138,21 @@
       },
       "usesDefaultStyle": true,
       "usesGroupStyle": false,
-      "layoutSource": "comment"
+      "layoutSource": "auto",
+      "columnOrder": [
+        "id",
+        "teacher_id",
+        "number",
+        "year",
+        "semester",
+        "active"
+      ]
     },
     {
       "id": "semester_profile",
       "name": "semester_profile",
-      "x": 832,
-      "y": 696,
+      "x": 884,
+      "y": 256,
       "width": 346,
       "height": 234,
       "visual": {
@@ -131,13 +165,22 @@
       },
       "usesDefaultStyle": true,
       "usesGroupStyle": false,
-      "layoutSource": "manual"
+      "layoutSource": "auto",
+      "columnOrder": [
+        "id",
+        "class_id",
+        "team_id",
+        "user_id",
+        "grade",
+        "ages_role",
+        "student_status"
+      ]
     },
     {
       "id": "lesson",
       "name": "lesson",
       "x": 947,
-      "y": 71.3,
+      "y": 64,
       "width": 220,
       "height": 122,
       "visual": {
@@ -150,13 +193,18 @@
       },
       "usesDefaultStyle": true,
       "usesGroupStyle": false,
-      "layoutSource": "comment"
+      "layoutSource": "auto",
+      "columnOrder": [
+        "id",
+        "class_id",
+        "date"
+      ]
     },
     {
       "id": "otp",
       "name": "otp",
       "x": 1348,
-      "y": 391.3,
+      "y": 291,
       "width": 266,
       "height": 178,
       "visual": {
@@ -169,13 +217,20 @@
       },
       "usesDefaultStyle": true,
       "usesGroupStyle": false,
-      "layoutSource": "comment"
+      "layoutSource": "auto",
+      "columnOrder": [
+        "id",
+        "user_id",
+        "expires_at",
+        "token",
+        "used"
+      ]
     },
     {
       "id": "schedule",
       "name": "schedule",
-      "x": 1592,
-      "y": 604,
+      "x": 1340,
+      "y": 539,
       "width": 274,
       "height": 206,
       "visual": {
@@ -188,13 +243,21 @@
       },
       "usesDefaultStyle": true,
       "usesGroupStyle": false,
-      "layoutSource": "manual"
+      "layoutSource": "auto",
+      "columnOrder": [
+        "id",
+        "admin_id",
+        "event",
+        "event_date",
+        "event_period",
+        "event_time"
+      ]
     },
     {
       "id": "technology",
       "name": "technology",
       "x": 1724,
-      "y": 1260,
+      "y": 1159,
       "width": 266,
       "height": 122,
       "visual": {
@@ -207,13 +270,18 @@
       },
       "usesDefaultStyle": true,
       "usesGroupStyle": false,
-      "layoutSource": "comment"
+      "layoutSource": "auto",
+      "columnOrder": [
+        "id",
+        "name",
+        "type"
+      ]
     },
     {
       "id": "project_stack",
       "name": "project_stack",
       "x": 1364,
-      "y": 1239.7,
+      "y": 1139,
       "width": 250,
       "height": 122,
       "visual": {
@@ -226,13 +294,18 @@
       },
       "usesDefaultStyle": true,
       "usesGroupStyle": false,
-      "layoutSource": "comment"
+      "layoutSource": "auto",
+      "columnOrder": [
+        "id",
+        "technology_id",
+        "project_id"
+      ]
     },
     {
       "id": "report",
       "name": "report",
-      "x": 268,
-      "y": 1060,
+      "x": 452,
+      "y": 524,
       "width": 322,
       "height": 318,
       "visual": {
@@ -245,13 +318,25 @@
       },
       "usesDefaultStyle": true,
       "usesGroupStyle": false,
-      "layoutSource": "manual"
+      "layoutSource": "auto",
+      "columnOrder": [
+        "id",
+        "student_id",
+        "create_date",
+        "edit_date",
+        "grade",
+        "type",
+        "url_archive",
+        "comment",
+        "correction_url",
+        "revision_date"
+      ]
     },
     {
       "id": "examining_board",
       "name": "examining_board",
       "x": 488,
-      "y": 291.3,
+      "y": 276,
       "width": 250,
       "height": 178,
       "visual": {
@@ -264,7 +349,14 @@
       },
       "usesDefaultStyle": true,
       "usesGroupStyle": false,
-      "layoutSource": "comment"
+      "layoutSource": "auto",
+      "columnOrder": [
+        "id",
+        "student_id",
+        "date",
+        "grade",
+        "room"
+      ]
     },
     {
       "id": "examining_board_member",
@@ -283,13 +375,18 @@
       },
       "usesDefaultStyle": true,
       "usesGroupStyle": false,
-      "layoutSource": "comment"
+      "layoutSource": "auto",
+      "columnOrder": [
+        "id",
+        "examining_board_id",
+        "teacher_id"
+      ]
     },
     {
       "id": "attendance",
       "name": "attendance",
       "x": 548,
-      "y": 91.7,
+      "y": 84,
       "width": 226,
       "height": 122,
       "visual": {
@@ -302,13 +399,18 @@
       },
       "usesDefaultStyle": true,
       "usesGroupStyle": false,
-      "layoutSource": "comment"
+      "layoutSource": "auto",
+      "columnOrder": [
+        "id",
+        "lesson_id",
+        "student_id"
+      ]
     },
     {
       "id": "sprint_report",
       "name": "sprint_report",
-      "x": -96,
-      "y": 916,
+      "x": 36,
+      "y": 605,
       "width": 306,
       "height": 262,
       "visual": {
@@ -321,13 +423,23 @@
       },
       "usesDefaultStyle": true,
       "usesGroupStyle": false,
-      "layoutSource": "manual"
+      "layoutSource": "auto",
+      "columnOrder": [
+        "id",
+        "report_id",
+        "activity_completed",
+        "learned_lessons",
+        "next_steps",
+        "predicted_activity",
+        "problems_encountered",
+        "sprint"
+      ]
     },
     {
       "id": "hours_report",
       "name": "hours_report",
-      "x": -272,
-      "y": 524,
+      "x": 12,
+      "y": 301,
       "width": 330,
       "height": 234,
       "visual": {
@@ -340,7 +452,16 @@
       },
       "usesDefaultStyle": true,
       "usesGroupStyle": false,
-      "layoutSource": "manual"
+      "layoutSource": "auto",
+      "columnOrder": [
+        "id",
+        "report_id",
+        "activities",
+        "entry_time",
+        "exit_time",
+        "rejection_justification",
+        "approved"
+      ]
     }
   ],
   "relations": [
@@ -352,19 +473,15 @@
       "viaPoints": [
         {
           "x": 1626,
-          "y": 995.3
+          "y": 895
         },
         {
-          "x": 1894,
-          "y": 995.3
+          "x": 1696,
+          "y": 895
         },
         {
-          "x": 1894,
-          "y": 340
-        },
-        {
-          "x": 2080,
-          "y": 340
+          "x": 1696,
+          "y": 220
         }
       ],
       "color": "#94a3b8",
@@ -388,15 +505,15 @@
       "viaPoints": [
         {
           "x": 1626,
-          "y": 1023.3
+          "y": 923
         },
         {
-          "x": 1948,
-          "y": 1023.3
+          "x": 1696,
+          "y": 923
         },
         {
-          "x": 1948,
-          "y": 1020
+          "x": 1696,
+          "y": 851
         }
       ],
       "color": "#94a3b8",
@@ -419,16 +536,16 @@
       "route": "orthogonal",
       "viaPoints": [
         {
-          "x": 1620.7,
-          "y": 227.7
+          "x": 1620.6666666666667,
+          "y": 144
         },
         {
-          "x": 2080,
-          "y": 227.7
+          "x": 1696,
+          "y": 144
         },
         {
-          "x": 2080,
-          "y": 340
+          "x": 1696,
+          "y": 220
         }
       ],
       "color": "#94a3b8",
@@ -451,20 +568,20 @@
       "route": "orthogonal",
       "viaPoints": [
         {
-          "x": 1326,
-          "y": 896
+          "x": 1258,
+          "y": 392
         },
         {
-          "x": 1326,
-          "y": 838
+          "x": 1258,
+          "y": 497
         },
         {
-          "x": 2080,
-          "y": 838
+          "x": 1696,
+          "y": 497
         },
         {
-          "x": 2080,
-          "y": 340
+          "x": 1696,
+          "y": 220
         }
       ],
       "color": "#94a3b8",
@@ -487,16 +604,16 @@
       "route": "orthogonal",
       "viaPoints": [
         {
-          "x": 1326,
-          "y": 924
+          "x": 1258,
+          "y": 364
+        },
+        {
+          "x": 1258,
+          "y": 867
         },
         {
           "x": 1344,
-          "y": 924
-        },
-        {
-          "x": 1344,
-          "y": 967.3
+          "y": 867
         }
       ],
       "color": "#94a3b8",
@@ -519,16 +636,16 @@
       "route": "orthogonal",
       "viaPoints": [
         {
-          "x": 1318,
-          "y": 952
+          "x": 1258,
+          "y": 336
         },
         {
-          "x": 1318,
-          "y": 115.7
+          "x": 1258,
+          "y": 116
         },
         {
-          "x": 1322.7,
-          "y": 115.7
+          "x": 1322.6666666666667,
+          "y": 116
         }
       ],
       "color": "#94a3b8",
@@ -552,15 +669,15 @@
       "viaPoints": [
         {
           "x": 1195,
-          "y": 179.3
+          "y": 144
         },
         {
-          "x": 1322.7,
-          "y": 179.3
+          "x": 1322.6666666666667,
+          "y": 144
         },
         {
-          "x": 1322.7,
-          "y": 115.7
+          "x": 1322.6666666666667,
+          "y": 116
         }
       ],
       "color": "#94a3b8",
@@ -584,15 +701,15 @@
       "viaPoints": [
         {
           "x": 1642,
-          "y": 471.3
+          "y": 371
         },
         {
-          "x": 2080,
-          "y": 471.3
+          "x": 1696,
+          "y": 371
         },
         {
-          "x": 2080,
-          "y": 340
+          "x": 1696,
+          "y": 220
         }
       ],
       "color": "#94a3b8",
@@ -615,16 +732,16 @@
       "route": "orthogonal",
       "viaPoints": [
         {
-          "x": 1894,
-          "y": 684
+          "x": 1642,
+          "y": 619
         },
         {
-          "x": 2080,
-          "y": 684
+          "x": 1696,
+          "y": 619
         },
         {
-          "x": 2080,
-          "y": 340
+          "x": 1696,
+          "y": 220
         }
       ],
       "color": "#94a3b8",
@@ -648,15 +765,15 @@
       "viaPoints": [
         {
           "x": 1642,
-          "y": 1319.7
+          "y": 1247
         },
         {
-          "x": 1642,
-          "y": 1020
+          "x": 1696,
+          "y": 1247
         },
         {
-          "x": 1948,
-          "y": 1020
+          "x": 1696,
+          "y": 851
         }
       ],
       "color": "#94a3b8",
@@ -680,15 +797,15 @@
       "viaPoints": [
         {
           "x": 1642,
-          "y": 1347.7
+          "y": 1219
         },
         {
           "x": 1696,
-          "y": 1347.7
+          "y": 1219
         },
         {
           "x": 1696,
-          "y": 1312
+          "y": 1211
         }
       ],
       "color": "#94a3b8",
@@ -711,16 +828,16 @@
       "route": "orthogonal",
       "viaPoints": [
         {
-          "x": 618,
-          "y": 1140
+          "x": 802,
+          "y": 604
         },
         {
-          "x": 804,
-          "y": 1140
+          "x": 856,
+          "y": 604
         },
         {
-          "x": 804,
-          "y": 748
+          "x": 856,
+          "y": 308
         }
       ],
       "color": "#94a3b8",
@@ -744,15 +861,15 @@
       "viaPoints": [
         {
           "x": 766,
-          "y": 455.3
+          "y": 356
         },
         {
-          "x": 804,
-          "y": 455.3
+          "x": 856,
+          "y": 356
         },
         {
-          "x": 804,
-          "y": 748
+          "x": 856,
+          "y": 308
         }
       ],
       "color": "#94a3b8",
@@ -784,7 +901,7 @@
         },
         {
           "x": 460,
-          "y": 343.3
+          "y": 328
         }
       ],
       "color": "#94a3b8",
@@ -812,15 +929,15 @@
         },
         {
           "x": 370,
-          "y": 35.5
+          "y": 36
         },
         {
-          "x": 2080,
-          "y": 35.5
+          "x": 1696,
+          "y": 36
         },
         {
-          "x": 2080,
-          "y": 340
+          "x": 1696,
+          "y": 220
         }
       ],
       "color": "#94a3b8",
@@ -844,15 +961,15 @@
       "viaPoints": [
         {
           "x": 802,
-          "y": 171.7
+          "y": 164
         },
         {
           "x": 919,
-          "y": 171.7
+          "y": 164
         },
         {
           "x": 919,
-          "y": 123.3
+          "y": 116
         }
       ],
       "color": "#94a3b8",
@@ -876,15 +993,15 @@
       "viaPoints": [
         {
           "x": 802,
-          "y": 199.7
+          "y": 192
         },
         {
-          "x": 804,
-          "y": 199.7
+          "x": 856,
+          "y": 192
         },
         {
-          "x": 804,
-          "y": 748
+          "x": 856,
+          "y": 308
         }
       ],
       "color": "#94a3b8",
@@ -907,16 +1024,16 @@
       "route": "orthogonal",
       "viaPoints": [
         {
-          "x": 238,
-          "y": 1164
+          "x": 370,
+          "y": 685
         },
         {
-          "x": 240,
-          "y": 1164
+          "x": 424,
+          "y": 685
         },
         {
-          "x": 240,
-          "y": 1112
+          "x": 424,
+          "y": 576
         }
       ],
       "color": "#94a3b8",
@@ -939,16 +1056,16 @@
       "route": "orthogonal",
       "viaPoints": [
         {
-          "x": 86,
-          "y": 744
+          "x": 370,
+          "y": 381
         },
         {
-          "x": 240,
-          "y": 744
+          "x": 424,
+          "y": 381
         },
         {
-          "x": 240,
-          "y": 1112
+          "x": 424,
+          "y": 576
         }
       ],
       "color": "#94a3b8",

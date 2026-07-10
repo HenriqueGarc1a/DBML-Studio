@@ -28,11 +28,12 @@ import { exportDbml } from "../exporter/dbmlExporter";
 import { applyUiLayout, exportUiLayout } from "../exporter/uiLayoutFile";
 import { sqlToDbml } from "../importer/sqlToDbml";
 import { parseDbml } from "../parser/dbmlParser";
-import { listWorkspaceDbml, saveWorkspaceDbml, sendWorkspaceDbmlBeacon } from "../utils/fileSave";
+import { listWorkspaceDbml, renameWorkspaceDbml, saveWorkspaceDbml, sendWorkspaceDbmlBeacon } from "../utils/fileSave";
 import { makeId, slugify, uniqueId } from "../utils/id";
 import { organizeRelationRoute, relationKeepsTableMargin } from "../utils/relationRouting";
 import { readJson, safeGetItem, safeSetItem, writeJson } from "../utils/storage";
 import { nearestNonOverlappingPosition } from "../utils/tableCollision";
+import { findViaInsertionIndex } from "../utils/geometry";
 import { demoDbml } from "./demoDbml";
 
 export interface DiagramController {
@@ -61,8 +62,8 @@ export interface DiagramController {
   createDiagram: () => Promise<void>;
   createDiagramFromSql: (sql: string) => Promise<void>;
   openDiagram: (id: string) => Promise<void>;
-  applyAutoLayout: () => Promise<void>;
-  saveLayoutToEditor: () => Promise<string>;
+  applyAutoLayout: () => Promise<DiagramModel>;
+  saveLayoutToEditor: (previewDataUrl?: string) => Promise<string>;
   updateDiagramVisual: (patch: Partial<DiagramModel["visual"]>) => void;
   addTable: () => void;
   updateTable: (id: string, patch: Partial<TableModel>) => void;
@@ -80,6 +81,7 @@ export interface DiagramController {
   tidyRelations: () => void;
   resetRelation: (id: string) => void;
   addViaPoint: (id: string, point: Point) => void;
+  insertViaPoint: (id: string, point: Point) => void;
   updateViaPoint: (id: string, index: number, point: Point) => void;
   removeViaPoint: (id: string, index: number) => void;
   updateGroup: (id: string, patch: Partial<GroupModel>) => void;
@@ -96,6 +98,7 @@ export interface SavedDiagram {
   name: string;
   dbml: string;
   uiLayout?: string;
+  previewDataUrl?: string;
   updatedAt: number;
   filename?: string;
 }
@@ -165,6 +168,8 @@ export function useDiagramController(): DiagramController {
   const parseRevisionRef = useRef(0);
   const lastValidDbmlRef = useRef(initialLibrary.activeDiagram.dbml);
   const workspaceSaveTimerRef = useRef<number | undefined>();
+  const renameTimerRef = useRef<number | undefined>();
+  const pendingRenameRef = useRef<{ from: string; to: string; dbml: string; uiLayout: string } | undefined>();
 
   const bumpHistoryVersion = useCallback(() => setHistoryVersion((version) => version + 1), []);
 
@@ -176,7 +181,7 @@ export function useDiagramController(): DiagramController {
     writeDiagramLibrary(nextDiagrams, nextActiveId);
   }, []);
 
-  const persistCurrentDiagram = useCallback((options: { silent?: boolean } = {}): PersistedDiagramSnapshot => {
+  const persistCurrentDiagram = useCallback((options: { silent?: boolean; previewDataUrl?: string } = {}): PersistedDiagramSnapshot => {
     const id = activeDiagramIdRef.current;
     const now = Date.now();
     const name = normalizeDiagramName(diagramNameRef.current);
@@ -188,11 +193,11 @@ export function useDiagramController(): DiagramController {
     const nextDiagrams = diagramsRef.current.map((item) => {
       if (item.id !== id) return item;
       found = true;
-      return { ...item, name, dbml, uiLayout, updatedAt: now };
+      return { ...item, name, dbml, uiLayout, previewDataUrl: options.previewDataUrl ?? item.previewDataUrl, updatedAt: now };
     });
 
     if (!found) {
-      nextDiagrams.push({ id, name, dbml, uiLayout, updatedAt: now, filename: dbmlFilename(name) });
+      nextDiagrams.push({ id, name, dbml, uiLayout, previewDataUrl: options.previewDataUrl, updatedAt: now, filename: dbmlFilename(name) });
     }
 
     commitDiagramLibrary(nextDiagrams, id);
@@ -227,6 +232,9 @@ export function useDiagramController(): DiagramController {
     return () => {
       if (workspaceSaveTimerRef.current !== undefined) {
         window.clearTimeout(workspaceSaveTimerRef.current);
+      }
+      if (renameTimerRef.current !== undefined) {
+        window.clearTimeout(renameTimerRef.current);
       }
     };
   }, []);
@@ -335,6 +343,7 @@ export function useDiagramController(): DiagramController {
           name: normalizeDiagramName(file.name),
           dbml: migrateDarkOnlyDbml(file.dbml),
           uiLayout: file.uiLayout,
+          previewDataUrl: file.previewDataUrl,
           updatedAt: file.updatedAt,
           filename: file.filename,
         }));
@@ -401,22 +410,24 @@ export function useDiagramController(): DiagramController {
 
 
   const applyAutoLayout = useCallback(async () => {
-    const { layoutDiagram } = await import("../layout/autoLayout");
-    const laidOut = await layoutDiagram(diagramRef.current, { preserveManual: false });
-    setSaveMessage("");
+    const { countRelationCrossings, layoutDiagramForMinimumCrossings } = await import("../layout/crossingOptimizedLayout");
+    const laidOut = await layoutDiagramForMinimumCrossings(diagramRef.current);
     replaceDiagram(laidOut, { recordHistory: true, source: "ui" });
+    const crossings = countRelationCrossings(laidOut);
+    setSaveMessage(`Auto-layout: ${crossings} cruzamento${crossings === 1 ? "" : "s"}`);
+    return laidOut;
   }, [replaceDiagram]);
 
-  const saveLayoutToEditor = useCallback(async () => {
+  const saveLayoutToEditor = useCallback(async (previewDataUrl?: string) => {
     const current = diagramRef.current;
     const nextDbml = exportDbml(current);
     setDbmlText(nextDbml);
     lastValidDbmlRef.current = nextDbml;
     setDbmlError(undefined);
     initialRelationsRef.current = new Map(current.relations.map((relation) => [relation.id, relation]));
-    const snapshot = persistCurrentDiagram();
+    const snapshot = persistCurrentDiagram({ previewDataUrl });
     void saveWorkspaceDbml(currentDbmlFilename(diagramsRef.current, activeDiagramIdRef.current, snapshot.name), snapshot.dbml, {
-      keepalive: true, uiLayout: snapshot.uiLayout,
+      keepalive: true, uiLayout: snapshot.uiLayout, previewDataUrl,
     });
     return nextDbml;
   }, [persistCurrentDiagram]);
@@ -427,8 +438,28 @@ export function useDiagramController(): DiagramController {
 
     const id = activeDiagramIdRef.current;
     const name = normalizeDiagramName(value);
+    const current = diagramsRef.current.find((item) => item.id === id);
+    const nextFilename = dbmlFilename(name);
+    if (current?.filename && current.filename !== nextFilename) {
+      pendingRenameRef.current = {
+        from: pendingRenameRef.current?.from ?? current.filename,
+        to: nextFilename,
+        dbml: exportDbml(diagramRef.current),
+        uiLayout: exportUiLayout(diagramRef.current),
+      };
+      if (renameTimerRef.current !== undefined) window.clearTimeout(renameTimerRef.current);
+      renameTimerRef.current = window.setTimeout(async () => {
+        renameTimerRef.current = undefined;
+        const pending = pendingRenameRef.current;
+        if (!pending) return;
+        const renamed = await renameWorkspaceDbml(pending.from, pending.to);
+        if (renamed) pendingRenameRef.current = undefined;
+        await saveWorkspaceDbml(pending.to, pending.dbml, { uiLayout: pending.uiLayout });
+        setSaveMessage(renamed ? `Renomeado para ${pending.to}` : "Não foi possível renomear o arquivo");
+      }, 700);
+    }
     const nextDiagrams = diagramsRef.current.map((item) =>
-      item.id === id ? { ...item, name, updatedAt: Date.now() } : item,
+      item.id === id ? { ...item, name, filename: nextFilename, updatedAt: Date.now() } : item,
     );
 
     commitDiagramLibrary(nextDiagrams, id);
@@ -727,14 +758,19 @@ export function useDiagramController(): DiagramController {
 
       const renamedFrom = previousName;
       const renamedTo = nextName;
+      const orderedTables = renamedFrom && renamedTo
+        ? tables.map((table) => table.id === tableId && table.columnOrder
+          ? { ...table, columnOrder: table.columnOrder.map((name) => name === renamedFrom ? renamedTo : name) }
+          : table)
+        : tables;
 
       if (!renamedFrom || !renamedTo || renamedFrom === renamedTo) {
-        return enforceRelationClearance({ ...current, tables });
+        return enforceRelationClearance({ ...current, tables: orderedTables });
       }
 
       return enforceRelationClearance({
         ...current,
-        tables,
+        tables: orderedTables,
         relations: current.relations.map((relation) => ({
           ...relation,
           fromColumn: relation.fromTable === tableId && relation.fromColumn === renamedFrom
@@ -761,6 +797,7 @@ export function useDiagramController(): DiagramController {
         return {
           ...table,
           columns,
+          columnOrder: table.columnOrder?.filter((name) => name !== removedName),
           height: getTableMinHeight(columns.length),
           layoutSource: "manual" as const,
         };
@@ -932,6 +969,22 @@ export function useDiagramController(): DiagramController {
           ? { ...relation, route: "orthogonal", viaPoints: [...relation.viaPoints, point] }
           : relation,
       ),
+    }));
+  }, [updateDiagramState]);
+
+  const insertViaPoint = useCallback((id: string, point: Point) => {
+    updateDiagramState((current) => enforceRelationClearance({
+      ...current,
+      relations: current.relations.map((relation) => {
+        if (relation.id !== id) return relation;
+        const fromTable = current.tables.find((table) => table.id === relation.fromTable);
+        const toTable = current.tables.find((table) => table.id === relation.toTable);
+        if (!fromTable || !toTable) return relation;
+        const index = findViaInsertionIndex(relation, fromTable, toTable, point);
+        const viaPoints = [...relation.viaPoints];
+        viaPoints.splice(index, 0, point);
+        return { ...relation, route: "orthogonal" as const, viaPoints };
+      }),
     }));
   }, [updateDiagramState]);
 
@@ -1136,6 +1189,7 @@ export function useDiagramController(): DiagramController {
     tidyRelations,
     resetRelation,
     addViaPoint,
+    insertViaPoint,
     updateViaPoint,
     removeViaPoint,
     updateGroup,
@@ -1340,6 +1394,7 @@ function readStoredDiagrams(): SavedDiagram[] {
       name: normalizeDiagramName(item.name),
       dbml: migrateDarkOnlyDbml(item.dbml),
       uiLayout: item.uiLayout,
+      previewDataUrl: item.previewDataUrl,
       updatedAt: item.updatedAt,
       filename: item.filename ?? dbmlFilename(item.name),
     }));
@@ -1363,6 +1418,7 @@ function isStoredDiagram(value: unknown): value is SavedDiagram {
     typeof item.name === "string" &&
     typeof item.dbml === "string" &&
     (item.uiLayout === undefined || typeof item.uiLayout === "string") &&
+    (item.previewDataUrl === undefined || typeof item.previewDataUrl === "string") &&
     typeof item.updatedAt === "number" &&
     (item.filename === undefined || typeof item.filename === "string")
   );

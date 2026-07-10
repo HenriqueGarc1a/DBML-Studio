@@ -3,7 +3,7 @@ import type { DiagramModel, RelationModel, TableModel } from "../model/types";
 interface UiLayoutFile {
   version: 1;
   visual: DiagramModel["visual"];
-  tables: Array<Pick<TableModel, "id" | "name" | "x" | "y" | "width" | "height" | "visual" | "usesDefaultStyle" | "usesGroupStyle" | "layoutSource">>;
+  tables: Array<Pick<TableModel, "id" | "name" | "x" | "y" | "width" | "height" | "visual" | "usesDefaultStyle" | "usesGroupStyle" | "layoutSource" | "columnOrder">>;
   relations: Array<RelationModel>;
   groups: DiagramModel["groups"];
 }
@@ -12,8 +12,8 @@ export function exportUiLayout(diagram: DiagramModel): string {
   const file: UiLayoutFile = {
     version: 1,
     visual: diagram.visual,
-    tables: diagram.tables.map(({ id, name, x, y, width, height, visual, usesDefaultStyle, usesGroupStyle, layoutSource }) => ({
-      id, name, x, y, width, height, visual, usesDefaultStyle, usesGroupStyle, layoutSource,
+    tables: diagram.tables.map(({ id, name, x, y, width, height, visual, usesDefaultStyle, usesGroupStyle, layoutSource, columnOrder }) => ({
+      id, name, x, y, width, height, visual, usesDefaultStyle, usesGroupStyle, layoutSource, columnOrder,
     })),
     relations: diagram.relations,
     groups: diagram.groups,

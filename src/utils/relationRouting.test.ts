@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { defaultRelationVisual, defaultTableVisual } from "../model/defaults";
 import type { Point, RelationModel, TableModel } from "../model/types";
 import { getColumnPoint } from "./geometry";
-import { organizeRelationRoute, relationKeepsTableMargin, routeRelationAroundTables, TABLE_ROUTE_MARGIN } from "./relationRouting";
+import { organizeRelationRoute, pathHasSelfIntersection, relationKeepsTableMargin, routeRelationAroundTables, TABLE_ROUTE_MARGIN } from "./relationRouting";
 
 const source = makeTable("orders", 40, 80);
 const target = makeTable("users", 620, 80);
@@ -70,6 +70,22 @@ describe("relation routing", () => {
 
     const organized = organizeRelationRoute(blocked, source, target, [source, target, blocker], "east", "west");
     expect(relationKeepsTableMargin({ ...blocked, ...organized }, [source, target, blocker])).toBe(true);
+  });
+
+  it("rejects routes that cross or overlap themselves", () => {
+    expect(pathHasSelfIntersection([
+      { x: 0, y: 0 },
+      { x: 100, y: 0 },
+      { x: 100, y: 100 },
+      { x: 40, y: 100 },
+      { x: 40, y: -40 },
+    ])).toBe(true);
+    expect(pathHasSelfIntersection([
+      { x: 0, y: 0 },
+      { x: 100, y: 0 },
+      { x: 100, y: 100 },
+      { x: 160, y: 100 },
+    ])).toBe(false);
   });
 });
 

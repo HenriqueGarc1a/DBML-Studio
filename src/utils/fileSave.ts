@@ -12,6 +12,7 @@ export interface WorkspaceDbmlFile {
   name: string;
   dbml: string;
   uiLayout?: string;
+  previewDataUrl?: string;
   updatedAt: number;
 }
 
@@ -70,7 +71,7 @@ export async function saveTextFile(
 export async function saveWorkspaceDbml(
   filename: string,
   contents: string,
-  options: { keepalive?: boolean; uiLayout?: string } = {},
+  options: { keepalive?: boolean; uiLayout?: string; previewDataUrl?: string } = {},
 ): Promise<boolean> {
   if (!contents.trim()) return false;
 
@@ -78,10 +79,24 @@ export async function saveWorkspaceDbml(
     const response = await fetch("/__dbml/save", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ filename, contents, uiLayout: options.uiLayout }),
+      body: JSON.stringify({ filename, contents, uiLayout: options.uiLayout, previewDataUrl: options.previewDataUrl }),
       keepalive: options.keepalive,
     });
 
+    return response.ok;
+  } catch {
+    return false;
+  }
+}
+
+export async function renameWorkspaceDbml(from: string, to: string): Promise<boolean> {
+  if (!from || !to || from === to) return true;
+  try {
+    const response = await fetch("/__dbml/rename", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ from, to }),
+    });
     return response.ok;
   } catch {
     return false;
@@ -120,6 +135,7 @@ function isWorkspaceDbmlFile(value: unknown): value is WorkspaceDbmlFile {
     typeof item.name === "string" &&
     typeof item.dbml === "string" &&
     (item.uiLayout === undefined || typeof item.uiLayout === "string") &&
+    (item.previewDataUrl === undefined || typeof item.previewDataUrl === "string") &&
     typeof item.updatedAt === "number"
   );
 }

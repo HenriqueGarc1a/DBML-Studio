@@ -1,46 +1,9 @@
-// @diagram
-// background=#0f172a
-// gridColor=#1f2a3a
-// gridSize=4
-// tableBackground=#111827
-// tableBorder=#4b5f78
-// tableHeader=#253142
-// tableText=#e5edf7
-// tableLine=#94a3b8
-// tableOpacity=1
-// pkBadgeBackground=#3f2d12
-// pkBadgeBorder=#f59e0b
-// pkBadgeText=#fcd34d
-// fkBadgeBackground=#12312e
-// fkBadgeBorder=#2dd4bf
-// fkBadgeText=#99f6e4
-// notNullBadgeBackground=#3b1620
-// notNullBadgeBorder=#fb7185
-// notNullBadgeText=#fecdd3
-// uniqueBadgeBackground=#1e1b4b
-// uniqueBadgeBorder=#818cf8
-// uniqueBadgeText=#c7d2fe
-
-// @table user
-// x=-64
-// y=88
-// width=250
-// height=122
-// useDefaultStyle=true
-// useGroupStyle=false
 Table user {
   id_user int [pk]
   name varchar(255) [not null]
   email varchar(255) [not null, unique]
 }
 
-// @table project
-// x=336
-// y=240
-// width=282
-// height=150
-// useDefaultStyle=true
-// useGroupStyle=false
 Table project {
   id_project int [pk]
   name varchar(255) [not null]
@@ -48,13 +11,6 @@ Table project {
   created_by_user_id int [not null]
 }
 
-// @table technology
-// x=360
-// y=-44
-// width=282
-// height=150
-// useDefaultStyle=true
-// useGroupStyle=false
 Table technology {
   id_technology int [pk]
   name varchar(100) [not null, unique]
@@ -62,13 +18,6 @@ Table technology {
   created_by_user_id int
 }
 
-// @table project_stack
-// x=760
-// y=56
-// width=242
-// height=94
-// useDefaultStyle=true
-// useGroupStyle=false
 Table project_stack {
   id_project int [pk]
   id_technology int [pk]
@@ -78,53 +27,9 @@ Table project_stack {
 }
 
 Ref: user.id_user > project.created_by_user_id
-// @line relation-user-id_user-project-created_by_user_id-0
-// color=#94a3b8
-// useTableLineColor=true
-// strokeWidth=4
-// opacity=0.9
-// style=solid
-// route=orthogonal
-// from=east
-// to=west
-// fromCardinality=many
-// toCardinality=one
 
 Ref: user.id_user > technology.created_by_user_id
-// @line relation-user-id_user-technology-created_by_user_id-1
-// color=#94a3b8
-// useTableLineColor=true
-// strokeWidth=4
-// opacity=0.9
-// style=solid
-// route=orthogonal
-// from=east
-// to=west
-// fromCardinality=many
-// toCardinality=one
 
 Ref: project.id_project > project_stack.id_project
-// @line relation-project-id_project-project_stack-id_project-2
-// color=#94a3b8
-// useTableLineColor=true
-// strokeWidth=4
-// opacity=0.9
-// style=solid
-// route=orthogonal
-// from=east
-// to=west
-// fromCardinality=many
-// toCardinality=one
 
 Ref: technology.id_technology > project_stack.id_technology
-// @line relation-technology-id_technology-project_stack-id_technology-3
-// color=#94a3b8
-// useTableLineColor=true
-// strokeWidth=4
-// opacity=0.9
-// style=solid
-// route=orthogonal
-// from=east
-// to=west
-// fromCardinality=many
-// toCardinality=one

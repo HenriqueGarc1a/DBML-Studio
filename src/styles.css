@@ -143,6 +143,14 @@ button.is-toggle-active {
   padding: 0;
 }
 
+.toolbar .menu-back-button {
+  flex: 0 0 auto;
+  width: auto;
+  min-width: 0;
+  padding: 0 10px;
+  white-space: nowrap;
+}
+
 .diagram-name-input,
 .diagram-picker {
   height: 34px;
@@ -342,6 +350,117 @@ button.is-toggle-active {
   overflow: hidden;
 }
 
+.diagram-library-screen {
+  min-height: 100vh;
+  display: grid;
+  grid-template-rows: 72px minmax(0, 1fr);
+  color: var(--text);
+  background: var(--canvas-bg);
+}
+
+.library-screen-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 0 28px;
+  border-bottom: 1px solid var(--line);
+  background: var(--panel);
+}
+
+.library-screen-header button {
+  flex: 0 0 auto;
+}
+
+.library-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.diagram-library-home {
+  width: min(1100px, calc(100% - 40px));
+  margin: 0 auto;
+  padding: 42px 0 64px;
+}
+
+.library-home-heading h2 {
+  margin: 0;
+  font-size: 22px;
+}
+
+.library-home-heading p {
+  margin: 6px 0 0;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.diagram-card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 14px;
+  margin-top: 24px;
+}
+
+.diagram-card {
+  min-width: 0;
+  min-height: 104px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-rows: 132px auto;
+  align-items: center;
+  gap: 12px;
+  padding: 16px;
+  border-color: var(--line-strong);
+  background: var(--panel);
+  text-align: left;
+}
+
+.diagram-card-preview {
+  grid-column: 1 / -1;
+  width: 100%;
+  height: 132px;
+  display: block;
+  overflow: hidden;
+  border: 1px solid color-mix(in srgb, var(--line) 75%, transparent);
+  border-radius: 7px;
+  background: var(--canvas-bg);
+  object-fit: cover;
+}
+
+.diagram-card-preview.is-empty {
+  display: grid;
+  place-items: center;
+  color: var(--muted);
+}
+
+.preview-background { fill: var(--canvas-bg); }
+.preview-relation { fill: none; stroke: #64748b; stroke-width: 4; opacity: 0.78; }
+.preview-table { fill: #111827; stroke: #64748b; stroke-width: 3; }
+.preview-table-header { fill: #253142; }
+
+.diagram-card:hover {
+  border-color: var(--teal);
+  background: color-mix(in srgb, var(--active-bg) 55%, var(--panel));
+}
+
+.diagram-card-copy {
+  min-width: 0;
+  display: grid;
+  gap: 5px;
+}
+
+.diagram-card-copy strong,
+.diagram-card-copy small {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.diagram-card-copy strong { color: var(--text); font-size: 14px; }
+.diagram-card-copy small { color: var(--muted); font-size: 11px; }
+.diagram-card-action { color: var(--teal-dark); font-size: 12px; }
+
 .dbml-pane {
   display: grid;
   grid-template-rows: 44px minmax(0, 1fr);
@@ -515,6 +634,44 @@ button.is-toggle-active {
 
 .relation-hitbox {
   cursor: pointer;
+}
+
+.segment-handle {
+  cursor: move;
+}
+
+.segment-handle circle {
+  fill: color-mix(in srgb, var(--canvas-bg) 76%, var(--teal));
+  stroke: var(--teal);
+  stroke-width: 2;
+}
+
+.segment-handle path {
+  fill: none;
+  stroke: var(--teal);
+  stroke-width: 1.5;
+  stroke-linecap: round;
+  pointer-events: none;
+}
+
+.segment-handle.is-horizontal {
+  cursor: ns-resize;
+}
+
+.segment-handle.is-vertical {
+  cursor: ew-resize;
+}
+
+.corner-handle {
+  fill: var(--handle-fill);
+  stroke: #fbbf24;
+  stroke-width: 2;
+  cursor: move;
+}
+
+.segment-handle:hover circle,
+.corner-handle:hover {
+  stroke-width: 3;
 }
 
 .relation-highlight-glow {
@@ -1079,7 +1236,7 @@ button.is-toggle-active {
   position: absolute;
   z-index: 3;
   display: grid;
-  grid-template-columns: 24px repeat(5, 32px);
+  grid-template-columns: 24px repeat(6, 32px);
   grid-template-rows: repeat(2, 30px);
   align-items: center;
   gap: 6px;
@@ -1116,9 +1273,9 @@ button.is-toggle-active {
 
 .floating-toolbar-grid {
   display: grid;
-  grid-column: 2 / span 5;
+  grid-column: 2 / span 6;
   grid-row: 1 / span 2;
-  grid-template-columns: repeat(5, 32px);
+  grid-template-columns: repeat(6, 32px);
   grid-template-rows: repeat(2, 30px);
   gap: 6px;
 }

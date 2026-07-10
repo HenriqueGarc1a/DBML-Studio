@@ -1,5 +1,6 @@
 import {
   Boxes,
+  ArrowLeft,
   ChevronLeft,
   ChevronRight,
   CircleHelp,
@@ -16,6 +17,10 @@ import { PropertiesPanel } from "./ui/PropertiesPanel";
 import { downloadText } from "./utils/download";
 import { saveTextFile, type TextFileHandle } from "./utils/fileSave";
 import { safeGetItem, safeSetItem } from "./utils/storage";
+import { parseDbml } from "./parser/dbmlParser";
+import { applyUiLayout } from "./exporter/uiLayoutFile";
+import { getRelationGeometry } from "./utils/geometry";
+import { captureDiagramPreview } from "./utils/diagramPreview";
 
 const DBML_COLLAPSED_STORAGE_KEY = "dbml-studio-dbml-collapsed";
 const PROPERTIES_COLLAPSED_STORAGE_KEY = "dbml-studio-properties-collapsed";
@@ -32,6 +37,7 @@ export function App() {
   const [helpOpen, setHelpOpen] = useState(false);
   const [sqlDraft, setSqlDraft] = useState("");
   const [sqlImportError, setSqlImportError] = useState("");
+  const [screen, setScreen] = useState<"library" | "editor">("library");
 
   const exportPdf = async () => {
     const { exportDiagramPdf } = await import("./utils/pdfExport");
@@ -39,7 +45,8 @@ export function App() {
   };
 
   const saveDiagram = async () => {
-    const dbml = await controller.saveLayoutToEditor();
+    const preview = await captureDiagramPreview(svgRef.current, controller.diagram.tables).catch(() => undefined);
+    const dbml = await controller.saveLayoutToEditor(preview);
     try {
       const result = await saveTextFile(controller.diagramFilename, dbml, dbmlFileHandleRef.current);
       dbmlFileHandleRef.current = result.handle ?? dbmlFileHandleRef.current;
@@ -55,6 +62,7 @@ export function App() {
       await controller.createDiagramFromSql(sqlDraft);
       setSqlImportOpen(false);
       setSqlDraft("");
+      setScreen("editor");
     } catch (error) {
       setSqlImportError(error instanceof Error ? error.message : "Não foi possível traduzir o SQL.");
     }
@@ -95,16 +103,95 @@ export function App() {
     writeStoredBoolean(PROPERTIES_COLLAPSED_STORAGE_KEY, propertiesCollapsed);
   }, [propertiesCollapsed]);
 
+  if (screen === "library") {
+    return (
+      <div className="diagram-library-screen">
+        <header className="library-screen-header">
+          <div className="brand">
+            <Boxes size={24} />
+            <div>
+              <h1>DBML Studio</h1>
+              <span>Escolha um esquema para continuar</span>
+            </div>
+          </div>
+          <div className="library-header-actions">
+            <button type="button" className="secondary-button" onClick={() => setSqlImportOpen(true)}>
+              <Database size={16} />
+              Importar SQL
+            </button>
+            <button
+              type="button"
+              onClick={() => void controller.createDiagram().then(() => setScreen("editor"))}
+            >
+              <Plus size={16} />
+              Novo esquema
+            </button>
+          </div>
+        </header>
+        <main className="diagram-library-home">
+          <div className="library-home-heading">
+            <div>
+              <h2>Seus esquemas</h2>
+              <p>{controller.diagrams.length} arquivo{controller.diagrams.length === 1 ? "" : "s"} disponível{controller.diagrams.length === 1 ? "" : "is"}</p>
+            </div>
+          </div>
+          <div className="diagram-card-grid">
+            {controller.diagrams.map((item) => (
+              <button
+                type="button"
+                key={item.id}
+                className="diagram-card"
+                onClick={() => void controller.openDiagram(item.id).then(() => setScreen("editor"))}
+              >
+                <DiagramPreview dbml={item.dbml} uiLayout={item.uiLayout} previewDataUrl={item.previewDataUrl} />
+                <span className="diagram-card-copy">
+                  <strong>{item.name}</strong>
+                  <small>{item.filename ?? `${item.name}.dbml`}</small>
+                </span>
+                <span className="diagram-card-action">Abrir</span>
+              </button>
+            ))}
+          </div>
+        </main>
+        {sqlImportOpen && (
+          <div className="modal-backdrop" role="presentation" onMouseDown={() => setSqlImportOpen(false)}>
+            <section className="modal-panel" role="dialog" aria-modal="true" aria-labelledby="sql-library-title" onMouseDown={(event) => event.stopPropagation()}>
+              <div className="modal-heading">
+                <h2 id="sql-library-title">Novo esquema via SQL</h2>
+                <button type="button" className="icon-button" title="Fechar" onClick={() => setSqlImportOpen(false)}><X size={16} /></button>
+              </div>
+              {sqlImportError && <div className="modal-error" role="status">{sqlImportError}</div>}
+              <textarea className="sql-import-textarea" value={sqlDraft} onChange={(event) => setSqlDraft(event.target.value)} spellCheck={false} autoFocus placeholder={`CREATE TABLE users (\n  id SERIAL PRIMARY KEY\n);`} />
+              <div className="modal-actions">
+                <button type="button" className="secondary-button" onClick={() => setSqlImportOpen(false)}>Cancelar</button>
+                <button type="button" onClick={() => void importSql()} disabled={!sqlDraft.trim()}><Database size={16} />Criar esquema</button>
+              </div>
+            </section>
+          </div>
+        )}
+      </div>
+    );
+  }
+
   return (
     <div className="app-shell">
       <header className="topbar">
+        <button
+          type="button"
+          className="secondary-button menu-back-button"
+          onClick={() => void captureDiagramPreview(svgRef.current, controller.diagram.tables)
+            .catch(() => undefined)
+            .then((preview) => controller.saveLayoutToEditor(preview))
+            .then(() => setScreen("library"))}
+          title="Voltar ao menu"
+        >
+          <ArrowLeft size={16} />
+          Menu
+        </button>
         <div className="brand">
           <Boxes size={22} />
           <div>
             <h1>DBML Studio</h1>
-            <span>
-              {controller.diagram.tables.length} tabelas · {controller.diagram.relations.length} linhas
-            </span>
           </div>
         </div>
         <div className="toolbar">
@@ -115,27 +202,6 @@ export function App() {
             aria-label="Nome do diagrama"
             title="Nome do diagrama"
           />
-          <select
-            className="diagram-picker"
-            value={controller.activeDiagramId}
-            onChange={(event) => void controller.openDiagram(event.target.value)}
-            aria-label="Abrir diagrama"
-            title="Abrir diagrama"
-          >
-            {controller.diagrams.map((item) => (
-              <option key={item.id} value={item.id}>
-                {item.name}
-              </option>
-            ))}
-          </select>
-          <button type="button" onClick={() => void controller.createDiagram()}>
-            <Plus size={16} />
-            Novo
-          </button>
-          <button type="button" onClick={() => setSqlImportOpen(true)}>
-            <Database size={16} />
-            SQL
-          </button>
           <button type="button" onClick={() => void saveDiagram()}>
             <Save size={16} />
             Salvar
@@ -265,23 +331,23 @@ export function App() {
                 </ol>
               </section>
               <section className="help-section">
-                <h3>Linhas e pontos</h3>
+                <h3>Editar linhas</h3>
                 <p>
-                  Pontos são dobras manuais da linha. Se todos forem removidos, a linha continua existindo,
-                  salva e selecionável; ela volta para uma rota automática entre os dois campos.
+                  Ao selecionar uma linha, círculos movem trechos retos e losangos reposicionam curvas. A rota
+                  nunca atravessa tabelas nem cruza a si mesma.
                 </p>
               </section>
               <section className="help-section">
                 <h3>Salvar e carregar</h3>
                 <p>
-                  Salvar grava o DBML atual em arquivo. O seletor no topo abre outros diagramas salvos, e o app
-                  também faz autosave local enquanto você trabalha.
+                  Salvar grava o DBML atual em arquivo. Use Menu para voltar à tela de esquemas; o app também
+                  faz autosave local enquanto você trabalha.
                 </p>
               </section>
               <section className="help-section">
                 <h3>Dicas rápidas</h3>
                 <ul>
-                  <li>Dê duplo clique em uma linha para inserir um ponto intermediário.</li>
+                  <li>Use os handles da linha para ajustar trechos e curvas.</li>
                   <li>Use Auto rota para reorganizar uma linha sem apagar a relação.</li>
                   <li>Quando nada estiver selecionado, o painel direito mostra a lista de linhas do diagrama.</li>
                 </ul>
@@ -292,6 +358,41 @@ export function App() {
       )}
     </div>
   );
+}
+
+function DiagramPreview({ dbml, uiLayout, previewDataUrl }: { dbml: string; uiLayout?: string; previewDataUrl?: string }) {
+  if (previewDataUrl) {
+    return <img className="diagram-card-preview" src={previewDataUrl} alt="Prévia do esquema" />;
+  }
+  try {
+    const diagram = applyUiLayout(parseDbml(dbml), uiLayout);
+    if (!diagram.tables.length) return <span className="diagram-card-preview is-empty"><Database size={28} /></span>;
+    const padding = 36;
+    const left = Math.min(...diagram.tables.map((table) => table.x)) - padding;
+    const top = Math.min(...diagram.tables.map((table) => table.y)) - padding;
+    const right = Math.max(...diagram.tables.map((table) => table.x + table.width)) + padding;
+    const bottom = Math.max(...diagram.tables.map((table) => table.y + table.height)) + padding;
+    const tableMap = new Map(diagram.tables.map((table) => [table.id, table]));
+    return (
+      <svg className="diagram-card-preview" viewBox={`${left} ${top} ${Math.max(1, right - left)} ${Math.max(1, bottom - top)}`} aria-label="Prévia do esquema">
+        <rect x={left} y={top} width={right - left} height={bottom - top} className="preview-background" />
+        {diagram.relations.map((relation) => {
+          const from = tableMap.get(relation.fromTable);
+          const to = tableMap.get(relation.toTable);
+          if (!from || !to) return null;
+          return <path key={relation.id} d={getRelationGeometry(relation, from, to).path} className="preview-relation" />;
+        })}
+        {diagram.tables.map((table) => (
+          <g key={table.id}>
+            <rect x={table.x} y={table.y} width={table.width} height={table.height} rx={6} className="preview-table" />
+            <rect x={table.x} y={table.y} width={table.width} height={38} rx={6} className="preview-table-header" />
+          </g>
+        ))}
+      </svg>
+    );
+  } catch {
+    return <span className="diagram-card-preview is-empty"><Database size={28} /></span>;
+  }
 }
 
 function isEditableTarget(target: EventTarget | null): boolean {

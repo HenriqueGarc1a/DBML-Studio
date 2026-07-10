@@ -6,8 +6,11 @@ import {
 } from "../model/defaults";
 import type { DiagramModel, TableModel } from "../model/types";
 
-interface LayoutOptions {
+export interface LayoutOptions {
   preserveManual?: boolean;
+  direction?: "RIGHT" | "DOWN";
+  tableOrder?: string[];
+  nodePlacement?: "NETWORK_SIMPLEX" | "BRANDES_KOEPF";
 }
 
 const elk = new ELK();
@@ -25,15 +28,21 @@ export async function layoutDiagram(
   }
 
   try {
+    const order = new Map((options.tableOrder ?? []).map((id, index) => [id, index]));
+    const orderedTables = [...measuredTables].sort((a, b) =>
+      (order.get(a.id) ?? Number.MAX_SAFE_INTEGER) - (order.get(b.id) ?? Number.MAX_SAFE_INTEGER));
     const graph = {
       id: "root",
       layoutOptions: {
         "elk.algorithm": "layered",
-        "elk.direction": "RIGHT",
+        "elk.direction": options.direction ?? "RIGHT",
         "elk.spacing.nodeNode": "70",
         "elk.layered.spacing.nodeNodeBetweenLayers": "110",
+        "elk.layered.nodePlacement.strategy": options.nodePlacement ?? "NETWORK_SIMPLEX",
+        "elk.layered.crossingMinimization.strategy": "LAYER_SWEEP",
+        "elk.layered.thoroughness": "30",
       },
-      children: measuredTables.map((table) => ({
+      children: orderedTables.map((table) => ({
         id: table.id,
         width: table.width,
         height: table.height,

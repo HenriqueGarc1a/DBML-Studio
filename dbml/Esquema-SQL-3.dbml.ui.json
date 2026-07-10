@@ -1,0 +1,249 @@
+{
+  "version": 1,
+  "visual": {
+    "backgroundColor": "#0f172a",
+    "gridColor": "#1f2a3a",
+    "gridSize": 4,
+    "tableRouteMargin": 28,
+    "defaultTable": {
+      "backgroundColor": "#111827",
+      "borderColor": "#4b5f78",
+      "textColor": "#e5edf7",
+      "headerColor": "#253142",
+      "lineColor": "#94a3b8",
+      "opacity": 1
+    },
+    "badges": {
+      "primaryKey": {
+        "backgroundColor": "#3f2d12",
+        "borderColor": "#f59e0b",
+        "textColor": "#fcd34d"
+      },
+      "foreignKey": {
+        "backgroundColor": "#12312e",
+        "borderColor": "#2dd4bf",
+        "textColor": "#99f6e4"
+      },
+      "notNull": {
+        "backgroundColor": "#3b1620",
+        "borderColor": "#fb7185",
+        "textColor": "#fecdd3"
+      },
+      "unique": {
+        "backgroundColor": "#1e1b4b",
+        "borderColor": "#818cf8",
+        "textColor": "#c7d2fe"
+      }
+    },
+    "savedColors": []
+  },
+  "tables": [
+    {
+      "id": "user",
+      "name": "user",
+      "x": -64,
+      "y": 88,
+      "width": 250,
+      "height": 122,
+      "visual": {
+        "backgroundColor": "#111827",
+        "borderColor": "#4b5f78",
+        "textColor": "#e5edf7",
+        "headerColor": "#253142",
+        "lineColor": "#94a3b8",
+        "opacity": 1
+      },
+      "usesDefaultStyle": true,
+      "usesGroupStyle": false,
+      "layoutSource": "comment"
+    },
+    {
+      "id": "project",
+      "name": "project",
+      "x": 336,
+      "y": 240,
+      "width": 282,
+      "height": 150,
+      "visual": {
+        "backgroundColor": "#111827",
+        "borderColor": "#4b5f78",
+        "textColor": "#e5edf7",
+        "headerColor": "#253142",
+        "lineColor": "#94a3b8",
+        "opacity": 1
+      },
+      "usesDefaultStyle": true,
+      "usesGroupStyle": false,
+      "layoutSource": "comment"
+    },
+    {
+      "id": "technology",
+      "name": "technology",
+      "x": 360,
+      "y": -44,
+      "width": 282,
+      "height": 150,
+      "visual": {
+        "backgroundColor": "#111827",
+        "borderColor": "#4b5f78",
+        "textColor": "#e5edf7",
+        "headerColor": "#253142",
+        "lineColor": "#94a3b8",
+        "opacity": 1
+      },
+      "usesDefaultStyle": true,
+      "usesGroupStyle": false,
+      "layoutSource": "comment"
+    },
+    {
+      "id": "project_stack",
+      "name": "project_stack",
+      "x": 760,
+      "y": 56,
+      "width": 242,
+      "height": 94,
+      "visual": {
+        "backgroundColor": "#111827",
+        "borderColor": "#4b5f78",
+        "textColor": "#e5edf7",
+        "headerColor": "#253142",
+        "lineColor": "#94a3b8",
+        "opacity": 1
+      },
+      "usesDefaultStyle": true,
+      "usesGroupStyle": false,
+      "layoutSource": "comment"
+    }
+  ],
+  "relations": [
+    {
+      "id": "relation-user-id_user-project-created_by_user_id-0",
+      "fromSide": "east",
+      "toSide": "west",
+      "route": "orthogonal",
+      "viaPoints": [
+        {
+          "x": 214,
+          "y": 140
+        },
+        {
+          "x": 308,
+          "y": 140
+        },
+        {
+          "x": 308,
+          "y": 376
+        }
+      ],
+      "color": "#94a3b8",
+      "usesTableLineColor": true,
+      "opacity": 0.9,
+      "strokeWidth": 4,
+      "style": "solid",
+      "fromCardinality": "many",
+      "toCardinality": "one",
+      "label": "",
+      "fromTable": "user",
+      "fromColumn": "id_user",
+      "toTable": "project",
+      "toColumn": "created_by_user_id"
+    },
+    {
+      "id": "relation-user-id_user-technology-created_by_user_id-1",
+      "fromSide": "east",
+      "toSide": "west",
+      "route": "orthogonal",
+      "viaPoints": [
+        {
+          "x": 214,
+          "y": 140
+        },
+        {
+          "x": 332,
+          "y": 140
+        },
+        {
+          "x": 332,
+          "y": 92
+        }
+      ],
+      "color": "#94a3b8",
+      "usesTableLineColor": true,
+      "opacity": 0.9,
+      "strokeWidth": 4,
+      "style": "solid",
+      "fromCardinality": "many",
+      "toCardinality": "one",
+      "label": "",
+      "fromTable": "user",
+      "fromColumn": "id_user",
+      "toTable": "technology",
+      "toColumn": "created_by_user_id"
+    },
+    {
+      "id": "relation-project-id_project-project_stack-id_project-2",
+      "fromSide": "east",
+      "toSide": "west",
+      "route": "orthogonal",
+      "viaPoints": [
+        {
+          "x": 646,
+          "y": 292
+        },
+        {
+          "x": 732,
+          "y": 292
+        },
+        {
+          "x": 732,
+          "y": 108
+        }
+      ],
+      "color": "#94a3b8",
+      "usesTableLineColor": true,
+      "opacity": 0.9,
+      "strokeWidth": 4,
+      "style": "solid",
+      "fromCardinality": "many",
+      "toCardinality": "one",
+      "label": "",
+      "fromTable": "project",
+      "fromColumn": "id_project",
+      "toTable": "project_stack",
+      "toColumn": "id_project"
+    },
+    {
+      "id": "relation-technology-id_technology-project_stack-id_technology-3",
+      "fromSide": "east",
+      "toSide": "west",
+      "route": "orthogonal",
+      "viaPoints": [
+        {
+          "x": 670,
+          "y": 8
+        },
+        {
+          "x": 732,
+          "y": 8
+        },
+        {
+          "x": 732,
+          "y": 136
+        }
+      ],
+      "color": "#94a3b8",
+      "usesTableLineColor": true,
+      "opacity": 0.9,
+      "strokeWidth": 4,
+      "style": "solid",
+      "fromCardinality": "many",
+      "toCardinality": "one",
+      "label": "",
+      "fromTable": "technology",
+      "fromColumn": "id_technology",
+      "toTable": "project_stack",
+      "toColumn": "id_technology"
+    }
+  ],
+  "groups": []
+}

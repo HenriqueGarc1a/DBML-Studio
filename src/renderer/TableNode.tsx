@@ -1,6 +1,7 @@
 import type { PointerEvent } from "react";
 import { TABLE_HEADER_HEIGHT, TABLE_ROW_HEIGHT } from "../model/defaults";
 import type { BadgeVisual, BadgeVisualSet, ColumnModel, TableModel, TableVisual } from "../model/types";
+import { getVisualColumns } from "../model/tableColumns";
 import { ResizeHandles, type ResizeHandle } from "./ResizeHandles";
 
 export interface RelationFieldEndpoint {
@@ -39,6 +40,7 @@ export function TableNode({
   onResizePointerDown,
 }: TableNodeProps) {
   const visual = groupVisual ?? (table.usesDefaultStyle ? defaultVisual : table.visual);
+  const visualColumns = getVisualColumns(table);
   const headerRadius = 6;
   const headerPath = [
     `M 0 ${TABLE_HEADER_HEIGHT}`,
@@ -79,7 +81,7 @@ export function TableNode({
       >
         {table.name}
       </text>
-      {table.columns.map((column, index) => {
+      {visualColumns.map((column, index) => {
         const y = TABLE_HEADER_HEIGHT + index * TABLE_ROW_HEIGHT;
         const badges = [
           column.primaryKey ? { label: "PK", visual: badgeVisuals.primaryKey } : undefined,
@@ -94,7 +96,7 @@ export function TableNode({
         const typeX = badges.length ? badgeStartX - 8 : table.width - 14;
         const isRelationSource =
           relationSource?.tableId === table.id && relationSource.columnId === column.id;
-        const isLastColumn = index === table.columns.length - 1;
+        const isLastColumn = index === visualColumns.length - 1;
 
         return (
           <g key={column.id} transform={`translate(0 ${y})`}>
