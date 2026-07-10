@@ -1,21 +1,6 @@
 import type { MouseEvent, MutableRefObject, PointerEvent, WheelEvent } from "react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
-  FolderPlus,
-  GripVertical,
-  Link2,
-  Magnet,
-  Maximize2,
-  Redo2,
-  Route,
-  Sparkles,
-  Table2,
-  Undo2,
-  ZoomIn,
-  ZoomOut,
-} from "lucide-react";
-import type { DiagramController } from "../editor/useDiagramController";
-import {
   GROUP_LABEL_DEFAULT_X,
   GROUP_LABEL_DEFAULT_Y,
   GROUP_MIN_HEIGHT,
@@ -47,6 +32,8 @@ import {
 import { GroupNode } from "./GroupNode";
 import { RelationPath } from "./RelationPath";
 import type { ResizeHandle } from "./ResizeHandles";
+import type { DiagramCanvasController } from "./types";
+import { CanvasToolbar } from "./CanvasToolbar";
 import { TableNode, type RelationFieldEndpoint } from "./TableNode";
 
 interface ResizeOrigin {
@@ -110,7 +97,7 @@ type DragState =
     };
 
 interface SvgCanvasProps {
-  controller: DiagramController;
+  controller: DiagramCanvasController;
   svgRef?: MutableRefObject<SVGSVGElement | null>;
 }
 
@@ -669,99 +656,19 @@ export function SvgCanvas({ controller, svgRef: externalSvgRef }: SvgCanvasProps
           />
         ))}
       </svg>
-      <div
-        className={`zoom-controls${zoomPanelDrag ? " is-dragging" : ""}`}
-        style={{ left: zoomPanelPosition.x, top: zoomPanelPosition.y }}
-        aria-label="Zoom"
-      >
-        <button
-          type="button"
-          className="zoom-drag-handle icon-button"
-          title="Mover controles de zoom"
-          onPointerDown={beginZoomPanelDrag}
-          onPointerMove={moveZoomPanel}
-          onPointerUp={stopZoomPanelDrag}
-          onPointerCancel={stopZoomPanelDrag}
-        >
-          <GripVertical size={15} />
-        </button>
-        <div className="floating-toolbar-grid" aria-label="Ferramentas do diagrama">
-          <button
-            type="button"
-            className="icon-button"
-            title="Desfazer"
-            onClick={controller.undo}
-            disabled={!controller.canUndo}
-          >
-            <Undo2 size={16} />
-          </button>
-          <button
-            type="button"
-            className="icon-button"
-            title="Refazer"
-            onClick={controller.redo}
-            disabled={!controller.canRedo}
-          >
-            <Redo2 size={16} />
-          </button>
-          <button type="button" className="icon-button" title="Nova tabela" onClick={controller.addTable}>
-            <Table2 size={16} />
-          </button>
-          <button type="button" className="icon-button" title="Novo grupo" onClick={controller.addGroup}>
-            <FolderPlus size={16} />
-          </button>
-          <button
-            type="button"
-            className={`icon-button${relationMode ? " is-toggle-active" : ""}`}
-            title={relationSource ? "Campo destino da relação" : "Nova relação"}
-            aria-pressed={relationMode}
-            onClick={() => {
-              setRelationMode((active) => !active);
-              setRelationSource(undefined);
-            }}
-          >
-            <Link2 size={16} />
-          </button>
-          <button
-            type="button"
-            className="icon-button"
-            title="Organizar relações"
-            onClick={controller.tidyRelations}
-            disabled={!controller.diagram.relations.length}
-          >
-            <Route size={16} />
-          </button>
-          <button
-            type="button"
-            className="icon-button"
-            title="Auto-arrumar esquema minimizando cruzamentos"
-            onClick={() => void controller.applyAutoLayout().then((laidOut) => {
-              setViewport(fitViewBoxToAspect(getTableBounds(laidOut.tables), canvasSize.width, canvasSize.height));
-            })}
-            disabled={controller.diagram.tables.length < 2}
-          >
-            <Sparkles size={16} />
-          </button>
-          <button
-            type="button"
-            className={`icon-button${controller.snapToGrid ? " is-toggle-active" : ""}`}
-            title="Snap no grid"
-            aria-pressed={controller.snapToGrid}
-            onClick={() => controller.setSnapToGrid(!controller.snapToGrid)}
-          >
-            <Magnet size={16} />
-          </button>
-          <button type="button" className="icon-button" title="Diminuir zoom" onClick={() => zoomAt(1 / 1.2)}>
-            <ZoomOut size={16} />
-          </button>
-          <button type="button" className="icon-button" title="Aumentar zoom" onClick={() => zoomAt(1.2)}>
-            <ZoomIn size={16} />
-          </button>
-          <button type="button" className="icon-button" title="Centralizar diagrama" onClick={fitDiagram}>
-            <Maximize2 size={16} />
-          </button>
-        </div>
-      </div>
+      <CanvasToolbar
+        position={zoomPanelPosition} dragging={Boolean(zoomPanelDrag)} relationMode={relationMode}
+        choosingTarget={Boolean(relationSource)} snapToGrid={controller.snapToGrid}
+        canUndo={controller.canUndo} canRedo={controller.canRedo}
+        hasRelations={Boolean(controller.diagram.relations.length)} canAutoLayout={controller.diagram.tables.length >= 2}
+        onDragStart={beginZoomPanelDrag} onDrag={moveZoomPanel} onDragEnd={stopZoomPanelDrag}
+        onUndo={controller.undo} onRedo={controller.redo} onAddTable={controller.addTable} onAddGroup={controller.addGroup}
+        onToggleRelation={() => { setRelationMode((active) => !active); setRelationSource(undefined); }}
+        onTidy={controller.tidyRelations}
+        onAutoLayout={() => void controller.applyAutoLayout().then((laidOut) => setViewport(fitViewBoxToAspect(getTableBounds(laidOut.tables), canvasSize.width, canvasSize.height)))}
+        onToggleSnap={() => controller.setSnapToGrid(!controller.snapToGrid)}
+        onZoomOut={() => zoomAt(1 / 1.2)} onZoomIn={() => zoomAt(1.2)} onFit={fitDiagram}
+      />
     </>
   );
 }

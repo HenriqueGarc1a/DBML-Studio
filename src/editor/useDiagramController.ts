@@ -31,79 +31,15 @@ import { parseDbml } from "../parser/dbmlParser";
 import { deleteWorkspaceDbml, listWorkspaceDbml, renameWorkspaceDbml, saveWorkspaceDbml, sendWorkspaceDbmlBeacon } from "../utils/fileSave";
 import { makeId, slugify, uniqueId } from "../utils/id";
 import { organizeRelationRoute, relationKeepsTableMargin } from "../utils/relationRouting";
-import { readJson, safeGetItem, safeSetItem, writeJson } from "../utils/storage";
+import { safeGetItem, safeSetItem } from "../utils/storage";
 import { nearestNonOverlappingPosition } from "../utils/tableCollision";
 import { findViaInsertionIndex } from "../utils/geometry";
-import { demoDbml } from "./demoDbml";
+import { ACTIVE_DIAGRAM_FILENAME_STORAGE_KEY, LEGACY_SAVED_DBML_KEY, createBlankDiagramDbml, currentDbmlFilename, dbmlFilename, loadDiagramLibrary, migrateDarkOnlyDbml, nextDiagramName, nextNamedDiagramName, normalizeDiagramName, writeDiagramLibrary, type DiagramLibrary, type SavedDiagram } from "./diagramLibrary";
+import type { DiagramController } from "./types";
 
-export interface DiagramController {
-  dbmlText: string;
-  diagram: DiagramModel;
-  diagrams: SavedDiagram[];
-  activeDiagramId: string;
-  diagramName: string;
-  diagramFilename: string;
-  selected: Selection | undefined;
-  exportedDbml: string;
-  exportedTikz: string;
-  snapToGrid: boolean;
-  saveMessage: string;
-  dbmlError: string | undefined;
-  canUndo: boolean;
-  canRedo: boolean;
-  setDbmlText: (value: string) => void;
-  setSelected: (selection: Selection | undefined) => void;
-  setSnapToGrid: (value: boolean) => void;
-  undo: () => void;
-  redo: () => void;
-  beginHistoryBatch: () => void;
-  endHistoryBatch: () => void;
-  setDiagramName: (value: string) => void;
-  renameSavedDiagram: (id: string, value: string) => Promise<boolean>;
-  deleteDiagram: (id: string) => Promise<boolean>;
-  createDiagram: () => Promise<void>;
-  createDiagramFromSql: (sql: string) => Promise<void>;
-  openDiagram: (id: string) => Promise<void>;
-  applyAutoLayout: () => Promise<DiagramModel>;
-  saveLayoutToEditor: (previewDataUrl?: string) => Promise<string>;
-  updateDiagramVisual: (patch: Partial<DiagramModel["visual"]>) => void;
-  addTable: () => void;
-  updateTable: (id: string, patch: Partial<TableModel>) => void;
-  moveTable: (id: string, dx: number, dy: number) => void;
-  resizeTable: (id: string, width: number) => void;
-  settleTable: (id: string) => void;
-  removeTable: (id: string) => void;
-  addColumn: (tableId: string) => void;
-  updateColumn: (tableId: string, columnId: string, patch: Partial<ColumnModel>) => void;
-  removeColumn: (tableId: string, columnId: string) => void;
-  addRelation: (fromTableId: string, fromColumn: string, toTableId: string, toColumn: string) => void;
-  removeRelation: (id: string) => void;
-  updateRelation: (id: string, patch: Partial<RelationModel>) => void;
-  tidyRelation: (id: string) => void;
-  tidyRelations: () => void;
-  resetRelation: (id: string) => void;
-  addViaPoint: (id: string, point: Point) => void;
-  insertViaPoint: (id: string, point: Point) => void;
-  updateViaPoint: (id: string, index: number, point: Point) => void;
-  removeViaPoint: (id: string, index: number) => void;
-  updateGroup: (id: string, patch: Partial<GroupModel>) => void;
-  moveGroup: (id: string, dx: number, dy: number) => void;
-  resizeGroup: (id: string, width: number, height: number) => void;
-  addGroup: () => void;
-  removeGroup: (id: string) => void;
-  sendGroupBackward: (id: string) => void;
-  bringGroupForward: (id: string) => void;
-}
+export type { DiagramController } from "./types";
 
-export interface SavedDiagram {
-  id: string;
-  name: string;
-  dbml: string;
-  uiLayout?: string;
-  previewDataUrl?: string;
-  updatedAt: number;
-  filename?: string;
-}
+export type { SavedDiagram } from "./diagramLibrary";
 
 const emptyDiagram: DiagramModel = {
   id: "diagram-main",
@@ -115,10 +51,6 @@ const emptyDiagram: DiagramModel = {
   source: "",
 };
 
-const LEGACY_SAVED_DBML_KEY = "dbml-studio-saved-dbml";
-const DIAGRAMS_STORAGE_KEY = "dbml-studio-diagrams";
-const ACTIVE_DIAGRAM_STORAGE_KEY = "dbml-studio-active-diagram-id";
-const ACTIVE_DIAGRAM_FILENAME_STORAGE_KEY = "dbml-studio-active-diagram-filename";
 const MAX_HISTORY_ENTRIES = 80;
 
 interface DiagramHistory {
@@ -128,11 +60,6 @@ interface DiagramHistory {
 
 type DiagramChangeSource = "editor" | "ui" | "system";
 
-interface DiagramLibrary {
-  diagrams: SavedDiagram[];
-  activeDiagramId: string;
-  activeDiagram: SavedDiagram;
-}
 
 interface PersistedDiagramSnapshot {
   name: string;
@@ -554,6 +481,7 @@ export function useDiagramController(): DiagramController {
     commitDiagramLibrary(nextDiagrams, id);
     void saveWorkspaceDbml(record.filename ?? dbmlFilename(name), dbml, { keepalive: true });
     await importDbmlText(dbml, { resetHistory: true });
+    return id;
   }, [commitDiagramLibrary, importDbmlText, persistCurrentDiagram]);
 
   const createDiagramFromSql = useCallback(async (sql: string) => {
@@ -582,6 +510,7 @@ export function useDiagramController(): DiagramController {
     if (!loaded) {
       throw new Error("SQL convertido, mas o DBML gerado não pôde ser carregado.");
     }
+    return id;
   }, [commitDiagramLibrary, importDbmlText, persistCurrentDiagram]);
 
   useEffect(() => {
@@ -1399,123 +1328,4 @@ function hasManualForeignKeySetting(column: ColumnModel): boolean {
     const lower = setting.toLowerCase();
     return lower === "fk" || lower === "foreign key" || lower.startsWith("ref:");
   });
-}
-
-function loadDiagramLibrary(): DiagramLibrary {
-  const stored = readStoredDiagrams();
-  const legacyDbml = safeGetItem(LEGACY_SAVED_DBML_KEY);
-
-  const diagrams = stored.length
-    ? stored
-    : [
-        {
-          id: uniqueId("diagram"),
-          name: "Diagrama 1",
-          dbml: migrateDarkOnlyDbml(legacyDbml ?? demoDbml),
-          updatedAt: Date.now(),
-          filename: dbmlFilename("Diagrama 1"),
-        },
-      ];
-  const activeId = safeGetItem(ACTIVE_DIAGRAM_STORAGE_KEY);
-  const activeFilename = safeGetItem(ACTIVE_DIAGRAM_FILENAME_STORAGE_KEY);
-  const activeDiagram =
-    diagrams.find((item) => item.id === activeId) ??
-    diagrams.find((item) => item.filename === activeFilename) ??
-    diagrams[0];
-
-  writeDiagramLibrary(diagrams, activeDiagram.id);
-  return {
-    diagrams,
-    activeDiagramId: activeDiagram.id,
-    activeDiagram,
-  };
-}
-
-function readStoredDiagrams(): SavedDiagram[] {
-  const parsed = readJson<unknown>(DIAGRAMS_STORAGE_KEY, []);
-  if (!Array.isArray(parsed)) return [];
-
-  return parsed
-    .filter(isStoredDiagram)
-    .map((item) => ({
-      id: item.id,
-      name: normalizeDiagramName(item.name),
-      dbml: migrateDarkOnlyDbml(item.dbml),
-      uiLayout: item.uiLayout,
-      previewDataUrl: item.previewDataUrl,
-      updatedAt: item.updatedAt,
-      filename: item.filename ?? dbmlFilename(item.name),
-    }));
-}
-
-function writeDiagramLibrary(diagrams: SavedDiagram[], activeDiagramId: string): void {
-  const active = diagrams.find((item) => item.id === activeDiagramId);
-
-  writeJson(DIAGRAMS_STORAGE_KEY, diagrams);
-  safeSetItem(ACTIVE_DIAGRAM_STORAGE_KEY, activeDiagramId);
-  if (active?.filename) {
-    safeSetItem(ACTIVE_DIAGRAM_FILENAME_STORAGE_KEY, active.filename);
-  }
-}
-
-function isStoredDiagram(value: unknown): value is SavedDiagram {
-  if (!value || typeof value !== "object") return false;
-  const item = value as Partial<SavedDiagram>;
-  return (
-    typeof item.id === "string" &&
-    typeof item.name === "string" &&
-    typeof item.dbml === "string" &&
-    (item.uiLayout === undefined || typeof item.uiLayout === "string") &&
-    (item.previewDataUrl === undefined || typeof item.previewDataUrl === "string") &&
-    typeof item.updatedAt === "number" &&
-    (item.filename === undefined || typeof item.filename === "string")
-  );
-}
-
-function normalizeDiagramName(value: string): string {
-  return value.trim() || "Diagrama sem nome";
-}
-
-function nextDiagramName(diagrams: SavedDiagram[]): string {
-  return nextNamedDiagramName(diagrams, "Diagrama");
-}
-
-function nextNamedDiagramName(diagrams: SavedDiagram[], prefix: string): string {
-  let index = diagrams.length + 1;
-  const names = new Set(diagrams.map((item) => item.name));
-
-  while (names.has(`${prefix} ${index}`)) {
-    index += 1;
-  }
-
-  return `${prefix} ${index}`;
-}
-
-function createBlankDiagramDbml(): string {
-  return `// @diagram
-// background=${defaultDiagramVisual.backgroundColor}
-// gridColor=${defaultDiagramVisual.gridColor}
-// gridSize=${defaultDiagramVisual.gridSize}
-`;
-}
-
-function currentDbmlFilename(diagrams: SavedDiagram[], activeDiagramId: string, diagramName: string): string {
-  return diagrams.find((item) => item.id === activeDiagramId)?.filename ?? dbmlFilename(diagramName);
-}
-
-function dbmlFilename(value: string): string {
-  const cleaned = value.trim().replace(/[^a-zA-Z0-9_-]+/g, "-").replace(/^-+|-+$/g, "") || "diagram";
-  return `${cleaned}.dbml`;
-}
-
-function migrateDarkOnlyDbml(dbml: string): string {
-  return dbml
-    .replace(/\/\/ background=#f8fafc/g, "// background=#0f172a")
-    .replace(/\/\/ gridColor=#d7dee8/g, "// gridColor=#1f2a3a")
-    .replace(/\/\/ background=#ffffff/g, "// background=#111827")
-    .replace(/\/\/ header=#dbeafe/g, "// header=#1e3a5f")
-    .replace(/\/\/ header=#e0f2fe/g, "// header=#253142")
-    .replace(/\/\/ header=#ccfbf1/g, "// header=#12312e")
-    .replace(/\/\/ text=#111827/g, "// text=#e5edf7")
-    .replace(/\/\/ text=#172033/g, "// text=#e5edf7");
 }

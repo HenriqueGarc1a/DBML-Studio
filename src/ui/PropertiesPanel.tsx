@@ -1,5 +1,5 @@
-import { ChevronDown, ChevronLeft, ChevronRight, Link2, Minus, Plus, RotateCcw, Route, Trash2 } from "lucide-react";
-import { useEffect, useState, type ChangeEvent, type ReactNode } from "react";
+import { ChevronLeft, ChevronRight, Link2, Minus, Plus, RotateCcw, Route, Trash2 } from "lucide-react";
+import { useState } from "react";
 import type { DiagramController } from "../editor/useDiagramController";
 import { DIAGRAM_MAX_GRID_SIZE, DIAGRAM_MAX_ROUTE_MARGIN, DIAGRAM_MIN_GRID_SIZE, DIAGRAM_MIN_ROUTE_MARGIN } from "../model/defaults";
 import type {
@@ -15,7 +15,7 @@ import type {
   TableVisual,
 } from "../model/types";
 import { getEffectiveTableVisual } from "../model/visualSelectors";
-import { safeGetItem, safeSetItem } from "../utils/storage";
+import { CheckboxField, CollapsibleGroup, ColorField, NumberField, RangeField, SelectField, TextField, isHexColor } from "./propertyFields";
 
 interface PropertiesPanelProps {
   controller: DiagramController;
@@ -23,7 +23,6 @@ interface PropertiesPanelProps {
   onToggle: () => void;
 }
 
-const PROPERTY_GROUP_STORAGE_PREFIX = "dbml-studio-property-group:";
 
 export function PropertiesPanel({ controller, collapsed, onToggle }: PropertiesPanelProps) {
   const selection = controller.selected;
@@ -297,52 +296,6 @@ function DiagramRelationsList({ controller }: { controller: DiagramController })
         </div>
       )}
     </CollapsibleGroup>
-  );
-}
-
-function CollapsibleGroup({
-  id,
-  title,
-  defaultOpen = true,
-  actions,
-  children,
-}: {
-  id: string;
-  title: string;
-  defaultOpen?: boolean;
-  actions?: ReactNode;
-  children: ReactNode;
-}) {
-  const [storedOpen, setStoredOpen] = useState(() => ({
-    id,
-    open: readStoredGroupOpen(id, defaultOpen),
-  }));
-  const open = storedOpen.id === id ? storedOpen.open : readStoredGroupOpen(id, defaultOpen);
-  const setOpen = (updater: boolean | ((current: boolean) => boolean)) => {
-    const nextOpen = typeof updater === "function" ? updater(open) : updater;
-    setStoredOpen({ id, open: nextOpen });
-  };
-
-  useEffect(() => {
-    safeSetItem(`${PROPERTY_GROUP_STORAGE_PREFIX}${id}`, open ? "open" : "closed");
-  }, [id, open]);
-
-  return (
-    <div className={`property-group${open ? " is-open" : ""}`}>
-      <div className="property-group-heading">
-        <button
-          type="button"
-          className="property-group-toggle"
-          aria-expanded={open}
-          onClick={() => setOpen((current) => !current)}
-        >
-          {open ? <ChevronDown size={15} /> : <ChevronRight size={15} />}
-          <span>{title}</span>
-        </button>
-        {actions && open && <div className="property-group-actions">{actions}</div>}
-      </div>
-      {open && <div className="property-group-body">{children}</div>}
-    </div>
   );
 }
 
@@ -813,161 +766,6 @@ function RelationProperties({ controller, relationId }: { controller: DiagramCon
   );
 }
 
-function TextField({ label, value, onChange }: { label: string; value: string; onChange: (value: string) => void }) {
-  return (
-    <label className="field-row">
-      <span>{label}</span>
-      <input type="text" value={value} onChange={(event) => onChange(event.target.value)} />
-    </label>
-  );
-}
-
-function NumberField({
-  label,
-  value,
-  min,
-  max,
-  step,
-  onChange,
-}: {
-  label: string;
-  value: number;
-  min?: number;
-  max?: number;
-  step?: number;
-  onChange: (value: number) => void;
-}) {
-  return (
-    <label className="field-row">
-      <span>{label}</span>
-      <input
-        type="number"
-        min={min}
-        max={max}
-        step={step}
-        value={Number(value.toFixed(1))}
-        onChange={(event) => onChange(Number(event.target.value))}
-      />
-    </label>
-  );
-}
-
-function CheckboxField({
-  label,
-  checked,
-  onChange,
-}: {
-  label: string;
-  checked: boolean;
-  onChange: (checked: boolean) => void;
-}) {
-  return (
-    <label className="field-row">
-      <span>{label}</span>
-      <input type="checkbox" checked={checked} onChange={(event) => onChange(event.target.checked)} />
-    </label>
-  );
-}
-
-function ColorField({
-  label,
-  value,
-  savedColors = [],
-  onChange,
-}: {
-  label: string;
-  value: string;
-  savedColors?: SavedColor[];
-  onChange: (value: string) => void;
-}) {
-  return (
-    <label className="field-row color-field-row">
-      <span>{label}</span>
-      <span className="color-control">
-        <input type="color" value={isHexColor(value) ? value : "#000000"} onChange={(event) => onChange(event.target.value)} />
-        <input type="text" value={value} onChange={(event) => onChange(event.target.value)} />
-        <select
-          value=""
-          aria-label={`Cores salvas ${label}`}
-          disabled={!savedColors.length}
-          onChange={(event) => {
-            if (event.target.value) {
-              onChange(event.target.value);
-            }
-          }}
-        >
-          <option value="">{savedColors.length ? "Cores salvas" : "Sem cores salvas"}</option>
-          {savedColors.map((item, index) => (
-            <option key={`${item.name}-${item.color}-${index}`} value={item.color}>
-              {item.name} - {item.color}
-            </option>
-          ))}
-        </select>
-      </span>
-    </label>
-  );
-}
-
-function RangeField({
-  label,
-  value,
-  min,
-  max,
-  step,
-  onChange,
-}: {
-  label: string;
-  value: number;
-  min: number;
-  max: number;
-  step: number;
-  onChange: (value: number) => void;
-}) {
-  return (
-    <label className="field-row">
-      <span>{label}</span>
-      <span className="range-control">
-        <input
-          type="range"
-          value={value}
-          min={min}
-          max={max}
-          step={step}
-          onChange={(event) => onChange(Number(event.target.value))}
-        />
-        <output>{value.toFixed(2)}</output>
-      </span>
-    </label>
-  );
-}
-
-function SelectField<T extends string>({
-  label,
-  value,
-  options,
-  labels,
-  onChange,
-}: {
-  label: string;
-  value: T;
-  options: T[];
-  labels?: Partial<Record<T, string>>;
-  onChange: (value: T) => void;
-}) {
-  return (
-    <label className="field-row">
-      <span>{label}</span>
-      <select value={value} onChange={(event: ChangeEvent<HTMLSelectElement>) => onChange(event.target.value as T)}>
-        {options.map((option) => (
-          <option key={option} value={option}>
-            {labels?.[option] ?? option}
-          </option>
-        ))}
-      </select>
-    </label>
-  );
-}
-
 function relationTitle(relation: RelationModel, tableMap: Map<string, TableModel>): string {
   const fromTable = tableMap.get(relation.fromTable)?.name ?? relation.fromTable;
   const toTable = tableMap.get(relation.toTable)?.name ?? relation.toTable;
@@ -983,16 +781,4 @@ function relationEndpointLabel(relation: RelationModel, tableMap: Map<string, Ta
 function confirmRemoval(message: string): boolean {
   if (typeof window === "undefined" || typeof window.confirm !== "function") return true;
   return window.confirm(message);
-}
-
-function isHexColor(value: string): boolean {
-  return /^#[0-9a-fA-F]{3}$/.test(value) || /^#[0-9a-fA-F]{6}$/.test(value);
-}
-
-function readStoredGroupOpen(id: string, fallback: boolean): boolean {
-  const stored = safeGetItem(`${PROPERTY_GROUP_STORAGE_PREFIX}${id}`);
-  if (stored === "open") return true;
-  if (stored === "closed") return false;
-
-  return fallback;
 }

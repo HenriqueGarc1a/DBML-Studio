@@ -3,13 +3,13 @@
   "visual": {
     "backgroundColor": "#0f172a",
     "gridColor": "#1f2a3a",
-    "gridSize": 4,
+    "gridSize": 54,
     "tableRouteMargin": 28,
     "defaultTable": {
       "backgroundColor": "#111827",
       "borderColor": "#4b5f78",
       "textColor": "#e5edf7",
-      "headerColor": "#253142",
+      "headerColor": "#006aff",
       "lineColor": "#94a3b8",
       "opacity": 1
     },
@@ -280,8 +280,8 @@
     {
       "id": "project_stack",
       "name": "project_stack",
-      "x": 1499,
-      "y": 1240,
+      "x": 1458,
+      "y": 1188,
       "width": 250,
       "height": 122,
       "visual": {
@@ -294,7 +294,7 @@
       },
       "usesDefaultStyle": true,
       "usesGroupStyle": false,
-      "layoutSource": "auto",
+      "layoutSource": "manual",
       "columnOrder": [
         "id",
         "technology_id",
@@ -304,8 +304,8 @@
     {
       "id": "report",
       "name": "report",
-      "x": 771,
-      "y": 384,
+      "x": 776,
+      "y": 376,
       "width": 322,
       "height": 318,
       "visual": {
@@ -318,7 +318,7 @@
       },
       "usesDefaultStyle": true,
       "usesGroupStyle": false,
-      "layoutSource": "auto",
+      "layoutSource": "manual",
       "columnOrder": [
         "id",
         "student_id",
@@ -438,8 +438,8 @@
     {
       "id": "hours_report",
       "name": "hours_report",
-      "x": 396,
-      "y": 44,
+      "x": 433,
+      "y": 40,
       "width": 330,
       "height": 234,
       "visual": {
@@ -452,7 +452,7 @@
       },
       "usesDefaultStyle": true,
       "usesGroupStyle": false,
-      "layoutSource": "manual",
+      "layoutSource": "auto",
       "columnOrder": [
         "id",
         "report_id",
@@ -768,16 +768,16 @@
       "route": "orthogonal",
       "viaPoints": [
         {
-          "x": 1471,
-          "y": 1348
+          "x": 1430,
+          "y": 1296
         },
         {
-          "x": 1471,
-          "y": 1390
+          "x": 1430,
+          "y": 1338
         },
         {
           "x": 1491,
-          "y": 1390
+          "y": 1338
         },
         {
           "x": 1491,
@@ -804,12 +804,12 @@
       "route": "orthogonal",
       "viaPoints": [
         {
-          "x": 1777,
-          "y": 1320
+          "x": 1811.8643798828125,
+          "y": 1281.8924560546875
         },
         {
           "x": 1827,
-          "y": 1320
+          "y": 1281.8924560546875
         },
         {
           "x": 1827,
@@ -836,16 +836,16 @@
       "route": "orthogonal",
       "viaPoints": [
         {
-          "x": 743,
-          "y": 464
+          "x": 748,
+          "y": 456
         },
         {
-          "x": 743,
-          "y": 730
+          "x": 748,
+          "y": 722
         },
         {
           "x": 784,
-          "y": 730
+          "y": 722
         },
         {
           "x": 784,
@@ -877,11 +877,11 @@
         },
         {
           "x": 729,
-          "y": 730
+          "y": 722
         },
         {
           "x": 784,
-          "y": 730
+          "y": 722
         },
         {
           "x": 784,
@@ -1045,11 +1045,11 @@
         },
         {
           "x": 1167,
-          "y": 436
+          "y": 428
         },
         {
-          "x": 1121,
-          "y": 436
+          "x": 1126,
+          "y": 428
         }
       ],
       "color": "#94a3b8",
@@ -1072,20 +1072,20 @@
       "route": "orthogonal",
       "viaPoints": [
         {
-          "x": 754,
-          "y": 124
+          "x": 791,
+          "y": 120
         },
         {
-          "x": 754,
-          "y": 306
+          "x": 791,
+          "y": 302
         },
         {
-          "x": 743,
-          "y": 306
+          "x": 748,
+          "y": 302
         },
         {
-          "x": 743,
-          "y": 436
+          "x": 748,
+          "y": 428
         }
       ],
       "color": "#94a3b8",
