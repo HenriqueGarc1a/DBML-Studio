@@ -48,6 +48,7 @@ export interface DiagramVisual {
   backgroundColor: string;
   gridColor: string;
   gridSize: number;
+  tableRouteMargin: number;
   defaultTable: TableVisual;
   badges: BadgeVisualSet;
   savedColors: SavedColor[];

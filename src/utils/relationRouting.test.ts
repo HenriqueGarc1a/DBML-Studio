@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { defaultRelationVisual, defaultTableVisual } from "../model/defaults";
 import type { Point, RelationModel, TableModel } from "../model/types";
 import { getColumnPoint } from "./geometry";
-import { organizeRelationRoute, routeRelationAroundTables } from "./relationRouting";
+import { organizeRelationRoute, relationKeepsTableMargin, routeRelationAroundTables, TABLE_ROUTE_MARGIN } from "./relationRouting";
 
 const source = makeTable("orders", 40, 80);
 const target = makeTable("users", 620, 80);
@@ -32,6 +32,7 @@ describe("relation routing", () => {
     expect(viaPoints.length).toBeGreaterThan(2);
     for (let index = 0; index < points.length - 1; index += 1) {
       expect(segmentCrossesTable(points[index], points[index + 1], blocker)).toBe(false);
+      expect(segmentCrossesTable(points[index], points[index + 1], expandTable(blocker, TABLE_ROUTE_MARGIN))).toBe(false);
     }
   });
 
@@ -55,6 +56,20 @@ describe("relation routing", () => {
 
     expect(["east", "west"]).toContain(route.fromSide);
     expect(["east", "west"]).toContain(route.toSide);
+  });
+
+  it("rejects a manual route that a user drags through a table margin", () => {
+    const blocked = {
+      ...relation,
+      viaPoints: [
+        { x: blocker.x + 20, y: blocker.y + 20 },
+        { x: blocker.x + 80, y: blocker.y + 20 },
+      ],
+    };
+    expect(relationKeepsTableMargin(blocked, [source, target, blocker])).toBe(false);
+
+    const organized = organizeRelationRoute(blocked, source, target, [source, target, blocker], "east", "west");
+    expect(relationKeepsTableMargin({ ...blocked, ...organized }, [source, target, blocker])).toBe(true);
   });
 });
 
@@ -91,6 +106,16 @@ function makeTable(id: string, x: number, y: number, width = 220, height = 120):
     usesGroupStyle: false,
     indexes: [],
     layoutSource: "manual",
+  };
+}
+
+function expandTable(table: TableModel, margin: number): TableModel {
+  return {
+    ...table,
+    x: table.x - margin,
+    y: table.y - margin,
+    width: table.width + margin * 2,
+    height: table.height + margin * 2,
   };
 }
 

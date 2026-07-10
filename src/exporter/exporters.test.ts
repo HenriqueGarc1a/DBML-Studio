@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { exportDbml } from "./dbmlExporter";
+import { applyUiLayout, exportUiLayout } from "./uiLayoutFile";
 import { exportTikz } from "./tikzExporter";
 import { parseDbml } from "../parser/dbmlParser";
 
@@ -60,36 +61,19 @@ Ref: project.user_id > user.id
 `;
 
 describe("exporters", () => {
-  it("exports current layout metadata back to DBML comments", () => {
-    const dbml = exportDbml(parseDbml(source));
+  it("separates schema DBML from UI layout metadata", () => {
+    const diagram = parseDbml(source);
+    const dbml = exportDbml(diagram);
+    const uiLayout = exportUiLayout(diagram);
 
-    expect(dbml).toContain("// @diagram");
-    expect(dbml).toContain("// background=#f1f5f9");
-    expect(dbml).toContain("// gridColor=#cbd5e1");
-    expect(dbml).toContain("// gridSize=10");
-    expect(dbml).toContain("// tableBackground=#111827");
-    expect(dbml).toContain("// tableLine=#94a3b8");
-    expect(dbml).toContain("// uniqueBadgeBorder=#818cf8");
-    expect(dbml).toContain("// savedColors=Marca:#22c55e");
-    expect(dbml).toContain("// @table user");
-    expect(dbml).toContain("// x=20");
-    expect(dbml).toContain("// useDefaultStyle=false");
-    expect(dbml).toContain("// useGroupStyle=true");
+    expect(dbml).not.toContain("// @diagram");
+    expect(dbml).not.toContain("// @table");
+    expect(dbml).not.toContain("// @line");
     expect(dbml).toContain("Ref: project.user_id > user.id");
-    expect(dbml).toContain("// useTableLineColor=false");
-    expect(dbml).toContain("// style=dashed");
-    expect(dbml).toContain("// fromCardinality=one");
-    expect(dbml).toContain("// toCardinality=many");
-    expect(dbml).toContain("// via=(300,60)");
-    expect(dbml).toContain("// @group backend");
-    expect(dbml).toContain("// labelX=12");
-    expect(dbml).toContain("// labelY=24");
-    expect(dbml).toContain("// text=#0f766e");
-    expect(dbml).toContain("// tableBorder=#14b8a6");
-    expect(dbml).toContain("// tableLine=#2dd4bf");
-    expect(dbml).toContain("// tables=user,project");
-
-    expect(parseDbml(dbml).groups[0].tables).toEqual(["user", "project"]);
+    const restored = applyUiLayout(parseDbml(dbml), uiLayout);
+    expect(restored.tables[0]).toMatchObject({ x: 20, usesDefaultStyle: false, usesGroupStyle: true });
+    expect(restored.relations[0]).toMatchObject({ style: "dashed", viaPoints: [{ x: 300, y: 60 }] });
+    expect(restored.groups[0].tables).toEqual(["user", "project"]);
   });
 
   it("exports a complete TikZ document with groups, tables and relations", () => {
@@ -133,8 +117,7 @@ Ref: project.user_id > user.id
     const reparsed = parseDbml(dbml);
 
     expect(dbml).toContain("Ref: project.user_id > user.id");
-    expect(dbml).toContain("// @line");
-    expect(dbml).not.toContain("// via=");
+    expect(dbml).not.toContain("// @line");
     expect(reparsed.relations).toHaveLength(1);
     expect(reparsed.relations[0]).toMatchObject({
       fromTable: "project",

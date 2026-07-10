@@ -26,15 +26,17 @@ function dbmlFilesPlugin() {
               .filter((entry) => entry.endsWith(".dbml"))
               .map(async (filename) => {
                 const filePath = path.join(dbmlDir, filename);
-                const [dbml, stats] = await Promise.all([
+                const [dbml, stats, uiLayout] = await Promise.all([
                   readFile(filePath, "utf8"),
                   stat(filePath),
+                  readFile(`${filePath}.ui.json`, "utf8").catch(() => undefined),
                 ]);
 
                 return {
                   filename,
                   name: filename.replace(/\.dbml$/i, "").replace(/-/g, " "),
                   dbml,
+                  uiLayout,
                   updatedAt: stats.mtimeMs,
                 };
               }),
@@ -56,6 +58,7 @@ function dbmlFilesPlugin() {
           const body = await readJsonBody(request);
           const filename = safeDbmlFilename(String(body.filename ?? ""));
           const contents = String(body.contents ?? "");
+          const uiLayout = typeof body.uiLayout === "string" ? body.uiLayout : undefined;
 
           if (!filename || !contents.trim()) {
             sendJson(response, 400, { error: "Invalid DBML payload" });
@@ -64,6 +67,9 @@ function dbmlFilesPlugin() {
 
           await mkdir(dbmlDir, { recursive: true });
           await writeFile(path.join(dbmlDir, filename), contents, "utf8");
+          if (uiLayout?.trim()) {
+            await writeFile(path.join(dbmlDir, `${filename}.ui.json`), uiLayout, "utf8");
+          }
           sendJson(response, 200, { filename });
         } catch (error) {
           sendJson(response, 500, { error: formatError(error) });

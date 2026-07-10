@@ -1,9 +1,7 @@
-import type { ColumnModel, DiagramModel, GroupModel, RelationModel, TableModel } from "../model/types";
-import { GROUP_LABEL_DEFAULT_X, GROUP_LABEL_DEFAULT_Y } from "../model/defaults";
-import { normalizeRelationSide } from "../utils/geometry";
+import type { ColumnModel, DiagramModel, RelationModel, TableModel } from "../model/types";
 
 export function exportDbml(diagram: DiagramModel): string {
-  const sections: string[] = [exportDiagram(diagram)];
+  const sections: string[] = [];
   const tableMap = new Map(diagram.tables.map((table) => [table.id, table]));
 
   for (const table of diagram.tables) {
@@ -18,59 +16,10 @@ export function exportDbml(diagram: DiagramModel): string {
     sections.push(exportRelation(relation, tableMap));
   }
 
-  for (const group of diagram.groups) {
-    sections.push(exportGroup(group));
-  }
-
   return `${sections.join("\n\n")}\n`;
 }
 
-function exportDiagram(diagram: DiagramModel): string {
-  const { visual } = diagram;
-  const badgeComments = [
-    ...exportBadge("pk", visual.badges.primaryKey),
-    ...exportBadge("fk", visual.badges.foreignKey),
-    ...exportBadge("notNull", visual.badges.notNull),
-    ...exportBadge("unique", visual.badges.unique),
-  ];
-
-  return [
-    "// @diagram",
-    `// background=${visual.backgroundColor}`,
-    `// gridColor=${visual.gridColor}`,
-    `// gridSize=${round(visual.gridSize, 0)}`,
-    `// tableBackground=${visual.defaultTable.backgroundColor}`,
-    `// tableBorder=${visual.defaultTable.borderColor}`,
-    `// tableHeader=${visual.defaultTable.headerColor}`,
-    `// tableText=${visual.defaultTable.textColor}`,
-    `// tableLine=${visual.defaultTable.lineColor}`,
-    `// tableOpacity=${round(visual.defaultTable.opacity, 2)}`,
-    ...badgeComments,
-    visual.savedColors.length ? `// savedColors=${visual.savedColors.map(exportSavedColor).join(",")}` : "",
-  ].filter(Boolean).join("\n");
-}
-
 function exportTable(table: TableModel): string {
-  const comments = [
-    `// @table ${table.name}`,
-    `// x=${round(table.x)}`,
-    `// y=${round(table.y)}`,
-    `// width=${round(table.width)}`,
-    `// height=${round(table.height)}`,
-    `// useDefaultStyle=${table.usesDefaultStyle}`,
-    `// useGroupStyle=${table.usesGroupStyle}`,
-    ...(!table.usesDefaultStyle
-      ? [
-          `// background=${table.visual.backgroundColor}`,
-          `// border=${table.visual.borderColor}`,
-          `// header=${table.visual.headerColor}`,
-          `// text=${table.visual.textColor}`,
-          `// line=${table.visual.lineColor}`,
-          `// opacity=${round(table.visual.opacity, 2)}`,
-        ]
-      : []),
-  ];
-
   const columns = table.columns.map((column) => `  ${exportColumn(column)}`);
   const note = table.note ? [`  Note: '${escapeSingle(table.note)}'`] : [];
   const indexes = table.indexes.length
@@ -88,26 +37,11 @@ function exportTable(table: TableModel): string {
       ]
     : [];
 
-  return `${comments.join("\n")}\nTable ${formatIdentifier(table.name)} {\n${[
+  return `Table ${formatIdentifier(table.name)} {\n${[
     ...columns,
     ...note,
     ...indexes,
   ].join("\n")}\n}`;
-}
-
-function exportBadge(
-  prefix: "pk" | "fk" | "notNull" | "unique",
-  visual: DiagramModel["visual"]["badges"]["primaryKey"],
-): string[] {
-  return [
-    `// ${prefix}BadgeBackground=${visual.backgroundColor}`,
-    `// ${prefix}BadgeBorder=${visual.borderColor}`,
-    `// ${prefix}BadgeText=${visual.textColor}`,
-  ];
-}
-
-function exportSavedColor(item: DiagramModel["visual"]["savedColors"][number]): string {
-  return `${encodeURIComponent(item.name)}:${item.color}`;
 }
 
 function exportColumn(column: ColumnModel): string {
@@ -143,55 +77,9 @@ function exportColumn(column: ColumnModel): string {
 function exportRelation(relation: RelationModel, tableMap: Map<string, TableModel>): string {
   const fromTable = tableMap.get(relation.fromTable)?.name ?? relation.fromTable;
   const toTable = tableMap.get(relation.toTable)?.name ?? relation.toTable;
-  const comments = [
-    `// @line ${relation.id}`,
-    `// color=${relation.color}`,
-    `// useTableLineColor=${relation.usesTableLineColor}`,
-    `// strokeWidth=${round(relation.strokeWidth, 2)}`,
-    `// opacity=${round(relation.opacity, 2)}`,
-    `// style=${relation.style}`,
-    `// route=${relation.route}`,
-    `// from=${normalizeRelationSide(relation.fromSide)}`,
-    `// to=${normalizeRelationSide(relation.toSide)}`,
-    `// fromCardinality=${relation.fromCardinality}`,
-    `// toCardinality=${relation.toCardinality}`,
-    relation.label ? `// label=${relation.label}` : "",
-    relation.viaPoints.length
-      ? `// via=${relation.viaPoints.map((point) => `(${round(point.x)},${round(point.y)})`).join(",")}`
-      : "",
-  ].filter(Boolean);
-
   return `Ref: ${formatIdentifier(fromTable)}.${formatIdentifier(
     relation.fromColumn,
-  )} > ${formatIdentifier(toTable)}.${formatIdentifier(relation.toColumn)}\n${comments.join("\n")}`;
-}
-
-function exportGroup(group: GroupModel): string {
-  const labelX = Number.isFinite(group.labelX) ? group.labelX : GROUP_LABEL_DEFAULT_X;
-  const labelY = Number.isFinite(group.labelY) ? group.labelY : GROUP_LABEL_DEFAULT_Y;
-  const textColor = group.textColor || group.borderColor;
-
-  return [
-    `// @group ${group.id.replace(/^group-/, "")}`,
-    `// label=${group.label}`,
-    `// labelX=${round(labelX)}`,
-    `// labelY=${round(labelY)}`,
-    `// x=${round(group.x)}`,
-    `// y=${round(group.y)}`,
-    `// width=${round(group.width)}`,
-    `// height=${round(group.height)}`,
-    `// background=${group.backgroundColor}`,
-    `// border=${group.borderColor}`,
-    `// text=${textColor}`,
-    `// opacity=${round(group.opacity, 2)}`,
-    `// tableBackground=${group.tableVisual.backgroundColor}`,
-    `// tableBorder=${group.tableVisual.borderColor}`,
-    `// tableHeader=${group.tableVisual.headerColor}`,
-    `// tableText=${group.tableVisual.textColor}`,
-    `// tableLine=${group.tableVisual.lineColor}`,
-    `// tableOpacity=${round(group.tableVisual.opacity, 2)}`,
-    group.tables.length ? `// tables=${group.tables.join(",")}` : "",
-  ].filter(Boolean).join("\n");
+  )} > ${formatIdentifier(toTable)}.${formatIdentifier(relation.toColumn)}`;
 }
 
 function formatIdentifier(value: string): string {
@@ -200,8 +88,4 @@ function formatIdentifier(value: string): string {
 
 function escapeSingle(value: string): string {
   return value.replace(/'/g, "\\'");
-}
-
-function round(value: number, digits = 1): string {
-  return Number(value.toFixed(digits)).toString();
 }

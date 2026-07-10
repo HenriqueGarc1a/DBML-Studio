@@ -260,7 +260,7 @@ export function App() {
                 <ol>
                   <li>Use Nova tabela no toolbar flutuante para adicionar uma tabela.</li>
                   <li>Selecione a tabela e adicione campos no grupo Campos.</li>
-                  <li>Ative Nova relação e clique no campo de origem e depois no campo de destino.</li>
+                  <li>Ative Nova relação, clique primeiro no campo da tabela pai e depois no campo FK da tabela filha.</li>
                   <li>Selecione uma linha para mudar cor, espessura, cardinalidade e rota.</li>
                 </ol>
               </section>

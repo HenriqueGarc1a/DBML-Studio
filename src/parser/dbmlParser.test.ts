@@ -223,7 +223,7 @@ Ref: audit_log.user_id > user.id
     });
     expect(auditRelation).toMatchObject({
       color: "#dc2626",
-      strokeWidth: 2,
+      strokeWidth: 4,
       style: "dashed",
     });
   });

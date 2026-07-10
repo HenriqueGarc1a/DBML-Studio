@@ -1,7 +1,7 @@
 import { ChevronDown, ChevronLeft, ChevronRight, Eraser, Link2, Minus, Plus, RotateCcw, Route, Trash2 } from "lucide-react";
 import { useEffect, useState, type ChangeEvent, type ReactNode } from "react";
 import type { DiagramController } from "../editor/useDiagramController";
-import { DIAGRAM_MAX_GRID_SIZE, DIAGRAM_MIN_GRID_SIZE } from "../model/defaults";
+import { DIAGRAM_MAX_GRID_SIZE, DIAGRAM_MAX_ROUTE_MARGIN, DIAGRAM_MIN_GRID_SIZE, DIAGRAM_MIN_ROUTE_MARGIN } from "../model/defaults";
 import type {
   BadgeKind,
   BadgeVisual,
@@ -100,6 +100,14 @@ export function PropertiesPanel({ controller, collapsed, onToggle }: PropertiesP
               max={DIAGRAM_MAX_GRID_SIZE}
               step={1}
               onChange={(gridSize) => controller.updateDiagramVisual({ gridSize })}
+            />
+            <NumberField
+              label="Margem das linhas"
+              value={controller.diagram.visual.tableRouteMargin}
+              min={DIAGRAM_MIN_ROUTE_MARGIN}
+              max={DIAGRAM_MAX_ROUTE_MARGIN}
+              step={1}
+              onChange={(tableRouteMargin) => controller.updateDiagramVisual({ tableRouteMargin })}
             />
           </CollapsibleGroup>
           <DefaultTableStyleEditor controller={controller} savedColors={savedColors} />

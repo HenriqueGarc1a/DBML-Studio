@@ -7,6 +7,7 @@ import {
   defaultTableVisual,
   getTableMinHeight,
   normalizeGridSize,
+  normalizeRouteMargin,
 } from "../model/defaults";
 import type {
   Cardinality,
@@ -226,6 +227,7 @@ function createDiagramVisual(visual?: Partial<DiagramModel["visual"]>): DiagramM
     backgroundColor: visual?.backgroundColor ?? defaultDiagramVisual.backgroundColor,
     gridColor: visual?.gridColor ?? defaultDiagramVisual.gridColor,
     gridSize: normalizeGridSize(visual?.gridSize, defaultDiagramVisual.gridSize),
+    tableRouteMargin: normalizeRouteMargin(visual?.tableRouteMargin, defaultDiagramVisual.tableRouteMargin),
     defaultTable: {
       ...defaultTableVisual,
       ...(visual?.defaultTable ?? {}),

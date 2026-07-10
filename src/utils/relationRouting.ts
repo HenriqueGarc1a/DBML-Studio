@@ -1,5 +1,5 @@
 import type { Direction, Point, RelationModel, TableModel } from "../model/types";
-import { getColumnPoint, normalizeRelationSide } from "./geometry";
+import { getColumnPoint, getRelationGeometry, normalizeRelationSide } from "./geometry";
 
 interface Obstacle {
   left: number;
@@ -8,8 +8,7 @@ interface Obstacle {
   bottom: number;
 }
 
-const OBSTACLE_PADDING = 18;
-const EXIT_DISTANCE = 32;
+export const TABLE_ROUTE_MARGIN = 28;
 const OUTER_RAIL_PADDING = 56;
 const BEND_PENALTY = 90;
 const SIDE_PREFERENCE_PENALTY = 45;
@@ -28,6 +27,7 @@ export function organizeRelationRoute(
   tables: TableModel[],
   preferredFromSide: Direction,
   preferredToSide: Direction,
+  margin = TABLE_ROUTE_MARGIN,
 ): OrganizedRelationRoute {
   const lateralCandidates = rankSidePairs(
     preferredLateralPairs(fromTable, toTable),
@@ -35,6 +35,7 @@ export function organizeRelationRoute(
     fromTable,
     toTable,
     tables,
+    margin,
   );
   const candidates = lateralCandidates.length
     ? lateralCandidates
@@ -49,6 +50,7 @@ export function organizeRelationRoute(
         fromTable,
         toTable,
         tables,
+        margin,
       );
 
   if (candidates[0]) {
@@ -65,7 +67,7 @@ export function organizeRelationRoute(
   return {
     fromSide: normalizedFromSide,
     toSide: normalizedToSide,
-    viaPoints: routeRelationAroundTables(relation, fromTable, toTable, tables, normalizedFromSide, normalizedToSide),
+    viaPoints: routeRelationAroundTables(relation, fromTable, toTable, tables, normalizedFromSide, normalizedToSide, margin),
   };
 }
 
@@ -75,12 +77,13 @@ function rankSidePairs(
   fromTable: TableModel,
   toTable: TableModel,
   tables: TableModel[],
+  margin: number,
 ): Array<OrganizedRelationRoute & { score: number }> {
   return uniqueSidePairs(sidePairs)
     .map(([fromSide, toSide], index) => {
       const normalizedFromSide = normalizeRelationSide(fromSide);
       const normalizedToSide = normalizeRelationSide(toSide);
-      const viaPoints = routeRelationAroundTables(relation, fromTable, toTable, tables, normalizedFromSide, normalizedToSide);
+      const viaPoints = routeRelationAroundTables(relation, fromTable, toTable, tables, normalizedFromSide, normalizedToSide, margin);
       const points = [
         getColumnPoint(fromTable, relation.fromColumn, normalizedFromSide),
         ...viaPoints,
@@ -91,12 +94,46 @@ function rankSidePairs(
         fromSide: normalizedFromSide,
         toSide: normalizedToSide,
         viaPoints,
-        clear: !pathCrossesTables(points, tables),
+        clear: pathKeepsTableMargin(points, tables, fromTable.id, toTable.id, margin),
         score: routeScore(points, points[0], points[points.length - 1]) + index * SIDE_PREFERENCE_PENALTY,
       };
     })
     .filter((candidate) => candidate.clear)
     .sort((a, b) => a.score - b.score);
+}
+
+/**
+ * Checks the editor's hard routing invariant. Only the short first/last
+ * connector may enter the margin of the table it is attached to.
+ */
+export function relationKeepsTableMargin(
+  relation: RelationModel,
+  tables: TableModel[],
+  margin = TABLE_ROUTE_MARGIN,
+): boolean {
+  const fromTable = tables.find((table) => table.id === relation.fromTable);
+  const toTable = tables.find((table) => table.id === relation.toTable);
+  if (!fromTable || !toTable) return true;
+  const points = getRelationGeometry(relation, fromTable, toTable).points;
+  return pathKeepsTableMargin(points, tables, fromTable.id, toTable.id, margin);
+}
+
+function pathKeepsTableMargin(
+  points: Point[],
+  tables: TableModel[],
+  fromTableId: string,
+  toTableId: string,
+  margin: number,
+): boolean {
+  return tables.every((table) => {
+    const obstacle = tableToObstacle(table, margin);
+    return points.every((point, index) => {
+      if (index === points.length - 1) return true;
+      if (table.id === fromTableId && index === 0) return true;
+      if (table.id === toTableId && index === points.length - 2) return true;
+      return isClearSegment(point, points[index + 1], [obstacle]);
+    });
+  });
 }
 
 function preferredLateralPairs(fromTable: TableModel, toTable: TableModel): Array<[Direction, Direction]> {
@@ -119,14 +156,16 @@ export function routeRelationAroundTables(
   tables: TableModel[],
   fromSide: Direction,
   toSide: Direction,
+  margin = TABLE_ROUTE_MARGIN,
 ): Point[] {
   const normalizedFromSide = normalizeRelationSide(fromSide);
   const normalizedToSide = normalizeRelationSide(toSide);
   const start = getColumnPoint(fromTable, relation.fromColumn, normalizedFromSide);
   const end = getColumnPoint(toTable, relation.toColumn, normalizedToSide);
-  const startExit = offsetFromSide(start, normalizedFromSide, EXIT_DISTANCE);
-  const endExit = offsetFromSide(end, normalizedToSide, EXIT_DISTANCE);
-  const obstacles = tables.map((table) => tableToObstacle(table, OBSTACLE_PADDING));
+  const exitDistance = Math.max(margin, 1);
+  const startExit = offsetFromSide(start, normalizedFromSide, exitDistance);
+  const endExit = offsetFromSide(end, normalizedToSide, exitDistance);
+  const obstacles = tables.map((table) => tableToObstacle(table, margin));
   const route = pickBestRoute(startExit, endExit, obstacles);
 
   return simplifyPoints([startExit, ...route.slice(1, -1), endExit]);
@@ -181,11 +220,6 @@ function uniqueSidePairs(pairs: Array<[Direction, Direction]>): Array<[Direction
   }
 
   return next;
-}
-
-function pathCrossesTables(points: Point[], tables: TableModel[]): boolean {
-  const obstacles = tables.map((table) => tableToObstacle(table, 0));
-  return points.some((point, index) => index < points.length - 1 && !isClearSegment(point, points[index + 1], obstacles));
 }
 
 function fallbackOuterRoute(start: Point, end: Point, bounds: Obstacle): Point[] {

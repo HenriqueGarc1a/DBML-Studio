@@ -11,6 +11,7 @@ export interface WorkspaceDbmlFile {
   filename: string;
   name: string;
   dbml: string;
+  uiLayout?: string;
   updatedAt: number;
 }
 
@@ -69,7 +70,7 @@ export async function saveTextFile(
 export async function saveWorkspaceDbml(
   filename: string,
   contents: string,
-  options: { keepalive?: boolean } = {},
+  options: { keepalive?: boolean; uiLayout?: string } = {},
 ): Promise<boolean> {
   if (!contents.trim()) return false;
 
@@ -77,7 +78,7 @@ export async function saveWorkspaceDbml(
     const response = await fetch("/__dbml/save", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ filename, contents }),
+      body: JSON.stringify({ filename, contents, uiLayout: options.uiLayout }),
       keepalive: options.keepalive,
     });
 
@@ -87,13 +88,13 @@ export async function saveWorkspaceDbml(
   }
 }
 
-export function sendWorkspaceDbmlBeacon(filename: string, contents: string): boolean {
+export function sendWorkspaceDbmlBeacon(filename: string, contents: string, uiLayout?: string): boolean {
   if (!contents.trim() || !navigator.sendBeacon) return false;
 
   try {
     return navigator.sendBeacon(
       "/__dbml/save",
-      new Blob([JSON.stringify({ filename, contents })], { type: "application/json" }),
+      new Blob([JSON.stringify({ filename, contents, uiLayout })], { type: "application/json" }),
     );
   } catch {
     return false;
@@ -118,6 +119,7 @@ function isWorkspaceDbmlFile(value: unknown): value is WorkspaceDbmlFile {
     typeof item.filename === "string" &&
     typeof item.name === "string" &&
     typeof item.dbml === "string" &&
+    (item.uiLayout === undefined || typeof item.uiLayout === "string") &&
     typeof item.updatedAt === "number"
   );
 }

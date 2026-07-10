@@ -117,6 +117,7 @@ export function SvgCanvas({ controller, svgRef: externalSvgRef }: SvgCanvasProps
   const [zoomPanelPosition, setZoomPanelPosition] = useState<Point>({ x: 12, y: 12 });
   const [zoomPanelDrag, setZoomPanelDrag] = useState<{ pointerStart: Point; origin: Point } | undefined>();
   const [relationMode, setRelationMode] = useState(false);
+  // The first endpoint picked by the user is the referenced (parent) field.
   const [relationSource, setRelationSource] = useState<RelationFieldEndpoint | undefined>();
   const computedBounds = useMemo(
     () => getTableBounds(controller.diagram.tables),
@@ -360,6 +361,9 @@ export function SvgCanvas({ controller, svgRef: externalSvgRef }: SvgCanvasProps
     if (event.currentTarget.hasPointerCapture(event.pointerId)) {
       event.currentTarget.releasePointerCapture(event.pointerId);
     }
+    if (drag.kind === "table" || drag.kind === "table-resize") {
+      controller.settleTable(drag.id);
+    }
     if (drag.kind !== "pan") {
       controller.endHistoryBatch();
     }
@@ -472,7 +476,7 @@ export function SvgCanvas({ controller, svgRef: externalSvgRef }: SvgCanvasProps
       return;
     }
 
-    controller.addRelation(relationSource.tableId, relationSource.columnName, endpoint.tableId, endpoint.columnName);
+    controller.addRelation(endpoint.tableId, endpoint.columnName, relationSource.tableId, relationSource.columnName);
     setRelationSource(undefined);
     setRelationMode(false);
   };

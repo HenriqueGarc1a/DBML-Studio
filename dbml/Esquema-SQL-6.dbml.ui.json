@@ -1,0 +1,969 @@
+{
+  "version": 1,
+  "visual": {
+    "backgroundColor": "#0f172a",
+    "gridColor": "#1f2a3a",
+    "gridSize": 4,
+    "tableRouteMargin": 28,
+    "defaultTable": {
+      "backgroundColor": "#111827",
+      "borderColor": "#4b5f78",
+      "textColor": "#e5edf7",
+      "headerColor": "#253142",
+      "lineColor": "#94a3b8",
+      "opacity": 1
+    },
+    "badges": {
+      "primaryKey": {
+        "backgroundColor": "#3f2d12",
+        "borderColor": "#f59e0b",
+        "textColor": "#fcd34d"
+      },
+      "foreignKey": {
+        "backgroundColor": "#12312e",
+        "borderColor": "#2dd4bf",
+        "textColor": "#99f6e4"
+      },
+      "notNull": {
+        "backgroundColor": "#3b1620",
+        "borderColor": "#fb7185",
+        "textColor": "#fecdd3"
+      },
+      "unique": {
+        "backgroundColor": "#1e1b4b",
+        "borderColor": "#818cf8",
+        "textColor": "#c7d2fe"
+      }
+    },
+    "savedColors": []
+  },
+  "tables": [
+    {
+      "id": "ages_user",
+      "name": "ages_user",
+      "x": 2108,
+      "y": 288,
+      "width": 282,
+      "height": 262,
+      "visual": {
+        "backgroundColor": "#111827",
+        "borderColor": "#4b5f78",
+        "textColor": "#e5edf7",
+        "headerColor": "#253142",
+        "lineColor": "#94a3b8",
+        "opacity": 1
+      },
+      "usesDefaultStyle": true,
+      "usesGroupStyle": false,
+      "layoutSource": "comment"
+    },
+    {
+      "id": "project",
+      "name": "project",
+      "x": 1976,
+      "y": 968,
+      "width": 330,
+      "height": 290,
+      "visual": {
+        "backgroundColor": "#111827",
+        "borderColor": "#4b5f78",
+        "textColor": "#e5edf7",
+        "headerColor": "#253142",
+        "lineColor": "#94a3b8",
+        "opacity": 1
+      },
+      "usesDefaultStyle": true,
+      "usesGroupStyle": false,
+      "layoutSource": "comment"
+    },
+    {
+      "id": "team",
+      "name": "team",
+      "x": 1372,
+      "y": 915.3,
+      "width": 226,
+      "height": 122,
+      "visual": {
+        "backgroundColor": "#111827",
+        "borderColor": "#4b5f78",
+        "textColor": "#e5edf7",
+        "headerColor": "#253142",
+        "lineColor": "#94a3b8",
+        "opacity": 1
+      },
+      "usesDefaultStyle": true,
+      "usesGroupStyle": false,
+      "layoutSource": "comment"
+    },
+    {
+      "id": "class",
+      "name": "class",
+      "x": 1350.7,
+      "y": 63.7,
+      "width": 242,
+      "height": 206,
+      "visual": {
+        "backgroundColor": "#111827",
+        "borderColor": "#4b5f78",
+        "textColor": "#e5edf7",
+        "headerColor": "#253142",
+        "lineColor": "#94a3b8",
+        "opacity": 1
+      },
+      "usesDefaultStyle": true,
+      "usesGroupStyle": false,
+      "layoutSource": "comment"
+    },
+    {
+      "id": "semester_profile",
+      "name": "semester_profile",
+      "x": 832,
+      "y": 696,
+      "width": 346,
+      "height": 234,
+      "visual": {
+        "backgroundColor": "#111827",
+        "borderColor": "#4b5f78",
+        "textColor": "#e5edf7",
+        "headerColor": "#253142",
+        "lineColor": "#94a3b8",
+        "opacity": 1
+      },
+      "usesDefaultStyle": true,
+      "usesGroupStyle": false,
+      "layoutSource": "manual"
+    },
+    {
+      "id": "lesson",
+      "name": "lesson",
+      "x": 947,
+      "y": 71.3,
+      "width": 220,
+      "height": 122,
+      "visual": {
+        "backgroundColor": "#111827",
+        "borderColor": "#4b5f78",
+        "textColor": "#e5edf7",
+        "headerColor": "#253142",
+        "lineColor": "#94a3b8",
+        "opacity": 1
+      },
+      "usesDefaultStyle": true,
+      "usesGroupStyle": false,
+      "layoutSource": "comment"
+    },
+    {
+      "id": "otp",
+      "name": "otp",
+      "x": 1348,
+      "y": 391.3,
+      "width": 266,
+      "height": 178,
+      "visual": {
+        "backgroundColor": "#111827",
+        "borderColor": "#4b5f78",
+        "textColor": "#e5edf7",
+        "headerColor": "#253142",
+        "lineColor": "#94a3b8",
+        "opacity": 1
+      },
+      "usesDefaultStyle": true,
+      "usesGroupStyle": false,
+      "layoutSource": "comment"
+    },
+    {
+      "id": "schedule",
+      "name": "schedule",
+      "x": 1592,
+      "y": 604,
+      "width": 274,
+      "height": 206,
+      "visual": {
+        "backgroundColor": "#111827",
+        "borderColor": "#4b5f78",
+        "textColor": "#e5edf7",
+        "headerColor": "#253142",
+        "lineColor": "#94a3b8",
+        "opacity": 1
+      },
+      "usesDefaultStyle": true,
+      "usesGroupStyle": false,
+      "layoutSource": "manual"
+    },
+    {
+      "id": "technology",
+      "name": "technology",
+      "x": 1724,
+      "y": 1260,
+      "width": 266,
+      "height": 122,
+      "visual": {
+        "backgroundColor": "#111827",
+        "borderColor": "#4b5f78",
+        "textColor": "#e5edf7",
+        "headerColor": "#253142",
+        "lineColor": "#94a3b8",
+        "opacity": 1
+      },
+      "usesDefaultStyle": true,
+      "usesGroupStyle": false,
+      "layoutSource": "comment"
+    },
+    {
+      "id": "project_stack",
+      "name": "project_stack",
+      "x": 1364,
+      "y": 1239.7,
+      "width": 250,
+      "height": 122,
+      "visual": {
+        "backgroundColor": "#111827",
+        "borderColor": "#4b5f78",
+        "textColor": "#e5edf7",
+        "headerColor": "#253142",
+        "lineColor": "#94a3b8",
+        "opacity": 1
+      },
+      "usesDefaultStyle": true,
+      "usesGroupStyle": false,
+      "layoutSource": "comment"
+    },
+    {
+      "id": "report",
+      "name": "report",
+      "x": 268,
+      "y": 1060,
+      "width": 322,
+      "height": 318,
+      "visual": {
+        "backgroundColor": "#111827",
+        "borderColor": "#4b5f78",
+        "textColor": "#e5edf7",
+        "headerColor": "#253142",
+        "lineColor": "#94a3b8",
+        "opacity": 1
+      },
+      "usesDefaultStyle": true,
+      "usesGroupStyle": false,
+      "layoutSource": "manual"
+    },
+    {
+      "id": "examining_board",
+      "name": "examining_board",
+      "x": 488,
+      "y": 291.3,
+      "width": 250,
+      "height": 178,
+      "visual": {
+        "backgroundColor": "#111827",
+        "borderColor": "#4b5f78",
+        "textColor": "#e5edf7",
+        "headerColor": "#253142",
+        "lineColor": "#94a3b8",
+        "opacity": 1
+      },
+      "usesDefaultStyle": true,
+      "usesGroupStyle": false,
+      "layoutSource": "comment"
+    },
+    {
+      "id": "examining_board_member",
+      "name": "examining_board_member",
+      "x": 52,
+      "y": 12,
+      "width": 290,
+      "height": 122,
+      "visual": {
+        "backgroundColor": "#111827",
+        "borderColor": "#4b5f78",
+        "textColor": "#e5edf7",
+        "headerColor": "#253142",
+        "lineColor": "#94a3b8",
+        "opacity": 1
+      },
+      "usesDefaultStyle": true,
+      "usesGroupStyle": false,
+      "layoutSource": "comment"
+    },
+    {
+      "id": "attendance",
+      "name": "attendance",
+      "x": 548,
+      "y": 91.7,
+      "width": 226,
+      "height": 122,
+      "visual": {
+        "backgroundColor": "#111827",
+        "borderColor": "#4b5f78",
+        "textColor": "#e5edf7",
+        "headerColor": "#253142",
+        "lineColor": "#94a3b8",
+        "opacity": 1
+      },
+      "usesDefaultStyle": true,
+      "usesGroupStyle": false,
+      "layoutSource": "comment"
+    },
+    {
+      "id": "sprint_report",
+      "name": "sprint_report",
+      "x": -96,
+      "y": 916,
+      "width": 306,
+      "height": 262,
+      "visual": {
+        "backgroundColor": "#111827",
+        "borderColor": "#4b5f78",
+        "textColor": "#e5edf7",
+        "headerColor": "#253142",
+        "lineColor": "#94a3b8",
+        "opacity": 1
+      },
+      "usesDefaultStyle": true,
+      "usesGroupStyle": false,
+      "layoutSource": "manual"
+    },
+    {
+      "id": "hours_report",
+      "name": "hours_report",
+      "x": -272,
+      "y": 524,
+      "width": 330,
+      "height": 234,
+      "visual": {
+        "backgroundColor": "#111827",
+        "borderColor": "#4b5f78",
+        "textColor": "#e5edf7",
+        "headerColor": "#253142",
+        "lineColor": "#94a3b8",
+        "opacity": 1
+      },
+      "usesDefaultStyle": true,
+      "usesGroupStyle": false,
+      "layoutSource": "manual"
+    }
+  ],
+  "relations": [
+    {
+      "id": "relation-team-teacher_id-ages_user-id-0",
+      "fromSide": "east",
+      "toSide": "west",
+      "route": "orthogonal",
+      "viaPoints": [
+        {
+          "x": 1626,
+          "y": 995.3
+        },
+        {
+          "x": 1894,
+          "y": 995.3
+        },
+        {
+          "x": 1894,
+          "y": 340
+        },
+        {
+          "x": 2080,
+          "y": 340
+        }
+      ],
+      "color": "#94a3b8",
+      "usesTableLineColor": true,
+      "opacity": 0.9,
+      "strokeWidth": 4,
+      "style": "solid",
+      "fromCardinality": "many",
+      "toCardinality": "one",
+      "label": "",
+      "fromTable": "team",
+      "fromColumn": "teacher_id",
+      "toTable": "ages_user",
+      "toColumn": "id"
+    },
+    {
+      "id": "relation-team-project_id-project-id-1",
+      "fromSide": "east",
+      "toSide": "west",
+      "route": "orthogonal",
+      "viaPoints": [
+        {
+          "x": 1626,
+          "y": 1023.3
+        },
+        {
+          "x": 1948,
+          "y": 1023.3
+        },
+        {
+          "x": 1948,
+          "y": 1020
+        }
+      ],
+      "color": "#94a3b8",
+      "usesTableLineColor": true,
+      "opacity": 0.9,
+      "strokeWidth": 4,
+      "style": "solid",
+      "fromCardinality": "many",
+      "toCardinality": "one",
+      "label": "",
+      "fromTable": "team",
+      "fromColumn": "project_id",
+      "toTable": "project",
+      "toColumn": "id"
+    },
+    {
+      "id": "relation-class-teacher_id-ages_user-id-2",
+      "fromSide": "east",
+      "toSide": "west",
+      "route": "orthogonal",
+      "viaPoints": [
+        {
+          "x": 1620.7,
+          "y": 227.7
+        },
+        {
+          "x": 2080,
+          "y": 227.7
+        },
+        {
+          "x": 2080,
+          "y": 340
+        }
+      ],
+      "color": "#94a3b8",
+      "usesTableLineColor": true,
+      "opacity": 0.9,
+      "strokeWidth": 4,
+      "style": "solid",
+      "fromCardinality": "many",
+      "toCardinality": "one",
+      "label": "",
+      "fromTable": "class",
+      "fromColumn": "teacher_id",
+      "toTable": "ages_user",
+      "toColumn": "id"
+    },
+    {
+      "id": "relation-semester_profile-user_id-ages_user-id-3",
+      "fromSide": "east",
+      "toSide": "west",
+      "route": "orthogonal",
+      "viaPoints": [
+        {
+          "x": 1326,
+          "y": 896
+        },
+        {
+          "x": 1326,
+          "y": 838
+        },
+        {
+          "x": 2080,
+          "y": 838
+        },
+        {
+          "x": 2080,
+          "y": 340
+        }
+      ],
+      "color": "#94a3b8",
+      "usesTableLineColor": true,
+      "opacity": 0.9,
+      "strokeWidth": 4,
+      "style": "solid",
+      "fromCardinality": "many",
+      "toCardinality": "one",
+      "label": "",
+      "fromTable": "semester_profile",
+      "fromColumn": "user_id",
+      "toTable": "ages_user",
+      "toColumn": "id"
+    },
+    {
+      "id": "relation-semester_profile-team_id-team-id-4",
+      "fromSide": "east",
+      "toSide": "west",
+      "route": "orthogonal",
+      "viaPoints": [
+        {
+          "x": 1326,
+          "y": 924
+        },
+        {
+          "x": 1344,
+          "y": 924
+        },
+        {
+          "x": 1344,
+          "y": 967.3
+        }
+      ],
+      "color": "#94a3b8",
+      "usesTableLineColor": true,
+      "opacity": 0.9,
+      "strokeWidth": 4,
+      "style": "solid",
+      "fromCardinality": "many",
+      "toCardinality": "one",
+      "label": "",
+      "fromTable": "semester_profile",
+      "fromColumn": "team_id",
+      "toTable": "team",
+      "toColumn": "id"
+    },
+    {
+      "id": "relation-semester_profile-class_id-class-id-5",
+      "fromSide": "east",
+      "toSide": "west",
+      "route": "orthogonal",
+      "viaPoints": [
+        {
+          "x": 1318,
+          "y": 952
+        },
+        {
+          "x": 1318,
+          "y": 115.7
+        },
+        {
+          "x": 1322.7,
+          "y": 115.7
+        }
+      ],
+      "color": "#94a3b8",
+      "usesTableLineColor": true,
+      "opacity": 0.9,
+      "strokeWidth": 4,
+      "style": "solid",
+      "fromCardinality": "many",
+      "toCardinality": "one",
+      "label": "",
+      "fromTable": "semester_profile",
+      "fromColumn": "class_id",
+      "toTable": "class",
+      "toColumn": "id"
+    },
+    {
+      "id": "relation-lesson-class_id-class-id-6",
+      "fromSide": "east",
+      "toSide": "west",
+      "route": "orthogonal",
+      "viaPoints": [
+        {
+          "x": 1195,
+          "y": 179.3
+        },
+        {
+          "x": 1322.7,
+          "y": 179.3
+        },
+        {
+          "x": 1322.7,
+          "y": 115.7
+        }
+      ],
+      "color": "#94a3b8",
+      "usesTableLineColor": true,
+      "opacity": 0.9,
+      "strokeWidth": 4,
+      "style": "solid",
+      "fromCardinality": "many",
+      "toCardinality": "one",
+      "label": "",
+      "fromTable": "lesson",
+      "fromColumn": "class_id",
+      "toTable": "class",
+      "toColumn": "id"
+    },
+    {
+      "id": "relation-otp-user_id-ages_user-id-7",
+      "fromSide": "east",
+      "toSide": "west",
+      "route": "orthogonal",
+      "viaPoints": [
+        {
+          "x": 1642,
+          "y": 471.3
+        },
+        {
+          "x": 2080,
+          "y": 471.3
+        },
+        {
+          "x": 2080,
+          "y": 340
+        }
+      ],
+      "color": "#94a3b8",
+      "usesTableLineColor": true,
+      "opacity": 0.9,
+      "strokeWidth": 4,
+      "style": "solid",
+      "fromCardinality": "many",
+      "toCardinality": "one",
+      "label": "",
+      "fromTable": "otp",
+      "fromColumn": "user_id",
+      "toTable": "ages_user",
+      "toColumn": "id"
+    },
+    {
+      "id": "relation-schedule-admin_id-ages_user-id-8",
+      "fromSide": "east",
+      "toSide": "west",
+      "route": "orthogonal",
+      "viaPoints": [
+        {
+          "x": 1894,
+          "y": 684
+        },
+        {
+          "x": 2080,
+          "y": 684
+        },
+        {
+          "x": 2080,
+          "y": 340
+        }
+      ],
+      "color": "#94a3b8",
+      "usesTableLineColor": true,
+      "opacity": 0.9,
+      "strokeWidth": 4,
+      "style": "solid",
+      "fromCardinality": "many",
+      "toCardinality": "one",
+      "label": "",
+      "fromTable": "schedule",
+      "fromColumn": "admin_id",
+      "toTable": "ages_user",
+      "toColumn": "id"
+    },
+    {
+      "id": "relation-project_stack-project_id-project-id-9",
+      "fromSide": "east",
+      "toSide": "west",
+      "route": "orthogonal",
+      "viaPoints": [
+        {
+          "x": 1642,
+          "y": 1319.7
+        },
+        {
+          "x": 1642,
+          "y": 1020
+        },
+        {
+          "x": 1948,
+          "y": 1020
+        }
+      ],
+      "color": "#94a3b8",
+      "usesTableLineColor": true,
+      "opacity": 0.9,
+      "strokeWidth": 4,
+      "style": "solid",
+      "fromCardinality": "many",
+      "toCardinality": "one",
+      "label": "",
+      "fromTable": "project_stack",
+      "fromColumn": "project_id",
+      "toTable": "project",
+      "toColumn": "id"
+    },
+    {
+      "id": "relation-project_stack-technology_id-technology-id-10",
+      "fromSide": "east",
+      "toSide": "west",
+      "route": "orthogonal",
+      "viaPoints": [
+        {
+          "x": 1642,
+          "y": 1347.7
+        },
+        {
+          "x": 1696,
+          "y": 1347.7
+        },
+        {
+          "x": 1696,
+          "y": 1312
+        }
+      ],
+      "color": "#94a3b8",
+      "usesTableLineColor": true,
+      "opacity": 0.9,
+      "strokeWidth": 4,
+      "style": "solid",
+      "fromCardinality": "many",
+      "toCardinality": "one",
+      "label": "",
+      "fromTable": "project_stack",
+      "fromColumn": "technology_id",
+      "toTable": "technology",
+      "toColumn": "id"
+    },
+    {
+      "id": "relation-report-student_id-semester_profile-id-11",
+      "fromSide": "east",
+      "toSide": "west",
+      "route": "orthogonal",
+      "viaPoints": [
+        {
+          "x": 618,
+          "y": 1140
+        },
+        {
+          "x": 804,
+          "y": 1140
+        },
+        {
+          "x": 804,
+          "y": 748
+        }
+      ],
+      "color": "#94a3b8",
+      "usesTableLineColor": true,
+      "opacity": 0.9,
+      "strokeWidth": 4,
+      "style": "solid",
+      "fromCardinality": "many",
+      "toCardinality": "one",
+      "label": "",
+      "fromTable": "report",
+      "fromColumn": "student_id",
+      "toTable": "semester_profile",
+      "toColumn": "id"
+    },
+    {
+      "id": "relation-examining_board-student_id-semester_profile-id-12",
+      "fromSide": "east",
+      "toSide": "west",
+      "route": "orthogonal",
+      "viaPoints": [
+        {
+          "x": 766,
+          "y": 455.3
+        },
+        {
+          "x": 804,
+          "y": 455.3
+        },
+        {
+          "x": 804,
+          "y": 748
+        }
+      ],
+      "color": "#94a3b8",
+      "usesTableLineColor": true,
+      "opacity": 0.9,
+      "strokeWidth": 4,
+      "style": "solid",
+      "fromCardinality": "many",
+      "toCardinality": "one",
+      "label": "",
+      "fromTable": "examining_board",
+      "fromColumn": "student_id",
+      "toTable": "semester_profile",
+      "toColumn": "id"
+    },
+    {
+      "id": "relation-examining_board_member-examining_board_id-examining_board-id-13",
+      "fromSide": "east",
+      "toSide": "west",
+      "route": "orthogonal",
+      "viaPoints": [
+        {
+          "x": 370,
+          "y": 92
+        },
+        {
+          "x": 460,
+          "y": 92
+        },
+        {
+          "x": 460,
+          "y": 343.3
+        }
+      ],
+      "color": "#94a3b8",
+      "usesTableLineColor": true,
+      "opacity": 0.9,
+      "strokeWidth": 4,
+      "style": "solid",
+      "fromCardinality": "many",
+      "toCardinality": "one",
+      "label": "",
+      "fromTable": "examining_board_member",
+      "fromColumn": "examining_board_id",
+      "toTable": "examining_board",
+      "toColumn": "id"
+    },
+    {
+      "id": "relation-examining_board_member-teacher_id-ages_user-id-14",
+      "fromSide": "east",
+      "toSide": "west",
+      "route": "orthogonal",
+      "viaPoints": [
+        {
+          "x": 370,
+          "y": 120
+        },
+        {
+          "x": 370,
+          "y": 35.5
+        },
+        {
+          "x": 2080,
+          "y": 35.5
+        },
+        {
+          "x": 2080,
+          "y": 340
+        }
+      ],
+      "color": "#94a3b8",
+      "usesTableLineColor": true,
+      "opacity": 0.9,
+      "strokeWidth": 4,
+      "style": "solid",
+      "fromCardinality": "many",
+      "toCardinality": "one",
+      "label": "",
+      "fromTable": "examining_board_member",
+      "fromColumn": "teacher_id",
+      "toTable": "ages_user",
+      "toColumn": "id"
+    },
+    {
+      "id": "relation-attendance-lesson_id-lesson-id-15",
+      "fromSide": "east",
+      "toSide": "west",
+      "route": "orthogonal",
+      "viaPoints": [
+        {
+          "x": 802,
+          "y": 171.7
+        },
+        {
+          "x": 919,
+          "y": 171.7
+        },
+        {
+          "x": 919,
+          "y": 123.3
+        }
+      ],
+      "color": "#94a3b8",
+      "usesTableLineColor": true,
+      "opacity": 0.9,
+      "strokeWidth": 4,
+      "style": "solid",
+      "fromCardinality": "many",
+      "toCardinality": "one",
+      "label": "",
+      "fromTable": "attendance",
+      "fromColumn": "lesson_id",
+      "toTable": "lesson",
+      "toColumn": "id"
+    },
+    {
+      "id": "relation-attendance-student_id-semester_profile-id-16",
+      "fromSide": "east",
+      "toSide": "west",
+      "route": "orthogonal",
+      "viaPoints": [
+        {
+          "x": 802,
+          "y": 199.7
+        },
+        {
+          "x": 804,
+          "y": 199.7
+        },
+        {
+          "x": 804,
+          "y": 748
+        }
+      ],
+      "color": "#94a3b8",
+      "usesTableLineColor": true,
+      "opacity": 0.9,
+      "strokeWidth": 4,
+      "style": "solid",
+      "fromCardinality": "many",
+      "toCardinality": "one",
+      "label": "",
+      "fromTable": "attendance",
+      "fromColumn": "student_id",
+      "toTable": "semester_profile",
+      "toColumn": "id"
+    },
+    {
+      "id": "relation-sprint_report-report_id-report-id-17",
+      "fromSide": "east",
+      "toSide": "west",
+      "route": "orthogonal",
+      "viaPoints": [
+        {
+          "x": 238,
+          "y": 1164
+        },
+        {
+          "x": 240,
+          "y": 1164
+        },
+        {
+          "x": 240,
+          "y": 1112
+        }
+      ],
+      "color": "#94a3b8",
+      "usesTableLineColor": true,
+      "opacity": 0.9,
+      "strokeWidth": 4,
+      "style": "solid",
+      "fromCardinality": "many",
+      "toCardinality": "one",
+      "label": "",
+      "fromTable": "sprint_report",
+      "fromColumn": "report_id",
+      "toTable": "report",
+      "toColumn": "id"
+    },
+    {
+      "id": "relation-hours_report-report_id-report-id-18",
+      "fromSide": "east",
+      "toSide": "west",
+      "route": "orthogonal",
+      "viaPoints": [
+        {
+          "x": 86,
+          "y": 744
+        },
+        {
+          "x": 240,
+          "y": 744
+        },
+        {
+          "x": 240,
+          "y": 1112
+        }
+      ],
+      "color": "#94a3b8",
+      "usesTableLineColor": true,
+      "opacity": 0.9,
+      "strokeWidth": 4,
+      "style": "solid",
+      "fromCardinality": "many",
+      "toCardinality": "one",
+      "label": "",
+      "fromTable": "hours_report",
+      "fromColumn": "report_id",
+      "toTable": "report",
+      "toColumn": "id"
+    }
+  ],
+  "groups": []
+}

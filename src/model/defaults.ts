@@ -12,6 +12,9 @@ export const GROUP_LABEL_DEFAULT_Y = 24;
 export const DIAGRAM_DEFAULT_GRID_SIZE = 4;
 export const DIAGRAM_MIN_GRID_SIZE = 2;
 export const DIAGRAM_MAX_GRID_SIZE = 128;
+export const DIAGRAM_DEFAULT_ROUTE_MARGIN = 28;
+export const DIAGRAM_MIN_ROUTE_MARGIN = 4;
+export const DIAGRAM_MAX_ROUTE_MARGIN = 160;
 
 export function getTableMinHeight(columnCount: number): number {
   return TABLE_HEADER_HEIGHT + columnCount * TABLE_ROW_HEIGHT;
@@ -21,6 +24,12 @@ export function normalizeGridSize(value: unknown, fallback = DIAGRAM_DEFAULT_GRI
   const next = Number(value);
   if (!Number.isFinite(next)) return fallback;
   return Math.min(DIAGRAM_MAX_GRID_SIZE, Math.max(DIAGRAM_MIN_GRID_SIZE, Math.round(next)));
+}
+
+export function normalizeRouteMargin(value: unknown, fallback = DIAGRAM_DEFAULT_ROUTE_MARGIN): number {
+  const next = Number(value);
+  if (!Number.isFinite(next)) return fallback;
+  return Math.min(DIAGRAM_MAX_ROUTE_MARGIN, Math.max(DIAGRAM_MIN_ROUTE_MARGIN, Math.round(next)));
 }
 
 export const defaultTableVisual: TableVisual = {
@@ -68,6 +77,7 @@ export const defaultDiagramVisual: DiagramVisual = {
   backgroundColor: "#0f172a",
   gridColor: "#1f2a3a",
   gridSize: DIAGRAM_DEFAULT_GRID_SIZE,
+  tableRouteMargin: DIAGRAM_DEFAULT_ROUTE_MARGIN,
   defaultTable: { ...defaultTableVisual },
   badges: {
     primaryKey: { ...defaultBadgeVisuals.primaryKey },
