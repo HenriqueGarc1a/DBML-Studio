@@ -673,6 +673,7 @@ function RelationProperties({ controller, relationId }: { controller: DiagramCon
         <strong>{relationTitle(relation, tableMap)}</strong>
         <span>Arraste os pontos da linha para ajustar a rota.</span>
       </div>
+      <RelationAttachmentControls controller={controller} relation={relation} tableMap={tableMap} />
       <CollapsibleGroup id="relation.general" title="Geral">
         <TextField label="Rótulo" value={relation.label} onChange={(label) => controller.updateRelation(relation.id, { label })} />
         <CheckboxField
@@ -694,7 +695,8 @@ function RelationProperties({ controller, relationId }: { controller: DiagramCon
       <CollapsibleGroup id="relation.route" title="Rota" defaultOpen={false}>
         <div className="relation-point-status">
           Arraste qualquer ponto livremente. Os pontos entre trechos criam novas âncoras; os pontos das curvas
-          movem âncoras existentes. Novos pontos aparecem automaticamente conforme você cria dobras.
+          movem âncoras existentes. Novos pontos aparecem automaticamente conforme você cria dobras. Perto da
+          saída de uma tabela, o ponto encaixa na altura exata do campo conectado antes de considerar o grid.
         </div>
         <SelectField<LineStyle>
           label="Estilo"
@@ -716,20 +718,6 @@ function RelationProperties({ controller, relationId }: { controller: DiagramCon
           options={["one", "many"]}
           labels={{ many: "N", one: "1" }}
           onChange={(toCardinality) => controller.updateRelation(relation.id, { toCardinality })}
-        />
-        <SelectField<Direction>
-          label="Origem"
-          value={relation.fromSide === "west" ? "west" : "east"}
-          options={["west", "east"]}
-          labels={{ east: "Direita", west: "Esquerda" }}
-          onChange={(fromSide) => controller.updateRelation(relation.id, { fromSide })}
-        />
-        <SelectField<Direction>
-          label="Destino"
-          value={relation.toSide === "west" ? "west" : "east"}
-          options={["west", "east"]}
-          labels={{ east: "Direita", west: "Esquerda" }}
-          onChange={(toSide) => controller.updateRelation(relation.id, { toSide })}
         />
         <div className="button-row">
           <button type="button" className="secondary-button" onClick={() => controller.tidyRelation(relation.id)}>
@@ -763,6 +751,74 @@ function RelationProperties({ controller, relationId }: { controller: DiagramCon
         </div>
       </CollapsibleGroup>
     </section>
+  );
+}
+
+function RelationAttachmentControls({
+  controller,
+  relation,
+  tableMap,
+}: {
+  controller: DiagramController;
+  relation: RelationModel;
+  tableMap: Map<string, TableModel>;
+}) {
+  const fromLabel = `${tableMap.get(relation.fromTable)?.name ?? relation.fromTable}.${relation.fromColumn}`;
+  const toLabel = `${tableMap.get(relation.toTable)?.name ?? relation.toTable}.${relation.toColumn}`;
+
+  return (
+    <CollapsibleGroup id="relation.attachments" title="Encaixe nas tabelas">
+      <div className="relation-side-mode">
+        <span className={relation.sideMode === "manual" ? "is-manual" : "is-auto"}>
+          {relation.sideMode === "manual" ? "Lados fixados manualmente" : "Escolha automática"}
+        </span>
+        <button type="button" className="secondary-button" onClick={() => controller.tidyRelation(relation.id)}>
+          <Route size={14} />
+          Automático
+        </button>
+      </div>
+      <RelationSideRow
+        label={`Origem · ${fromLabel}`}
+        side={relation.fromSide}
+        onChange={(fromSide) => controller.updateRelation(relation.id, { fromSide, sideMode: "manual" })}
+      />
+      <RelationSideRow
+        label={`Destino · ${toLabel}`}
+        side={relation.toSide}
+        onChange={(toSide) => controller.updateRelation(relation.id, { toSide, sideMode: "manual" })}
+      />
+    </CollapsibleGroup>
+  );
+}
+
+function RelationSideRow({ label, side, onChange }: {
+  label: string;
+  side: Direction;
+  onChange(side: "west" | "east"): void;
+}) {
+  const normalizedSide = side === "west" ? "west" : "east";
+  return (
+    <div className="relation-side-row">
+      <span title={label}>{label}</span>
+      <div className="relation-side-buttons" role="group" aria-label={label}>
+        <button
+          type="button"
+          className={normalizedSide === "west" ? "is-active" : ""}
+          aria-pressed={normalizedSide === "west"}
+          onClick={() => onChange("west")}
+        >
+          ← Esquerda
+        </button>
+        <button
+          type="button"
+          className={normalizedSide === "east" ? "is-active" : ""}
+          aria-pressed={normalizedSide === "east"}
+          onClick={() => onChange("east")}
+        >
+          Direita →
+        </button>
+      </div>
+    </div>
   );
 }
 

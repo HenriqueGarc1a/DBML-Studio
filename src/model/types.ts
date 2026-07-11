@@ -105,6 +105,7 @@ export interface RelationModel {
   toColumn: string;
   fromSide: Direction;
   toSide: Direction;
+  sideMode?: "auto" | "manual";
   route: LineRoute;
   viaPoints: Point[];
   color: string;

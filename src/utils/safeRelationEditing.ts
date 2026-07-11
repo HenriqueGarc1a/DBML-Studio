@@ -7,6 +7,8 @@ import {
 } from "./geometry";
 import {
   inspectRelationSafety,
+  relationClearanceMargin,
+  routePointsAroundTables,
   type RelationSafetyInspection,
 } from "./relationRouting";
 
@@ -231,17 +233,56 @@ function evaluateSegmentCandidate(request: SafeSegmentEditRequest, delta: number
 }
 
 function evaluateCornerCandidate(request: SafeCornerEditRequest, position: Point): EvaluatedCandidate {
-  const viaPoints = normalizeCandidate(
+  const directViaPoints = normalizeCandidate(
     request.relation,
     request.tables,
     moveRelationCorner(request.sourcePoints, request.pointIndex, position),
   );
-  const inspection = inspectRelationSafety(
-    { ...request.relation, route: "orthogonal", viaPoints },
+  const directInspection = inspectRelationSafety(
+    { ...request.relation, route: "orthogonal", viaPoints: directViaPoints },
     request.tables,
     request.margin,
   );
-  return { viaPoints, inspection };
+  if (directInspection.valid) return { viaPoints: directViaPoints, inspection: directInspection };
+
+  const reroutedViaPoints = rerouteCornerCandidate(request, position);
+  if (!reroutedViaPoints) return { viaPoints: directViaPoints, inspection: directInspection };
+  const reroutedInspection = inspectRelationSafety(
+    { ...request.relation, route: "orthogonal", viaPoints: reroutedViaPoints },
+    request.tables,
+    request.margin,
+  );
+  return reroutedInspection.valid
+    ? { viaPoints: reroutedViaPoints, inspection: reroutedInspection }
+    : { viaPoints: directViaPoints, inspection: directInspection };
+}
+
+function rerouteCornerCandidate(request: SafeCornerEditRequest, position: Point): Point[] | undefined {
+  const start = request.sourcePoints[0];
+  const end = request.sourcePoints[request.sourcePoints.length - 1];
+  if (!start || !end) return undefined;
+  const clearance = relationClearanceMargin(request.relation, request.margin);
+  const fromSide = request.relation.fromSide === "west" ? "west" : "east";
+  const toSide = request.relation.toSide === "west" ? "west" : "east";
+  const startExit = { x: start.x + (fromSide === "east" ? clearance : -clearance), y: start.y };
+  const endExit = { x: end.x + (toSide === "east" ? clearance : -clearance), y: end.y };
+  const moved = request.sourcePoints.map((point, index) => index === request.pointIndex ? position : point);
+  const internal = moved.slice(1, -1).filter((point, index) => {
+    const sourceIndex = index + 1;
+    return sourceIndex === request.pointIndex || !pointInsideAnyTableMargin(point, request.tables, clearance);
+  });
+  const routed = routePointsAroundTables([startExit, ...internal, endExit], request.tables, clearance);
+  if (!routed) return undefined;
+  return normalizeCandidate(request.relation, request.tables, [startExit, ...routed.slice(1, -1), endExit]);
+}
+
+function pointInsideAnyTableMargin(point: Point, tables: TableModel[], padding: number): boolean {
+  return tables.some((table) =>
+    point.x > table.x - padding &&
+    point.x < table.x + table.width + padding &&
+    point.y > table.y - padding &&
+    point.y < table.y + table.height + padding,
+  );
 }
 
 function projectFromPreviousSafeCorner(

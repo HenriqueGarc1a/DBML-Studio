@@ -9,6 +9,7 @@ export interface DiagramController {
   undo(): void; redo(): void; beginHistoryBatch(): void; endHistoryBatch(): void; setDiagramName(value: string): void;
   renameSavedDiagram(id: string, value: string): Promise<boolean>; deleteDiagram(id: string): Promise<boolean>;
   createDiagram(): Promise<string>; createDiagramFromSql(sql: string): Promise<string>; openDiagram(id: string): Promise<void>;
+  saveWiki(id: string, markdown: string): Promise<boolean>;
   applyAutoLayout(): Promise<DiagramModel>; saveLayoutToEditor(previewDataUrl?: string): Promise<string>;
   updateDiagramVisual(patch: Partial<DiagramModel["visual"]>): void;
   addTable(): void; updateTable(id: string, patch: Partial<TableModel>): void; moveTable(id: string, dx: number, dy: number): void;

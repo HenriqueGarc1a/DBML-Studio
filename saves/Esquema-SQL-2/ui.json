@@ -1,7 +1,7 @@
 {
   "version": 1,
   "visual": {
-    "backgroundColor": "#4176d2",
+    "backgroundColor": "#000000",
     "gridColor": "#67f21c",
     "gridSize": 20,
     "tableRouteMargin": 28,
@@ -174,8 +174,8 @@
     {
       "id": "schedule",
       "name": "schedule",
-      "x": 1720,
-      "y": 380,
+      "x": 1740,
+      "y": 400,
       "width": 380,
       "height": 206,
       "visual": {
@@ -188,7 +188,7 @@
       },
       "usesDefaultStyle": false,
       "usesGroupStyle": true,
-      "layoutSource": "comment"
+      "layoutSource": "manual"
     },
     {
       "id": "technology",
@@ -351,15 +351,15 @@
       "route": "orthogonal",
       "viaPoints": [
         {
-          "x": 2688,
+          "x": 2691,
           "y": 792
         },
         {
-          "x": 2792,
+          "x": 2789,
           "y": 792
         },
         {
-          "x": 2792,
+          "x": 2789,
           "y": 820
         }
       ],
@@ -383,15 +383,15 @@
       "route": "orthogonal",
       "viaPoints": [
         {
-          "x": 3272,
+          "x": 3269,
           "y": 792
         },
         {
-          "x": 3228,
+          "x": 3231,
           "y": 792
         },
         {
-          "x": 3228,
+          "x": 3231,
           "y": 848
         }
       ],
@@ -415,15 +415,15 @@
       "route": "orthogonal",
       "viaPoints": [
         {
-          "x": 2688,
+          "x": 2691,
           "y": 792
         },
         {
-          "x": 2792,
+          "x": 2789,
           "y": 792
         },
         {
-          "x": 2792,
+          "x": 2789,
           "y": 544
         }
       ],
@@ -447,11 +447,11 @@
       "route": "orthogonal",
       "viaPoints": [
         {
-          "x": 2688,
+          "x": 2691,
           "y": 792
         },
         {
-          "x": 2688,
+          "x": 2691,
           "y": 544
         }
       ],
@@ -475,15 +475,15 @@
       "route": "orthogonal",
       "viaPoints": [
         {
-          "x": 2792,
+          "x": 2789,
           "y": 792
         },
         {
-          "x": 2688,
+          "x": 2691,
           "y": 792
         },
         {
-          "x": 2688,
+          "x": 2691,
           "y": 600
         }
       ],
@@ -507,15 +507,15 @@
       "route": "orthogonal",
       "viaPoints": [
         {
-          "x": 2792,
+          "x": 2789,
           "y": 432
         },
         {
-          "x": 2688,
+          "x": 2691,
           "y": 432
         },
         {
-          "x": 2688,
+          "x": 2691,
           "y": 572
         }
       ],
@@ -539,15 +539,15 @@
       "route": "orthogonal",
       "viaPoints": [
         {
-          "x": 3228,
+          "x": 3231,
           "y": 432
         },
         {
-          "x": 3272,
+          "x": 3269,
           "y": 432
         },
         {
-          "x": 3272,
+          "x": 3269,
           "y": 488
         }
       ],
@@ -571,15 +571,15 @@
       "route": "orthogonal",
       "viaPoints": [
         {
-          "x": 2252,
+          "x": 2249,
           "y": 792
         },
         {
-          "x": 2128,
+          "x": 2131,
           "y": 792
         },
         {
-          "x": 2128,
+          "x": 2131,
           "y": 820
         }
       ],
@@ -603,16 +603,16 @@
       "route": "orthogonal",
       "viaPoints": [
         {
-          "x": 2252,
+          "x": 2249,
           "y": 792
         },
         {
-          "x": 2128,
+          "x": 2151,
           "y": 792
         },
         {
-          "x": 2128,
-          "y": 460
+          "x": 2151,
+          "y": 480
         }
       ],
       "color": "#94a3b8",
@@ -635,15 +635,15 @@
       "route": "orthogonal",
       "viaPoints": [
         {
-          "x": 3708,
+          "x": 3711,
           "y": 792
         },
         {
-          "x": 3752,
+          "x": 3749,
           "y": 792
         },
         {
-          "x": 3752,
+          "x": 3749,
           "y": 820
         }
       ],
@@ -667,11 +667,11 @@
       "route": "orthogonal",
       "viaPoints": [
         {
-          "x": 4188,
+          "x": 4191,
           "y": 972
         },
         {
-          "x": 4188,
+          "x": 4191,
           "y": 848
         }
       ],
@@ -695,15 +695,15 @@
       "route": "orthogonal",
       "viaPoints": [
         {
-          "x": 2688,
+          "x": 2691,
           "y": 432
         },
         {
-          "x": 2792,
+          "x": 2789,
           "y": 432
         },
         {
-          "x": 2792,
+          "x": 2789,
           "y": -20
         }
       ],
@@ -727,15 +727,15 @@
       "route": "orthogonal",
       "viaPoints": [
         {
-          "x": 2688,
+          "x": 2691,
           "y": 432
         },
         {
-          "x": 2688,
+          "x": 2691,
           "y": 84
         },
         {
-          "x": 2668,
+          "x": 2671,
           "y": 84
         }
       ],
@@ -750,7 +750,8 @@
       "fromTable": "semester_profile",
       "fromColumn": "id",
       "toTable": "examining_board",
-      "toColumn": "student_id"
+      "toColumn": "student_id",
+      "sideMode": "manual"
     },
     {
       "id": "relation-examining_board-id-examining_board_member-examining_board_id-13",
@@ -759,15 +760,15 @@
       "route": "orthogonal",
       "viaPoints": [
         {
-          "x": 2232,
+          "x": 2229,
           "y": -28
         },
         {
-          "x": 2148,
+          "x": 2151,
           "y": -28
         },
         {
-          "x": 2148,
+          "x": 2151,
           "y": -20
         }
       ],
@@ -787,19 +788,23 @@
     {
       "id": "relation-ages_user-id-examining_board_member-teacher_id-14",
       "fromSide": "west",
-      "toSide": "east",
+      "toSide": "west",
       "route": "orthogonal",
       "viaPoints": [
         {
-          "x": 2252,
+          "x": 2249,
           "y": 792
         },
         {
-          "x": 2148,
-          "y": 792
+          "x": 2249,
+          "y": 129
         },
         {
-          "x": 2148,
+          "x": 1709,
+          "y": 129
+        },
+        {
+          "x": 1709,
           "y": 8
         }
       ],
@@ -814,7 +819,8 @@
       "fromTable": "ages_user",
       "fromColumn": "id",
       "toTable": "examining_board_member",
-      "toColumn": "teacher_id"
+      "toColumn": "teacher_id",
+      "sideMode": "manual"
     },
     {
       "id": "relation-lesson-id-attendance-lesson_id-15",
@@ -823,15 +829,15 @@
       "route": "orthogonal",
       "viaPoints": [
         {
-          "x": 3708,
+          "x": 3711,
           "y": 432
         },
         {
-          "x": 3752,
+          "x": 3749,
           "y": 432
         },
         {
-          "x": 3752,
+          "x": 3749,
           "y": 460
         }
       ],
@@ -855,19 +861,19 @@
       "route": "orthogonal",
       "viaPoints": [
         {
-          "x": 2688,
+          "x": 2691,
           "y": 432
         },
         {
-          "x": 2688,
-          "y": 352
+          "x": 2691,
+          "y": 349
         },
         {
-          "x": 3752,
-          "y": 352
+          "x": 3749,
+          "y": 349
         },
         {
-          "x": 3752,
+          "x": 3749,
           "y": 488
         }
       ],
@@ -891,15 +897,15 @@
       "route": "orthogonal",
       "viaPoints": [
         {
-          "x": 3228,
+          "x": 3231,
           "y": -48
         },
         {
-          "x": 3228,
+          "x": 3231,
           "y": 148
         },
         {
-          "x": 3752,
+          "x": 3749,
           "y": 148
         }
       ],
@@ -923,15 +929,15 @@
       "route": "orthogonal",
       "viaPoints": [
         {
-          "x": 3228,
+          "x": 3231,
           "y": -48
         },
         {
-          "x": 3292,
+          "x": 3289,
           "y": -48
         },
         {
-          "x": 3292,
+          "x": 3289,
           "y": 100
         }
       ],

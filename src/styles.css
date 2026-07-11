@@ -170,6 +170,50 @@ button.is-toggle-active {
   padding: 0;
 }
 
+.project-topbar {
+  justify-content: flex-start;
+  gap: 12px;
+}
+
+.project-topbar .project-brand {
+  min-width: 132px;
+}
+
+.project-topbar .toolbar {
+  margin-left: auto;
+}
+
+.project-tabs {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 3px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--input-bg);
+}
+
+.project-tab {
+  min-height: 28px;
+  padding: 0 10px;
+  border: 0;
+  color: var(--muted);
+  background: transparent;
+  font-size: 12px;
+}
+
+.project-tab:hover {
+  border: 0;
+  color: var(--text);
+}
+
+.project-tab.is-active {
+  color: var(--teal-dark);
+  background: var(--active-bg);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--teal) 30%, transparent);
+}
+
 .toolbar .menu-back-button,
 .topbar > .menu-back-button {
   flex: 0 0 auto;
@@ -504,6 +548,23 @@ button.is-toggle-active {
   opacity: 1;
 }
 
+.diagram-card-wiki {
+  position: absolute;
+  right: 16px;
+  bottom: 15px;
+  z-index: 2;
+  min-height: 28px;
+  padding: 0 9px;
+  border-color: color-mix(in srgb, var(--teal) 28%, var(--line));
+  color: var(--teal-dark);
+  background: color-mix(in srgb, var(--active-bg) 80%, var(--panel));
+  font-size: 11px;
+}
+
+.diagram-card-copy {
+  padding-right: 70px;
+}
+
 .diagram-edit-modal {
   width: min(460px, 100%);
   height: auto;
@@ -735,14 +796,6 @@ button.is-toggle-active {
   cursor: move;
 }
 
-.relation-segment-highlight {
-  stroke: #2dd4bf;
-  stroke-width: 8;
-  stroke-linecap: round;
-  opacity: 0.28;
-  filter: drop-shadow(0 0 5px rgb(45 212 191 / 45%));
-}
-
 .segment-handle-hitbox {
   fill: transparent;
   stroke: transparent;
@@ -770,6 +823,38 @@ button.is-toggle-active {
   vector-effect: non-scaling-stroke;
 }
 
+.relation-endpoint-handle {
+  cursor: ew-resize;
+}
+
+.relation-endpoint-hitbox {
+  fill: transparent;
+  stroke: transparent;
+  stroke-width: 24;
+  vector-effect: non-scaling-stroke;
+}
+
+.relation-endpoint-control {
+  fill: color-mix(in srgb, var(--canvas-bg) 62%, #22d3ee);
+  stroke: #67e8f9;
+  stroke-width: 2;
+  vector-effect: non-scaling-stroke;
+  transition: fill 120ms ease, stroke-width 120ms ease;
+}
+
+.relation-endpoint-stem {
+  stroke: #67e8f9;
+  stroke-width: 2;
+  stroke-linecap: round;
+  vector-effect: non-scaling-stroke;
+  pointer-events: none;
+}
+
+.relation-endpoint-handle:hover .relation-endpoint-control {
+  fill: color-mix(in srgb, var(--canvas-bg) 38%, #22d3ee);
+  stroke-width: 2.8;
+}
+
 
 .relation-path.is-editing .relation-stroke {
   filter: drop-shadow(0 0 4px rgb(45 212 191 / 46%));
@@ -777,6 +862,21 @@ button.is-toggle-active {
 
 .relation-path.is-constrained .relation-stroke {
   stroke: #f59e0b;
+}
+
+.relation-snap-guide {
+  stroke: #22d3ee;
+  stroke-width: 1.5;
+  stroke-dasharray: 5 4;
+  vector-effect: non-scaling-stroke;
+  filter: drop-shadow(0 0 4px rgb(34 211 238 / 50%));
+}
+
+.relation-snap-point {
+  fill: color-mix(in srgb, var(--canvas-bg) 54%, #22d3ee);
+  stroke: #67e8f9;
+  stroke-width: 2;
+  vector-effect: non-scaling-stroke;
 }
 
 .table-route-obstacle-indicator {
@@ -1122,6 +1222,81 @@ button.is-toggle-active {
 .relation-point-status.is-empty {
   border-color: color-mix(in srgb, var(--amber) 32%, var(--line));
   background: color-mix(in srgb, var(--amber) 8%, var(--panel));
+}
+
+.relation-side-mode {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.relation-side-mode > span {
+  min-width: 0;
+  padding: 4px 7px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  color: var(--muted);
+  background: var(--panel-soft);
+  font-size: 10px;
+  font-weight: 700;
+}
+
+.relation-side-mode > span.is-manual {
+  border-color: color-mix(in srgb, var(--teal) 45%, var(--line));
+  color: #5eead4;
+  background: color-mix(in srgb, var(--teal) 10%, var(--panel));
+}
+
+.relation-side-mode .secondary-button {
+  min-height: 28px;
+  padding: 4px 8px;
+  font-size: 11px;
+}
+
+.relation-side-row {
+  display: grid;
+  gap: 6px;
+  margin-bottom: 11px;
+}
+
+.relation-side-row > span {
+  overflow: hidden;
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 700;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.relation-side-buttons {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 5px;
+}
+
+.relation-side-buttons button {
+  min-width: 0;
+  min-height: 30px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 4px 7px;
+  color: var(--muted);
+  background: var(--input-bg);
+  font-size: 11px;
+}
+
+.relation-side-buttons button:hover {
+  border-color: color-mix(in srgb, var(--teal) 45%, var(--line));
+  color: var(--text);
+}
+
+.relation-side-buttons button.is-active {
+  border-color: var(--teal);
+  color: #99f6e4;
+  background: color-mix(in srgb, var(--teal) 14%, var(--input-bg));
+  box-shadow: inset 0 0 0 1px rgb(45 212 191 / 18%);
 }
 
 .field-row {

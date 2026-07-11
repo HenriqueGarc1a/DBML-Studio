@@ -78,6 +78,32 @@ export function organizeRelationRoute(
   };
 }
 
+export function organizeRelationRouteOnFixedSides(
+  relation: RelationModel,
+  fromTable: TableModel,
+  toTable: TableModel,
+  tables: TableModel[],
+  fromSide: Direction,
+  toSide: Direction,
+  margin = TABLE_ROUTE_MARGIN,
+): OrganizedRelationRoute {
+  const normalizedFromSide = normalizeRelationSide(fromSide);
+  const normalizedToSide = normalizeRelationSide(toSide);
+  return {
+    fromSide: normalizedFromSide,
+    toSide: normalizedToSide,
+    viaPoints: routeRelationAroundTables(
+      relation,
+      fromTable,
+      toTable,
+      tables,
+      normalizedFromSide,
+      normalizedToSide,
+      relationClearanceMargin(relation, margin),
+    ),
+  };
+}
+
 function rankSidePairs(
   sidePairs: Array<[Direction, Direction]>,
   relation: RelationModel,
@@ -265,6 +291,31 @@ export function routeRelationAroundTables(
   const route = pickBestRoute(startExit, endExit, obstacles);
 
   return simplifyPoints([startExit, ...route.slice(1, -1), endExit]);
+}
+
+/**
+ * Connects ordered user control points while routing each interval around the
+ * expanded table obstacles. Returns undefined while any control point itself
+ * is inside a protected table area.
+ */
+export function routePointsAroundTables(
+  points: Point[],
+  tables: TableModel[],
+  padding: number,
+): Point[] | undefined {
+  if (points.length < 2) return points;
+  const obstacles = tables.map((table) => tableToObstacle(table, padding));
+  if (points.some((point) => isInsideObstacle(point, obstacles))) return undefined;
+
+  const routed: Point[] = [points[0]];
+  for (let index = 0; index < points.length - 1; index += 1) {
+    const part = pickBestRoute(points[index], points[index + 1], obstacles);
+    if (!isClearPath(part, obstacles)) return undefined;
+    routed.push(...part.slice(1));
+  }
+
+  const simplified = simplifyPoints(routed);
+  return isClearPath(simplified, obstacles) ? simplified : undefined;
 }
 
 function pickBestRoute(start: Point, end: Point, obstacles: Obstacle[]): Point[] {

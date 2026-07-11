@@ -46,14 +46,20 @@ try {
   await waitForExpression("Boolean(document.querySelector('[data-testid=diagram-canvas]') && document.querySelector('[data-testid=relation-segment]'))", 15_000);
 
   await testSelectionAndHover();
+  await testEndpointSideDrag();
   await testFreeMidpointAndSingleUndo();
   await testCornerPointMovement();
+  await testTableExitAlignment();
+  await testCrossingThroughObstacle();
   await testObstacleFeedback();
 
   console.log("✓ Chrome real: clique seleciona sem mover");
-  console.log("✓ Chrome real: hover destaca somente o trecho");
+  console.log("✓ Chrome real: hover não cria uma linha fantasma");
+  console.log("✓ Chrome real: extremidade troca o lado de encaixe ao atravessar a tabela");
   console.log("✓ Chrome real: ponto intermediário cria uma âncora livre e aplica grid apenas ao soltar");
   console.log("✓ Chrome real: ponto de curva acompanha o cursor em dois eixos");
+  console.log("✓ Chrome real: ponto dá snap na altura exata da saída da tabela");
+  console.log("✓ Chrome real: ponto atravessa a tabela com segurança e é liberado no outro lado válido");
   console.log("✓ Chrome real: obstáculo mostra feedback e mantém a rota segura");
   console.log("✓ Chrome real: um único Ctrl+Z restaura o gesto completo");
 } catch (error) {
@@ -78,8 +84,7 @@ async function testSelectionAndHover() {
   const client = await svgToClient(middle);
 
   await mouse("mouseMoved", client);
-  await waitForExpression("Boolean(document.querySelector('[data-testid=relation-segment-highlight]'))");
-  assert(await count("[data-testid=relation-segment-highlight]") === 1, "hover deve destacar exatamente um trecho");
+  assert(await count("[data-testid=relation-segment-highlight]") === 0, "hover criou uma linha fantasma");
 
   await mouse("mousePressed", client, { button: "left", buttons: 1, clickCount: 1 });
   await mouse("mouseReleased", client, { button: "left", buttons: 0, clickCount: 1 });
@@ -121,6 +126,22 @@ async function testFreeMidpointAndSingleUndo() {
   assert(samePoints(initial, await routePoints()), "um Ctrl+Z não restaurou toda a edição");
 }
 
+async function testEndpointSideDrag() {
+  const initial = await routePoints();
+  assert(await count('[data-testid=relation-endpoint-handle][data-endpoint="from"]') === 1, "ponto de encaixe da origem não apareceu");
+  const start = await svgToClient(initial[0]);
+  const target = await svgToClient({ x: 70, y: initial[0].y });
+
+  await mouse("mousePressed", start, { button: "left", buttons: 1, clickCount: 1 });
+  await dragMouse(start, target, 8);
+  const preview = await routePoints();
+  assert(Math.abs(preview[0].x - 40) < 0.1, "arrastar através da tabela não mudou o encaixe para a esquerda");
+  await mouse("mouseReleased", target, { button: "left", buttons: 0, clickCount: 1 });
+  await waitForExpression("document.querySelector('[data-testid=relation-endpoint-handle][data-endpoint=from]')?.dataset.side === 'west'");
+  await keyChord("z", true, false);
+  await waitUntil(async () => samePoints(initial, await routePoints()));
+}
+
 async function testCornerPointMovement() {
   const initial = await routePoints();
   const pointIndex = 2;
@@ -155,6 +176,41 @@ async function testObstacleFeedback() {
   const preview = await routePoints();
   assert(!routeCrossesExpandedTable(preview, { left: 319, top: 9, right: 561, bottom: 291 }), "a prévia atravessou a margem protegida");
   await mouse("mouseReleased", blockedTarget, { button: "left", buttons: 0, clickCount: 1 });
+  await keyChord("z", true, false);
+  await waitUntil(async () => samePoints(initial, await routePoints()));
+}
+
+async function testTableExitAlignment() {
+  const initial = await routePoints();
+  const midpointPoint = midpoint(initial[0], initial[1]);
+  const start = await svgToClient(midpointPoint);
+  const target = await svgToClient({ x: midpointPoint.x + 10, y: 157 });
+
+  await mouse("mousePressed", start, { button: "left", buttons: 1, clickCount: 1 });
+  await dragMouse(start, target, 5);
+  await waitForExpression("Boolean(document.querySelector('[data-testid=relation-snap-guides]'))");
+  const snapY = await evaluate("Number(document.querySelector('.relation-snap-point')?.getAttribute('cy'))");
+  assert(Math.abs(snapY - 152) < 0.1, "o ponto não alinhou à saída do campo conectado");
+  await mouse("mouseReleased", target, { button: "left", buttons: 0, clickCount: 1 });
+  await keyChord("z", true, false);
+  await waitUntil(async () => samePoints(initial, await routePoints()));
+}
+
+async function testCrossingThroughObstacle() {
+  const initial = await routePoints();
+  const pointIndex = 2;
+  const start = await svgToClient(initial[pointIndex]);
+  const desired = { x: 590, y: 80 };
+  const target = await svgToClient(desired);
+
+  await mouse("mousePressed", start, { button: "left", buttons: 1, clickCount: 1 });
+  await dragMouse(start, target, 12);
+  await waitForExpression("document.querySelector('.relation-path')?.dataset.dragState === 'dragging'");
+  assert(await evaluate("document.querySelector('.relation-path')?.dataset.blocked === 'false'"), "a linha continuou presa depois que o cursor saiu da tabela");
+  const preview = await routePoints();
+  assert(preview.some((point) => Math.abs(point.x - desired.x) < 0.75 && Math.abs(point.y - desired.y) < 0.75), "o caminho não alcançou o ponto válido no outro lado da tabela");
+  assert(!routeCrossesExpandedTable(preview, { left: 319, top: 9, right: 561, bottom: 291 }), "o caminho recalculado atravessou a margem da tabela");
+  await mouse("mouseReleased", target, { button: "left", buttons: 0, clickCount: 1 });
   await keyChord("z", true, false);
   await waitUntil(async () => samePoints(initial, await routePoints()));
 }

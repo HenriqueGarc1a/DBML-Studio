@@ -28,9 +28,13 @@ import { exportDbml } from "../exporter/dbmlExporter";
 import { applyUiLayout, exportUiLayout } from "../exporter/uiLayoutFile";
 import { sqlToDbml } from "../importer/sqlToDbml";
 import { parseDbml } from "../parser/dbmlParser";
-import { deleteWorkspaceDbml, listWorkspaceDbml, renameWorkspaceDbml, saveWorkspaceDbml, sendWorkspaceDbmlBeacon } from "../utils/fileSave";
+import { deleteWorkspaceDbml, listWorkspaceDbml, renameWorkspaceDbml, saveWorkspaceDbml, saveWorkspaceWiki, sendWorkspaceDbmlBeacon } from "../utils/fileSave";
 import { makeId, slugify, uniqueId } from "../utils/id";
-import { organizeRelationRoute, relationKeepsTableMargin } from "../utils/relationRouting";
+import {
+  organizeRelationRoute,
+  organizeRelationRouteOnFixedSides,
+  relationKeepsTableMargin,
+} from "../utils/relationRouting";
 import { safeGetItem, safeSetItem } from "../utils/storage";
 import { nearestNonOverlappingPosition } from "../utils/tableCollision";
 import { findViaInsertionIndex } from "../utils/geometry";
@@ -271,6 +275,7 @@ export function useDiagramController(): DiagramController {
           id: `file:${file.filename}`,
           name: normalizeDiagramName(file.name),
           dbml: migrateDarkOnlyDbml(file.dbml),
+          wiki: file.wiki,
           uiLayout: file.uiLayout,
           previewDataUrl: file.previewDataUrl,
           updatedAt: file.updatedAt,
@@ -460,6 +465,17 @@ export function useDiagramController(): DiagramController {
     writeDiagramLibrary(diagramsRef.current, record.id);
     await importDbmlText(record.dbml, { resetHistory: true, uiLayout: record.uiLayout });
   }, [importDbmlText, persistCurrentDiagram]);
+
+  const saveWiki = useCallback(async (id: string, markdown: string) => {
+    const record = diagramsRef.current.find((item) => item.id === id);
+    if (!record) return false;
+
+    const nextDiagrams = diagramsRef.current.map((item) => item.id === id
+      ? { ...item, wiki: markdown }
+      : item);
+    commitDiagramLibrary(nextDiagrams, activeDiagramIdRef.current);
+    return saveWorkspaceWiki(record.filename ?? dbmlFilename(record.name), markdown);
+  }, [commitDiagramLibrary]);
 
   const createDiagram = useCallback(async () => {
     const snapshot = persistCurrentDiagram({ silent: true });
@@ -897,7 +913,18 @@ export function useDiagramController(): DiagramController {
       ...current,
       relations: current.relations.map((relation) => {
         if (relation.id !== id) return relation;
-        const candidate = { ...relation, ...patch };
+        const sideChanged = patch.fromSide !== undefined || patch.toSide !== undefined;
+        const candidate = {
+          ...relation,
+          ...patch,
+          sideMode: sideChanged ? "manual" as const : patch.sideMode ?? relation.sideMode,
+        };
+        if (patch.sideMode === "auto") {
+          return tidyRelationGeometry(candidate, current.tables, current.visual.tableRouteMargin);
+        }
+        if (sideChanged) {
+          return routeRelationOnChosenSides(candidate, current.tables, current.visual.tableRouteMargin);
+        }
         return relationKeepsTableMargin(candidate, current.tables, current.visual.tableRouteMargin)
           ? candidate
           : tidyRelationGeometry(candidate, current.tables, current.visual.tableRouteMargin);
@@ -909,7 +936,9 @@ export function useDiagramController(): DiagramController {
     updateDiagramState((current) => enforceRelationClearance({
       ...current,
       relations: current.relations.map((relation) =>
-        relation.id === id ? tidyRelationGeometry(relation, current.tables, current.visual.tableRouteMargin) : relation,
+        relation.id === id
+          ? tidyRelationGeometry({ ...relation, sideMode: "auto" }, current.tables, current.visual.tableRouteMargin)
+          : relation,
       ),
     }));
   }, [updateDiagramState]);
@@ -1152,6 +1181,7 @@ export function useDiagramController(): DiagramController {
     createDiagram,
     createDiagramFromSql,
     openDiagram,
+    saveWiki,
     applyAutoLayout,
     saveLayoutToEditor,
     updateDiagramVisual,
@@ -1276,6 +1306,10 @@ function tidyRelationGeometry(relation: RelationModel, tables: TableModel[], mar
   const toTable = tables.find((table) => table.id === relation.toTable);
   if (!fromTable || !toTable) return relation;
 
+  if (relation.sideMode === "manual") {
+    return routeRelationOnChosenSides(relation, tables, margin);
+  }
+
   const [fromSide, toSide] = inferRelationSides(fromTable, toTable);
   const route = organizeRelationRoute(relation, fromTable, toTable, tables, fromSide, toSide, margin);
 
@@ -1283,6 +1317,36 @@ function tidyRelationGeometry(relation: RelationModel, tables: TableModel[], mar
     ...relation,
     fromSide: route.fromSide,
     toSide: route.toSide,
+    route: "orthogonal",
+    viaPoints: route.viaPoints,
+  };
+}
+
+function routeRelationOnChosenSides(
+  relation: RelationModel,
+  tables: TableModel[],
+  margin = defaultDiagramVisual.tableRouteMargin,
+): RelationModel {
+  const fromTable = tables.find((table) => table.id === relation.fromTable);
+  const toTable = tables.find((table) => table.id === relation.toTable);
+  if (!fromTable || !toTable) return relation;
+  const fromSide: Direction = relation.fromSide === "west" ? "west" : "east";
+  const toSide: Direction = relation.toSide === "west" ? "west" : "east";
+  const route = organizeRelationRouteOnFixedSides(
+    relation,
+    fromTable,
+    toTable,
+    tables,
+    fromSide,
+    toSide,
+    margin,
+  );
+
+  return {
+    ...relation,
+    fromSide: route.fromSide,
+    toSide: route.toSide,
+    sideMode: "manual",
     route: "orthogonal",
     viaPoints: route.viaPoints,
   };

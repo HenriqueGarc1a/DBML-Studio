@@ -63,6 +63,12 @@ Ref: project.user_id > user.id
 describe("exporters", () => {
   it("separates schema DBML from UI layout metadata", () => {
     const diagram = parseDbml(source);
+    diagram.relations[0] = {
+      ...diagram.relations[0],
+      fromSide: "west",
+      toSide: "east",
+      sideMode: "manual",
+    };
     const dbml = exportDbml(diagram);
     const uiLayout = exportUiLayout(diagram);
 
@@ -72,7 +78,13 @@ describe("exporters", () => {
     expect(dbml).toContain("Ref: project.user_id > user.id");
     const restored = applyUiLayout(parseDbml(dbml), uiLayout);
     expect(restored.tables[0]).toMatchObject({ x: 20, usesDefaultStyle: false, usesGroupStyle: true });
-    expect(restored.relations[0]).toMatchObject({ style: "dashed", viaPoints: [{ x: 300, y: 60 }] });
+    expect(restored.relations[0]).toMatchObject({
+      style: "dashed",
+      fromSide: "west",
+      toSide: "east",
+      sideMode: "manual",
+      viaPoints: [{ x: 300, y: 60 }],
+    });
     expect(restored.groups[0].tables).toEqual(["user", "project"]);
   });
 

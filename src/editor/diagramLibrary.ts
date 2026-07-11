@@ -7,6 +7,7 @@ export interface SavedDiagram {
   id: string;
   name: string;
   dbml: string;
+  wiki?: string;
   uiLayout?: string;
   previewDataUrl?: string;
   updatedAt: number;

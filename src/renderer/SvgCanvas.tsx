@@ -20,6 +20,7 @@ import {
 } from "../utils/geometry";
 import { snapValue } from "../utils/grid";
 import { buildJumpPath } from "../utils/lineJumps";
+import type { RelationPointAlignment } from "../utils/relationPointSnap";
 import {
   fitViewBoxToAspect,
   panViewBox,
@@ -29,6 +30,7 @@ import {
 } from "../utils/viewport";
 import { GroupNode } from "./GroupNode";
 import { RelationPath } from "./RelationPath";
+import { RelationEndpointHandles } from "./RelationEndpointHandles";
 import type { ResizeHandle } from "./ResizeHandles";
 import type { DiagramCanvasController } from "./types";
 import { CanvasToolbar } from "./CanvasToolbar";
@@ -111,6 +113,11 @@ export function SvgCanvas({ controller, svgRef: externalSvgRef }: SvgCanvasProps
     [controller.diagram.tables],
   );
   const selected = controller.selected;
+  const selectedRelation = selected?.type === "relation"
+    ? controller.diagram.relations.find((relation) => relation.id === selected.id)
+    : undefined;
+  const selectedRelationFromTable = selectedRelation ? tableMap.get(selectedRelation.fromTable) : undefined;
+  const selectedRelationToTable = selectedRelation ? tableMap.get(selectedRelation.toTable) : undefined;
   const gridSize = controller.diagram.visual.gridSize;
   const paintBounds = useMemo(
     () => expandPaintBounds(unionViewBox(computedBounds, viewport), gridSize),
@@ -610,6 +617,21 @@ export function SvgCanvas({ controller, svgRef: externalSvgRef }: SvgCanvasProps
             }}
           />
         ))}
+        {selectedRelation && selectedRelationFromTable && selectedRelationToTable && !relationEditor.active && (
+          <RelationEndpointHandles
+            relation={selectedRelation}
+            fromTable={selectedRelationFromTable}
+            toTable={selectedRelationToTable}
+            onPointerDown={(event, endpoint) => relationEditor.armEndpoint(
+              event,
+              selectedRelation,
+              selectedRelationFromTable,
+              selectedRelationToTable,
+              endpoint,
+            )}
+          />
+        )}
+        {relationEditor.alignment && <RelationSnapGuides alignment={relationEditor.alignment} />}
         {relationEditor.feedback && <RelationConstraintFeedback feedback={relationEditor.feedback} />}
       </svg>
       <CanvasToolbar
@@ -629,10 +651,41 @@ export function SvgCanvas({ controller, svgRef: externalSvgRef }: SvgCanvasProps
   );
 }
 
+function RelationSnapGuides({ alignment }: { alignment: RelationPointAlignment }) {
+  return (
+    <g className="relation-snap-guides" data-testid="relation-snap-guides" pointerEvents="none">
+      {alignment.horizontal && (
+        <line
+          x1={alignment.horizontal.anchor.x}
+          y1={alignment.horizontal.anchor.y}
+          x2={alignment.point.x}
+          y2={alignment.point.y}
+          className="relation-snap-guide"
+          data-snap-axis="horizontal"
+        />
+      )}
+      {alignment.vertical && (
+        <line
+          x1={alignment.vertical.anchor.x}
+          y1={alignment.vertical.anchor.y}
+          x2={alignment.point.x}
+          y2={alignment.point.y}
+          className="relation-snap-guide"
+          data-snap-axis="vertical"
+        />
+      )}
+      <circle cx={alignment.point.x} cy={alignment.point.y} r={6.5} className="relation-snap-point" />
+    </g>
+  );
+}
+
 function RelationConstraintFeedback({ feedback }: { feedback: RelationEditFeedback }) {
+  const lines = wrapFeedbackMessage(feedback.message);
+  const lineHeight = 14;
+  const width = Math.max(190, Math.min(310, Math.max(...lines.map((line) => line.length)) * 6.2 + 20));
+  const height = lines.length * lineHeight + 12;
   const labelX = feedback.applied.x + 14;
-  const labelY = feedback.applied.y - 16;
-  const width = Math.min(330, Math.max(210, feedback.message.length * 5.7));
+  const labelY = feedback.applied.y - height - 12;
   return (
     <g className="relation-edit-feedback" data-testid="relation-edit-feedback" pointerEvents="none">
       <line
@@ -645,11 +698,31 @@ function RelationConstraintFeedback({ feedback }: { feedback: RelationEditFeedba
       <circle cx={feedback.requested.x} cy={feedback.requested.y} r={4} className="relation-requested-point" />
       <circle cx={feedback.applied.x} cy={feedback.applied.y} r={5} className="relation-applied-point" />
       <g transform={`translate(${labelX} ${labelY})`}>
-        <rect x={0} y={-17} width={width} height={27} rx={7} className="relation-feedback-bubble" />
-        <text x={9} y={1} className="relation-feedback-text">{feedback.message}</text>
+        <rect x={0} y={0} width={width} height={height} rx={7} className="relation-feedback-bubble" />
+        <text x={10} y={17} className="relation-feedback-text">
+          {lines.map((line, index) => (
+            <tspan key={`${line}-${index}`} x={10} dy={index === 0 ? 0 : lineHeight}>{line}</tspan>
+          ))}
+        </text>
       </g>
     </g>
   );
+}
+
+function wrapFeedbackMessage(message: string, maxCharacters = 42): string[] {
+  const lines: string[] = [];
+  let current = "";
+  for (const word of message.split(/\s+/)) {
+    const next = current ? `${current} ${word}` : word;
+    if (next.length <= maxCharacters || !current) {
+      current = next;
+    } else {
+      lines.push(current);
+      current = word;
+    }
+  }
+  if (current) lines.push(current);
+  return lines.length ? lines : [message];
 }
 
 function resizeTableWidthFromHandle(

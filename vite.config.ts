@@ -31,17 +31,19 @@ function dbmlFilesPlugin(configuredSavesDir?: string, configuredLegacyDir?: stri
               .map(async (folder) => {
                 const saveDir = path.join(savesDir, folder);
                 const filePath = path.join(saveDir, "diagram.dbml");
-                const [dbml, stats, uiLayout, preview] = await Promise.all([
+                const [dbml, stats, uiLayout, preview, wiki] = await Promise.all([
                   readFile(filePath, "utf8"),
                   stat(filePath),
                   readFile(path.join(saveDir, "ui.json"), "utf8").catch(() => undefined),
                   readFile(path.join(saveDir, "preview.webp")).catch(() => undefined),
+                  readFile(path.join(saveDir, "wiki.md"), "utf8").catch(() => undefined),
                 ]);
 
                 return {
                   filename: `${folder}.dbml`,
                   name: folder.replace(/-/g, " "),
                   dbml,
+                  wiki,
                   uiLayout,
                   previewDataUrl: preview ? `data:image/webp;base64,${preview.toString("base64")}` : undefined,
                   updatedAt: stats.mtimeMs,
@@ -81,6 +83,30 @@ function dbmlFilesPlugin(configuredSavesDir?: string, configuredLegacyDir?: stri
           }
           const preview = previewDataUrl?.match(/^data:image\/webp;base64,(.+)$/)?.[1];
           if (preview) await writeFile(path.join(saveDir, "preview.webp"), Buffer.from(preview, "base64"));
+          sendJson(response, 200, { filename });
+        } catch (error) {
+          sendJson(response, 500, { error: formatError(error) });
+        }
+      });
+
+      server.middlewares.use("/__dbml/wiki", async (request, response) => {
+        if (request.method !== "POST") {
+          sendJson(response, 405, { error: "Method not allowed" });
+          return;
+        }
+
+        try {
+          const body = await readJsonBody(request);
+          const filename = safeDbmlFilename(String(body.filename ?? ""));
+          const contents = typeof body.contents === "string" ? body.contents : "";
+          if (!filename) {
+            sendJson(response, 400, { error: "Invalid wiki payload" });
+            return;
+          }
+
+          const saveDir = saveDirectory(savesDir, filename);
+          await mkdir(saveDir, { recursive: true });
+          await writeFile(path.join(saveDir, "wiki.md"), contents, "utf8");
           sendJson(response, 200, { filename });
         } catch (error) {
           sendJson(response, 500, { error: formatError(error) });

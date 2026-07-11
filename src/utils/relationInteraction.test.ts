@@ -5,6 +5,7 @@ import {
   isEditableRelationSegment,
   projectPointToRelationSegment,
   relationSegmentDelta,
+  relationSideAtPointer,
   snapRelationSegmentDelta,
 } from "./relationInteraction";
 
@@ -45,5 +46,21 @@ describe("relation pointer interaction", () => {
 
   it("aligns the absolute segment coordinate to the grid only on commit", () => {
     expect(snapRelationSegmentDelta(points, 2, 19, 32)).toBe(28);
+  });
+
+  it("switches an endpoint side by dragging across the table center with a small hysteresis", () => {
+    const table = {
+      id: "table", name: "table", x: 100, y: 100, width: 200, height: 100,
+      columns: [], visual: {
+        backgroundColor: "#000", borderColor: "#000", textColor: "#fff",
+        headerColor: "#000", lineColor: "#fff", opacity: 1,
+      },
+      usesDefaultStyle: true, usesGroupStyle: false, indexes: [], layoutSource: "manual" as const,
+    };
+
+    expect(relationSideAtPointer(table, { x: 195, y: 120 }, "east")).toBe("east");
+    expect(relationSideAtPointer(table, { x: 185, y: 120 }, "east")).toBe("west");
+    expect(relationSideAtPointer(table, { x: 205, y: 120 }, "west")).toBe("west");
+    expect(relationSideAtPointer(table, { x: 215, y: 120 }, "west")).toBe("east");
   });
 });

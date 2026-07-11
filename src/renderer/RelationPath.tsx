@@ -1,5 +1,4 @@
 import type { PointerEvent } from "react";
-import { useState } from "react";
 import type { RelationModel, TableModel } from "../model/types";
 import { getRelationGeometry } from "../utils/geometry";
 import { buildJumpPath } from "../utils/lineJumps";
@@ -46,7 +45,6 @@ export function RelationPath({
   onSegmentPointPointerDown,
   onCornerPointPointerDown,
 }: RelationPathProps) {
-  const [hoveredSegment, setHoveredSegment] = useState<number>();
   const geometry = getRelationGeometry(relation, fromTable, toTable);
   const path = renderedPath ?? geometry.path;
   const dash = relation.style === "dashed" ? "9 7" : relation.style === "dotted" ? "1 7" : undefined;
@@ -100,16 +98,6 @@ export function RelationPath({
         className="relation-stroke"
         pointerEvents="none"
       />
-      {!editing && hoveredSegment !== undefined && geometry.points[hoveredSegment + 1] && (
-        <path
-          d={segmentPath(geometry.points[hoveredSegment], geometry.points[hoveredSegment + 1])}
-          fill="none"
-          className="relation-segment-highlight"
-          pointerEvents="none"
-          vectorEffect="non-scaling-stroke"
-          data-testid="relation-segment-highlight"
-        />
-      )}
       {Array.from({ length: flowArrowCount }, (_, index) => (
         <g key={`${relation.id}-flow-${index}`} className="relation-flow-arrow" style={{ color: arrowColor }}>
           <path d="M -8 -4.5 L 2 0 L -8 4.5" className="relation-flow-arrow-outline" />
@@ -152,8 +140,6 @@ export function RelationPath({
             data-segment-index={index}
             data-orientation={orientation}
             data-editable={editable ? "true" : "false"}
-            onPointerEnter={() => setHoveredSegment(index)}
-            onPointerLeave={() => setHoveredSegment((current) => current === index ? undefined : current)}
             onPointerDown={(event) => onSelectPointerDown(event, relation)}
           >
             <title>Clique para selecionar; use os pontos para ajustar a linha</title>
@@ -166,7 +152,6 @@ export function RelationPath({
             const next = geometry.points[index + 1];
             if (relationSegmentLength(geometry.points, index) < 36) return null;
             const middle = { x: (point.x + next.x) / 2, y: (point.y + next.y) / 2 };
-            const orientation = relationSegmentOrientation(geometry.points, index);
             return (
               <g
                 key={`${relation.id}-segment-${index}`}
@@ -174,8 +159,6 @@ export function RelationPath({
                 transform={`translate(${middle.x} ${middle.y})`}
                 data-testid="relation-segment-handle"
                 data-segment-index={index}
-                onPointerEnter={() => setHoveredSegment(index)}
-                onPointerLeave={() => setHoveredSegment((current) => current === index ? undefined : current)}
                 onPointerDown={(event) => onSegmentPointPointerDown(event, relation, index)}
               >
                 <title>Arraste livremente para criar um novo ponto nesta parte da linha</title>

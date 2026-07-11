@@ -1,4 +1,4 @@
-import { ArrowLeft, Boxes, ChevronLeft, ChevronRight, CircleHelp, Database, FileDown, Save } from "lucide-react";
+import { ChevronLeft, ChevronRight, CircleHelp, FileDown, Save } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { toast } from "sonner";
@@ -10,6 +10,7 @@ import { downloadText } from "../../utils/download";
 import { saveTextFile, type TextFileHandle } from "../../utils/fileSave";
 import { safeGetItem, safeSetItem } from "../../utils/storage";
 import { HelpDialog } from "../components/HelpDialog";
+import { ProjectHeader } from "../components/ProjectHeader";
 
 const DBML_COLLAPSED_STORAGE_KEY = "dbml-studio-dbml-collapsed";
 const PROPERTIES_COLLAPSED_STORAGE_KEY = "dbml-studio-properties-collapsed";
@@ -61,6 +62,11 @@ export function EditorPage({ controller }: { controller: DiagramController }) {
     await controller.saveLayoutToEditor(preview);
     navigate("/");
   };
+  const goToWiki = async () => {
+    const preview = await captureDiagramPreview(svgRef.current, controller.diagram.tables).catch(() => undefined);
+    await controller.saveLayoutToEditor(preview);
+    navigate(`/editor/${encodeURIComponent(controller.activeDiagramId)}/wiki`);
+  };
   const exportPdf = async () => {
     const { exportDiagramPdf } = await import("../../utils/pdfExport");
     await exportDiagramPdf(svgRef.current);
@@ -69,16 +75,20 @@ export function EditorPage({ controller }: { controller: DiagramController }) {
 
   return (
     <div className="app-shell">
-      <header className="topbar">
-        <button type="button" className="secondary-button menu-back-button" onClick={() => void goToMenu()}><ArrowLeft size={16} />Menu</button>
-        <div className="brand"><Boxes size={22} /><h1>DBML Studio</h1></div>
-        <div className="active-diagram-name" title={controller.diagramFilename}><Database size={15} /><span>{controller.diagramName}</span></div>
-        <div className="toolbar">
+      <ProjectHeader
+        projectName={controller.diagramName}
+        projectFilename={controller.diagramFilename}
+        activeSection="diagram"
+        onMenu={() => void goToMenu()}
+        onSectionChange={(section) => { if (section === "wiki") void goToWiki(); }}
+        actions={(
+          <>
           <button type="button" onClick={() => void save()}><Save size={16} />Salvar</button>
           <button type="button" onClick={() => void exportPdf()}><FileDown size={16} />Exportar PDF</button>
           <button type="button" onClick={() => setHelpOpen(true)}><CircleHelp size={16} />Ajuda</button>
-        </div>
-      </header>
+          </>
+        )}
+      />
       <main className={`workspace${dbmlCollapsed ? " is-dbml-collapsed" : ""}${propertiesCollapsed ? " is-properties-collapsed" : ""}`}>
         <aside className={`dbml-pane${controller.dbmlError ? " has-error" : ""}${dbmlCollapsed ? " is-collapsed" : ""}`}>
           <div className="pane-heading"><h2>{!dbmlCollapsed && "DBML"}</h2><button type="button" className="pane-toggle icon-button" onClick={() => setDbmlCollapsed(!dbmlCollapsed)}>{dbmlCollapsed ? <ChevronRight size={16} /> : <ChevronLeft size={16} />}</button></div>

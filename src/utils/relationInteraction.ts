@@ -1,4 +1,4 @@
-import type { Point } from "../model/types";
+import type { Direction, Point, TableModel } from "../model/types";
 import type { RelationSegmentEditMode } from "./safeRelationEditing";
 
 const MIN_SEGMENT_LENGTH = 24;
@@ -92,6 +92,18 @@ export function snapRelationSegmentDelta(
   if (!a || gridSize <= 0) return desiredDelta;
   const coordinate = relationSegmentOrientation(points, segmentIndex) === "horizontal" ? a.y : a.x;
   return Math.round((coordinate + desiredDelta) / gridSize) * gridSize - coordinate;
+}
+
+export function relationSideAtPointer(
+  table: TableModel,
+  pointer: Point,
+  currentSide: Direction,
+  hysteresis = 8,
+): "west" | "east" {
+  const center = table.x + table.width / 2;
+  if (currentSide === "west" && pointer.x <= center + hysteresis) return "west";
+  if (currentSide !== "west" && pointer.x >= center - hysteresis) return "east";
+  return pointer.x < center ? "west" : "east";
 }
 
 function clamp(value: number, min: number, max: number): number {

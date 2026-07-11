@@ -1,6 +1,6 @@
 import type { DiagramModel, Point, RelationModel, TableModel } from "../model/types";
 import { getRelationGeometry } from "../utils/geometry";
-import { organizeRelationRoute, relationKeepsTableMargin } from "../utils/relationRouting";
+import { organizeRelationRoute, organizeRelationRouteOnFixedSides, relationKeepsTableMargin } from "../utils/relationRouting";
 import { layoutDiagram, type LayoutOptions } from "./autoLayout";
 
 export async function layoutDiagramForMinimumCrossings(diagram: DiagramModel): Promise<DiagramModel> {
@@ -115,9 +115,13 @@ function routeAllRelations(diagram: DiagramModel, reverse = false): DiagramModel
     const from = tableMap.get(relation.fromTable);
     const to = tableMap.get(relation.toTable);
     if (!from || !to) { routed.push(relation); continue; }
-    const route = organizeRelationRoute(
-      relation, from, to, diagram.tables, relation.fromSide, relation.toSide, diagram.visual.tableRouteMargin,
-    );
+    const route = relation.sideMode === "manual"
+      ? organizeRelationRouteOnFixedSides(
+        relation, from, to, diagram.tables, relation.fromSide, relation.toSide, diagram.visual.tableRouteMargin,
+      )
+      : organizeRelationRoute(
+        relation, from, to, diagram.tables, relation.fromSide, relation.toSide, diagram.visual.tableRouteMargin,
+      );
     const base = { ...relation, ...route, route: "orthogonal" as const };
     const candidates = laneCandidates(base, diagram.visual.gridSize)
       .filter((candidate) => relationKeepsTableMargin(candidate, diagram.tables, diagram.visual.tableRouteMargin));

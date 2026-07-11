@@ -1,4 +1,4 @@
-import { Boxes, Database, Pencil, Plus, Trash2, X } from "lucide-react";
+import { BookOpenText, Boxes, Database, Pencil, Plus, Trash2, X } from "lucide-react";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
@@ -17,6 +17,10 @@ export function LibraryPage({ controller }: { controller: DiagramController }) {
   const openDiagram = async (id: string) => {
     await controller.openDiagram(id);
     navigate(`/editor/${encodeURIComponent(id)}`);
+  };
+  const openWiki = async (id: string) => {
+    await controller.openDiagram(id);
+    navigate(`/editor/${encodeURIComponent(id)}/wiki`);
   };
   const createDiagram = async () => {
     const id = await controller.createDiagram();
@@ -56,8 +60,8 @@ export function LibraryPage({ controller }: { controller: DiagramController }) {
               <button type="button" className="diagram-card-open" onClick={() => void openDiagram(item.id)}>
                 <DiagramPreview dbml={item.dbml} uiLayout={item.uiLayout} previewDataUrl={item.previewDataUrl} />
                 <span className="diagram-card-copy"><strong>{item.name}</strong><small>{item.filename ?? `${item.name}.dbml`}</small></span>
-                <span className="diagram-card-action">Abrir</span>
               </button>
+              <button type="button" className="diagram-card-wiki" title={`Abrir a wiki de ${item.name}`} onClick={() => void openWiki(item.id)}><BookOpenText size={14} />Wiki</button>
               <button type="button" className="diagram-card-edit icon-button" title="Editar esquema" onClick={() => { setEditingId(item.id); setNameDraft(item.name); }}><Pencil size={14} /></button>
             </article>
           ))}

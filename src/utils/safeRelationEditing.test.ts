@@ -85,6 +85,23 @@ describe("safe relation editing", () => {
     expect(result.resolved).not.toEqual(result.desired);
     expect(relationKeepsTableMargin({ ...relation, viaPoints: result.viaPoints }, tables, 28)).toBe(true);
   });
+
+  it("releases the point after the cursor crosses a table and reroutes to the valid far side", () => {
+    const whileInside = resolveSafeCornerEdit({
+      relation, tables, sourcePoints: geometry, pointIndex: 2,
+      desired: { x: 400, y: 100 }, previousPosition: geometry[2], margin: 28,
+    });
+    const afterCrossing = resolveSafeCornerEdit({
+      relation, tables, sourcePoints: geometry, pointIndex: 2,
+      desired: { x: 540, y: 80 }, previousPosition: whileInside.resolved, margin: 28,
+    });
+
+    expect(whileInside.constrained).toBe(true);
+    expect(afterCrossing.constrained).toBe(false);
+    expect(afterCrossing.resolved).toEqual({ x: 540, y: 80 });
+    expect(afterCrossing.viaPoints).toContainEqual({ x: 540, y: 80 });
+    expect(relationKeepsTableMargin({ ...relation, viaPoints: afterCrossing.viaPoints }, tables, 28)).toBe(true);
+  });
 });
 
 function table(id: string, x: number, y: number, width = 220, height = 120): TableModel {

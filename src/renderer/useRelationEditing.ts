@@ -2,8 +2,14 @@ import type { MutableRefObject, PointerEvent as ReactPointerEvent } from "react"
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { Point, RelationModel, TableModel } from "../model/types";
 import { getRelationGeometry } from "../utils/geometry";
-import { insertRelationMidpoint } from "../utils/relationInteraction";
+import { insertRelationMidpoint, relationSideAtPointer } from "../utils/relationInteraction";
+import {
+  relationSnapThreshold,
+  snapRelationPointToTableExits,
+  type RelationPointAlignment,
+} from "../utils/relationPointSnap";
 import { resolveSafeCornerEdit, type SafeCornerEditResult } from "../utils/safeRelationEditing";
+import { organizeRelationRouteOnFixedSides } from "../utils/relationRouting";
 import type { DiagramCanvasController } from "./types";
 
 const DRAG_THRESHOLD_PX = 5;
@@ -23,6 +29,18 @@ interface PointEditSession {
   constrained: boolean;
   selfIntersection: boolean;
   blockingTableIds: string[];
+  alignment?: RelationPointAlignment;
+}
+
+interface EndpointEditSession {
+  phase: "armed" | "dragging";
+  pointerId: number;
+  relation: RelationModel;
+  endpoint: "from" | "to";
+  fromTable: TableModel;
+  toTable: TableModel;
+  clientStart: Point;
+  previewRelation: RelationModel;
 }
 
 export interface RelationEditFeedback {
@@ -41,10 +59,17 @@ interface UseRelationEditingOptions {
 export function useRelationEditing({ controller, svgRef, toSvgPoint }: UseRelationEditingOptions) {
   const [session, setSession] = useState<PointEditSession>();
   const sessionRef = useRef<PointEditSession>();
+  const [endpointSession, setEndpointSession] = useState<EndpointEditSession>();
+  const endpointSessionRef = useRef<EndpointEditSession>();
 
   const storeSession = useCallback((next: PointEditSession | undefined) => {
     sessionRef.current = next;
     setSession(next);
+  }, []);
+
+  const storeEndpointSession = useCallback((next: EndpointEditSession | undefined) => {
+    endpointSessionRef.current = next;
+    setEndpointSession(next);
   }, []);
 
   const selectRelation = useCallback((event: ReactPointerEvent<SVGElement>, relation: RelationModel) => {
@@ -83,6 +108,7 @@ export function useRelationEditing({ controller, svgRef, toSvgPoint }: UseRelati
       constrained: false,
       selfIntersection: false,
       blockingTableIds: [],
+      alignment: undefined,
     });
   }, [controller, storeSession, svgRef, toSvgPoint]);
 
@@ -109,6 +135,30 @@ export function useRelationEditing({ controller, svgRef, toSvgPoint }: UseRelati
     armPoint(event, relation, insertion.points, insertion.pointIndex);
   }, [armPoint]);
 
+  const armEndpoint = useCallback((
+    event: ReactPointerEvent<SVGElement>,
+    relation: RelationModel,
+    fromTable: TableModel,
+    toTable: TableModel,
+    endpoint: "from" | "to",
+  ) => {
+    if (!event.isPrimary || event.button !== 0) return;
+    event.stopPropagation();
+    event.preventDefault();
+    controller.setSelected({ type: "relation", id: relation.id });
+    svgRef.current?.setPointerCapture(event.pointerId);
+    storeEndpointSession({
+      phase: "armed",
+      pointerId: event.pointerId,
+      relation: { ...relation, viaPoints: relation.viaPoints.map((point) => ({ ...point })) },
+      endpoint,
+      fromTable,
+      toTable,
+      clientStart: { x: event.clientX, y: event.clientY },
+      previewRelation: relation,
+    });
+  }, [controller, storeEndpointSession, svgRef]);
+
   const resolvePoint = useCallback((current: PointEditSession, desired: Point) =>
     resolveSafeCornerEdit({
       relation: current.relation,
@@ -120,7 +170,36 @@ export function useRelationEditing({ controller, svgRef, toSvgPoint }: UseRelati
       previousPosition: current.applied,
     }), [controller.diagram.tables, controller.diagram.visual.tableRouteMargin]);
 
+  const alignToTableExit = useCallback((current: PointEditSession, raw: Point, fallback: Point) =>
+    snapRelationPointToTableExits(
+      current.relation,
+      controller.diagram.tables,
+      raw,
+      fallback,
+      controller.diagram.visual.tableRouteMargin,
+      relationSnapThreshold(controller.diagram.visual.gridSize),
+    ), [
+      controller.diagram.tables,
+      controller.diagram.visual.gridSize,
+      controller.diagram.visual.tableRouteMargin,
+    ]);
+
   const move = useCallback((event: ReactPointerEvent<SVGSVGElement>): boolean => {
+    const endpointCurrent = endpointSessionRef.current;
+    if (endpointCurrent && event.pointerId === endpointCurrent.pointerId) {
+      event.preventDefault();
+      const clientDistance = Math.hypot(
+        event.clientX - endpointCurrent.clientStart.x,
+        event.clientY - endpointCurrent.clientStart.y,
+      );
+      if (endpointCurrent.phase === "armed" && clientDistance < DRAG_THRESHOLD_PX) return true;
+      if (endpointCurrent.phase === "armed") controller.beginHistoryBatch();
+      const pointer = toSvgPoint(event);
+      const previewRelation = previewEndpointSide(endpointCurrent, pointer, controller.diagram.tables, controller.diagram.visual.tableRouteMargin);
+      storeEndpointSession({ ...endpointCurrent, phase: "dragging", previewRelation });
+      return true;
+    }
+
     const current = sessionRef.current;
     if (!current || event.pointerId !== current.pointerId) return false;
     event.preventDefault();
@@ -129,22 +208,42 @@ export function useRelationEditing({ controller, svgRef, toSvgPoint }: UseRelati
     if (current.phase === "armed" && clientDistance < DRAG_THRESHOLD_PX) return true;
     if (current.phase === "armed") controller.beginHistoryBatch();
     const desired = translatedPoint(current, pointer);
-    storeSession(sessionResult(current, resolvePoint(current, desired)));
+    const alignment = alignToTableExit(current, desired, desired);
+    storeSession(sessionResult(current, resolvePoint(current, alignment.point), alignment));
     return true;
-  }, [controller, resolvePoint, storeSession, toSvgPoint]);
+  }, [alignToTableExit, controller, resolvePoint, storeEndpointSession, storeSession, toSvgPoint]);
 
   const finish = useCallback((event: ReactPointerEvent<SVGSVGElement>): boolean => {
+    const endpointCurrent = endpointSessionRef.current;
+    if (endpointCurrent && event.pointerId === endpointCurrent.pointerId) {
+      event.preventDefault();
+      if (event.currentTarget.hasPointerCapture(event.pointerId)) {
+        event.currentTarget.releasePointerCapture(event.pointerId);
+      }
+      if (endpointCurrent.phase === "dragging") {
+        const patch = endpointCurrent.endpoint === "from"
+          ? { fromSide: endpointCurrent.previewRelation.fromSide, sideMode: "manual" as const }
+          : { toSide: endpointCurrent.previewRelation.toSide, sideMode: "manual" as const };
+        controller.updateRelation(endpointCurrent.relation.id, patch);
+        controller.endHistoryBatch();
+      }
+      storeEndpointSession(undefined);
+      return true;
+    }
+
     const current = sessionRef.current;
     if (!current || event.pointerId !== current.pointerId) return false;
     event.preventDefault();
     if (event.currentTarget.hasPointerCapture(event.pointerId)) event.currentTarget.releasePointerCapture(event.pointerId);
 
     if (current.phase === "dragging") {
-      const desired = snapPoint(
-        translatedPoint(current, toSvgPoint(event)),
+      const raw = translatedPoint(current, toSvgPoint(event));
+      const gridPoint = snapPoint(
+        raw,
         controller.snapToGrid ? controller.diagram.visual.gridSize : undefined,
       );
-      const result = resolvePoint(current, desired);
+      const alignment = alignToTableExit(current, raw, gridPoint);
+      const result = resolvePoint(current, alignment.point);
       const currentRelation = controller.diagram.relations.find((relation) => relation.id === current.relation.id);
       if (currentRelation && !samePoints(currentRelation.viaPoints, result.viaPoints)) {
         controller.updateRelation(current.relation.id, { route: "orthogonal", viaPoints: result.viaPoints });
@@ -154,9 +253,21 @@ export function useRelationEditing({ controller, svgRef, toSvgPoint }: UseRelati
 
     storeSession(undefined);
     return true;
-  }, [controller, resolvePoint, storeSession, toSvgPoint]);
+  }, [alignToTableExit, controller, resolvePoint, storeEndpointSession, storeSession, toSvgPoint]);
 
   const cancel = useCallback((event?: ReactPointerEvent<SVGSVGElement>): boolean => {
+    const endpointCurrent = endpointSessionRef.current;
+    if (endpointCurrent && (!event || event.pointerId === endpointCurrent.pointerId)) {
+      if (event?.currentTarget.hasPointerCapture(endpointCurrent.pointerId)) {
+        event.currentTarget.releasePointerCapture(endpointCurrent.pointerId);
+      } else if (svgRef.current?.hasPointerCapture(endpointCurrent.pointerId)) {
+        svgRef.current.releasePointerCapture(endpointCurrent.pointerId);
+      }
+      if (endpointCurrent.phase === "dragging") controller.endHistoryBatch();
+      storeEndpointSession(undefined);
+      return true;
+    }
+
     const current = sessionRef.current;
     if (!current || (event && event.pointerId !== current.pointerId)) return false;
     if (event?.currentTarget.hasPointerCapture(event.pointerId)) {
@@ -167,10 +278,10 @@ export function useRelationEditing({ controller, svgRef, toSvgPoint }: UseRelati
     if (current.phase === "dragging") controller.endHistoryBatch();
     storeSession(undefined);
     return true;
-  }, [controller, storeSession, svgRef]);
+  }, [controller, storeEndpointSession, storeSession, svgRef]);
 
   useEffect(() => {
-    if (!session) return;
+    if (!session && !endpointSession) return;
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key !== "Escape") return;
       event.preventDefault();
@@ -178,12 +289,15 @@ export function useRelationEditing({ controller, svgRef, toSvgPoint }: UseRelati
     };
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
-  }, [cancel, session]);
+  }, [cancel, endpointSession, session]);
 
   const displayRelation = useCallback((relation: RelationModel): RelationModel => {
+    if (endpointSession?.phase === "dragging" && endpointSession.relation.id === relation.id) {
+      return endpointSession.previewRelation;
+    }
     if (session?.phase !== "dragging" || session.relation.id !== relation.id) return relation;
     return { ...relation, route: "orthogonal", viaPoints: session.previewViaPoints };
-  }, [session]);
+  }, [endpointSession, session]);
 
   const feedback = useMemo<RelationEditFeedback | undefined>(() => {
     if (session?.phase !== "dragging" || !session.constrained) return undefined;
@@ -198,16 +312,18 @@ export function useRelationEditing({ controller, svgRef, toSvgPoint }: UseRelati
   }, [session]);
 
   return {
-    active: Boolean(session),
-    dragging: session?.phase === "dragging",
-    relationId: session?.relation.id,
+    active: Boolean(session || endpointSession),
+    dragging: session?.phase === "dragging" || endpointSession?.phase === "dragging",
+    relationId: session?.relation.id ?? endpointSession?.relation.id,
     pointIndex: session?.pointIndex,
     constrained: Boolean(session?.phase === "dragging" && session.constrained),
     feedback,
+    alignment: session?.phase === "dragging" ? session.alignment : undefined,
     obstacleTableIds: new Set(feedback?.blockingTableIds ?? []),
     selectRelation,
     armMidpoint,
     armCorner,
+    armEndpoint,
     move,
     finish,
     cancel,
@@ -215,7 +331,11 @@ export function useRelationEditing({ controller, svgRef, toSvgPoint }: UseRelati
   };
 }
 
-function sessionResult(session: PointEditSession, result: SafeCornerEditResult): PointEditSession {
+function sessionResult(
+  session: PointEditSession,
+  result: SafeCornerEditResult,
+  alignment: RelationPointAlignment,
+): PointEditSession {
   return {
     ...session,
     phase: "dragging",
@@ -225,7 +345,47 @@ function sessionResult(session: PointEditSession, result: SafeCornerEditResult):
     constrained: result.constrained,
     selfIntersection: result.selfIntersection,
     blockingTableIds: result.blockingTableIds,
+    alignment: appliedAlignment(alignment, result.resolved),
   };
+}
+
+function previewEndpointSide(
+  session: EndpointEditSession,
+  pointer: Point,
+  tables: TableModel[],
+  margin: number,
+): RelationModel {
+  const table = session.endpoint === "from" ? session.fromTable : session.toTable;
+  const currentSide = session.endpoint === "from"
+    ? session.previewRelation.fromSide
+    : session.previewRelation.toSide;
+  const side = relationSideAtPointer(table, pointer, currentSide);
+  const candidate: RelationModel = {
+    ...session.relation,
+    fromSide: session.endpoint === "from" ? side : session.relation.fromSide,
+    toSide: session.endpoint === "to" ? side : session.relation.toSide,
+    sideMode: "manual",
+  };
+  const route = organizeRelationRouteOnFixedSides(
+    candidate,
+    session.fromTable,
+    session.toTable,
+    tables,
+    candidate.fromSide,
+    candidate.toSide,
+    margin,
+  );
+  return { ...candidate, ...route, route: "orthogonal" };
+}
+
+function appliedAlignment(alignment: RelationPointAlignment, resolved: Point): RelationPointAlignment | undefined {
+  const horizontal = alignment.horizontal && Math.abs(resolved.y - alignment.point.y) < 0.1
+    ? alignment.horizontal
+    : undefined;
+  const vertical = alignment.vertical && Math.abs(resolved.x - alignment.point.x) < 0.1
+    ? alignment.vertical
+    : undefined;
+  return horizontal || vertical ? { point: resolved, horizontal, vertical } : undefined;
 }
 
 function translatedPoint(session: PointEditSession, pointer: Point): Point {

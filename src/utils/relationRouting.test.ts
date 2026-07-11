@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { defaultRelationVisual, defaultTableVisual } from "../model/defaults";
 import type { Point, RelationModel, TableModel } from "../model/types";
 import { getColumnPoint } from "./geometry";
-import { organizeRelationRoute, pathHasSelfIntersection, relationKeepsTableMargin, routeRelationAroundTables, TABLE_ROUTE_MARGIN } from "./relationRouting";
+import { organizeRelationRoute, pathHasSelfIntersection, relationClearanceMargin, relationKeepsTableMargin, routeRelationAroundTables, TABLE_ROUTE_MARGIN } from "./relationRouting";
 
 const source = makeTable("orders", 40, 80);
 const target = makeTable("users", 620, 80);
@@ -56,6 +56,35 @@ describe("relation routing", () => {
 
     expect(["east", "west"]).toContain(route.fromSide);
     expect(["east", "west"]).toContain(route.toSide);
+  });
+
+  it("routes safely through the exact sides selected by the user", () => {
+    const fromSide = "west" as const;
+    const toSide = "east" as const;
+    const manual = {
+      ...relation,
+      fromSide,
+      toSide,
+      sideMode: "manual" as const,
+      viaPoints: routeRelationAroundTables(
+        relation,
+        source,
+        target,
+        [source, target, blocker],
+        fromSide,
+        toSide,
+        relationClearanceMargin(relation, TABLE_ROUTE_MARGIN),
+      ),
+    };
+    const points = [
+      getColumnPoint(source, relation.fromColumn, fromSide),
+      ...manual.viaPoints,
+      getColumnPoint(target, relation.toColumn, toSide),
+    ];
+
+    expect(points[1].x).toBeLessThan(points[0].x);
+    expect(points[points.length - 2].x).toBeGreaterThan(points[points.length - 1].x);
+    expect(relationKeepsTableMargin(manual, [source, target, blocker], TABLE_ROUTE_MARGIN)).toBe(true);
   });
 
   it("rejects a manual route that a user drags through a table margin", () => {
