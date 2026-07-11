@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { defaultDiagramVisual, defaultRelationVisual, defaultTableVisual } from "../model/defaults";
 import type { DiagramModel, RelationModel, TableModel } from "../model/types";
-import { countRelationCrossings, optimizeVisualColumnOrder } from "./crossingOptimizedLayout";
+import { countRelationCrossings, optimizeVisualColumnOrder, relationCongestionScore } from "./crossingOptimizedLayout";
 
 describe("crossing optimized layout", () => {
   it("counts proper crossings between different relations", () => {
@@ -32,6 +32,15 @@ describe("crossing optimized layout", () => {
     const optimized = optimizeVisualColumnOrder(diagram);
     expect(optimized.tables[1].columnOrder?.[0]).toBe("id");
     expect(optimized.tables[1].columns.map((column) => column.name)).toEqual(["name", "owner_id", "id"]);
+  });
+
+  it("penalizes overlapping internal lanes more than grid-separated lanes", () => {
+    const left = table("left", 0, 80);
+    const right = table("right", 620, 80);
+    const base = { ...relation("a", "left", "right"), viaPoints: [{ x: 260, y: 132 }, { x: 260, y: 20 }, { x: 580, y: 20 }, { x: 580, y: 132 }] };
+    const diagram: DiagramModel = { id: "d", source: "", tables: [left, right], groups: [], enums: [], visual: { ...defaultDiagramVisual, gridSize: 8 }, relations: [base, { ...base, id: "b" }] };
+    const separated = { ...diagram, relations: [base, { ...base, id: "b", viaPoints: [{ x: 268, y: 132 }, { x: 268, y: 12 }, { x: 572, y: 12 }, { x: 572, y: 132 }] }] };
+    expect(relationCongestionScore(diagram)).toBeGreaterThan(relationCongestionScore(separated));
   });
 });
 

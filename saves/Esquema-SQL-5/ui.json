@@ -60,8 +60,8 @@
     {
       "id": "project",
       "name": "project",
-      "x": 368,
-      "y": 264,
+      "x": -276,
+      "y": 280,
       "width": 282,
       "height": 150,
       "visual": {
@@ -74,13 +74,13 @@
       },
       "usesDefaultStyle": true,
       "usesGroupStyle": false,
-      "layoutSource": "comment"
+      "layoutSource": "manual"
     },
     {
       "id": "technology",
       "name": "technology",
-      "x": 392,
-      "y": -40,
+      "x": -126,
+      "y": 114,
       "width": 282,
       "height": 150,
       "visual": {
@@ -91,15 +91,15 @@
         "lineColor": "#94a3b8",
         "opacity": 1
       },
-      "usesDefaultStyle": true,
+      "usesDefaultStyle": false,
       "usesGroupStyle": false,
-      "layoutSource": "comment"
+      "layoutSource": "manual"
     },
     {
       "id": "project_stack",
       "name": "project_stack",
-      "x": -176,
-      "y": 204,
+      "x": -384,
+      "y": 160,
       "width": 242,
       "height": 94,
       "visual": {
@@ -112,7 +112,7 @@
       },
       "usesDefaultStyle": true,
       "usesGroupStyle": false,
-      "layoutSource": "comment"
+      "layoutSource": "manual"
     }
   ],
   "relations": [
@@ -123,15 +123,15 @@
       "route": "orthogonal",
       "viaPoints": [
         {
-          "x": 678,
+          "x": 681,
           "y": 400
         },
         {
-          "x": 748,
+          "x": 745,
           "y": 400
         },
         {
-          "x": 748,
+          "x": 745,
           "y": 208
         }
       ],
@@ -155,15 +155,15 @@
       "route": "orthogonal",
       "viaPoints": [
         {
-          "x": 702,
+          "x": 705,
           "y": 96
         },
         {
-          "x": 748,
+          "x": 745,
           "y": 96
         },
         {
-          "x": 748,
+          "x": 745,
           "y": 208
         }
       ],
@@ -182,21 +182,21 @@
     },
     {
       "id": "relation-project_stack-id_project-project-id_project-2",
-      "fromSide": "east",
+      "fromSide": "west",
       "toSide": "west",
       "route": "orthogonal",
       "viaPoints": [
         {
-          "x": 94,
-          "y": 256
+          "x": -415,
+          "y": 212
         },
         {
-          "x": 340,
-          "y": 256
+          "x": -415,
+          "y": 332
         },
         {
-          "x": 340,
-          "y": 316
+          "x": -307,
+          "y": 332
         }
       ],
       "color": "#94a3b8",
@@ -214,21 +214,25 @@
     },
     {
       "id": "relation-project_stack-id_technology-technology-id_technology-3",
-      "fromSide": "east",
-      "toSide": "west",
+      "fromSide": "west",
+      "toSide": "east",
       "route": "orthogonal",
       "viaPoints": [
         {
-          "x": 94,
-          "y": 284
+          "x": -415,
+          "y": 240
         },
         {
-          "x": 94,
-          "y": 12
+          "x": -415,
+          "y": 83
         },
         {
-          "x": 364,
-          "y": 12
+          "x": 187,
+          "y": 83
+        },
+        {
+          "x": 187,
+          "y": 166
         }
       ],
       "color": "#94a3b8",
@@ -251,8 +255,8 @@
       "label": "New Group",
       "labelX": 12,
       "labelY": 24,
-      "x": -496,
-      "y": 56,
+      "x": -428,
+      "y": 72,
       "width": 620,
       "height": 400,
       "backgroundColor": "#0f766e",

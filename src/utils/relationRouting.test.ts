@@ -87,6 +87,34 @@ describe("relation routing", () => {
       { x: 160, y: 100 },
     ])).toBe(false);
   });
+
+  it("rejects a manual route that exits through the inside of its own table", () => {
+    const malformed = {
+      ...relation,
+      viaPoints: [
+        { x: source.x - 60, y: 132 },
+        { x: source.x - 60, y: 0 },
+        { x: target.x - 40, y: 0 },
+        { x: target.x - 40, y: 132 },
+      ],
+    };
+
+    expect(relationKeepsTableMargin(malformed, [source, target, blocker])).toBe(false);
+  });
+
+  it("includes half the stroke width in the protected table margin", () => {
+    const thick = {
+      ...relation,
+      strokeWidth: 20,
+      viaPoints: [
+        { x: 280, y: blocker.y - TABLE_ROUTE_MARGIN },
+        { x: 540, y: blocker.y - TABLE_ROUTE_MARGIN },
+      ],
+    };
+    expect(relationKeepsTableMargin(thick, [source, target, blocker], TABLE_ROUTE_MARGIN)).toBe(false);
+    const organized = organizeRelationRoute(thick, source, target, [source, target, blocker], "east", "west", TABLE_ROUTE_MARGIN);
+    expect(relationKeepsTableMargin({ ...thick, ...organized }, [source, target, blocker], TABLE_ROUTE_MARGIN)).toBe(true);
+  });
 });
 
 function makeTable(id: string, x: number, y: number, width = 220, height = 120): TableModel {

@@ -1,19 +1,22 @@
-import { defineConfig } from "vite";
+import { defineConfig, loadEnv } from "vite";
 import react from "@vitejs/plugin-react";
 import { mkdir, readdir, readFile, rename, rm, stat, writeFile } from "node:fs/promises";
 import type { IncomingMessage, ServerResponse } from "node:http";
 import path from "node:path";
 
-export default defineConfig({
-  plugins: [react(), dbmlFilesPlugin()],
-  build: {
-    chunkSizeWarningLimit: 1500,
-  },
+export default defineConfig(({ mode }) => {
+  const env = loadEnv(mode, process.cwd(), "");
+  return {
+    plugins: [react(), dbmlFilesPlugin(env.DBML_SAVES_DIR, env.DBML_LEGACY_DIR)],
+    build: {
+      chunkSizeWarningLimit: 1500,
+    },
+  };
 });
 
-function dbmlFilesPlugin() {
-  const savesDir = path.resolve(process.cwd(), "saves");
-  const legacyDir = path.resolve(process.cwd(), "dbml");
+function dbmlFilesPlugin(configuredSavesDir?: string, configuredLegacyDir?: string) {
+  const savesDir = path.resolve(configuredSavesDir ?? path.join(process.cwd(), "saves"));
+  const legacyDir = path.resolve(configuredLegacyDir ?? path.join(process.cwd(), "dbml"));
 
   return {
     name: "dbml-files",

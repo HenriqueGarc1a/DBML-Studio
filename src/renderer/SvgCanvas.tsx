@@ -20,7 +20,6 @@ import {
 } from "../utils/geometry";
 import { snapValue } from "../utils/grid";
 import { buildJumpPath } from "../utils/lineJumps";
-import { snapCornerEdit, snapSegmentEdit } from "../utils/safeRelationEditing";
 import {
   fitViewBoxToAspect,
   panViewBox,
@@ -34,6 +33,7 @@ import type { ResizeHandle } from "./ResizeHandles";
 import type { DiagramCanvasController } from "./types";
 import { CanvasToolbar } from "./CanvasToolbar";
 import { TableNode, type RelationFieldEndpoint } from "./TableNode";
+import { useRelationEditing, type RelationEditFeedback } from "./useRelationEditing";
 
 interface ResizeOrigin {
   x: number;
@@ -74,20 +74,6 @@ type DragState =
       handle: ResizeHandle;
       start: Point;
       origin: ResizeOrigin;
-    }
-  | {
-      kind: "relation-segment";
-      id: string;
-      start: Point;
-      points: Point[];
-      segmentIndex: number;
-      horizontal: boolean;
-    }
-  | {
-      kind: "relation-corner";
-      id: string;
-      points: Point[];
-      pointIndex: number;
     }
   | {
       kind: "pan";
@@ -226,7 +212,10 @@ export function SvgCanvas({ controller, svgRef: externalSvgRef }: SvgCanvasProps
     return matrix ? point.matrixTransform(matrix) : { x: event.clientX, y: event.clientY };
   };
 
+  const relationEditor = useRelationEditing({ controller, svgRef, toSvgPoint });
+
   const onPointerMove = (event: PointerEvent<SVGSVGElement>) => {
+    if (relationEditor.move(event)) return;
     if (!drag) return;
     event.preventDefault();
 
@@ -312,38 +301,10 @@ export function SvgCanvas({ controller, svgRef: externalSvgRef }: SvgCanvasProps
       controller.updateGroup(drag.id, next);
     }
 
-    if (drag.kind === "relation-segment") {
-      const relation = controller.diagram.relations.find((item) => item.id === drag.id);
-      if (!relation) return;
-      const rawDelta = drag.horizontal ? point.y - drag.start.y : point.x - drag.start.x;
-      const delta = controller.snapToGrid ? snapValue(rawDelta, gridSize) : rawDelta;
-      controller.updateRelation(drag.id, {
-        route: "orthogonal",
-        viaPoints: snapSegmentEdit(
-          relation, controller.diagram.tables, drag.points, drag.segmentIndex, delta,
-          controller.diagram.visual.tableRouteMargin, controller.snapToGrid ? gridSize : 4,
-        ),
-      });
-    }
-
-    if (drag.kind === "relation-corner") {
-      const relation = controller.diagram.relations.find((item) => item.id === drag.id);
-      if (!relation) return;
-      const desired = {
-        x: controller.snapToGrid ? snapValue(point.x, gridSize) : point.x,
-        y: controller.snapToGrid ? snapValue(point.y, gridSize) : point.y,
-      };
-      controller.updateRelation(drag.id, {
-        route: "orthogonal",
-        viaPoints: snapCornerEdit(
-          relation, controller.diagram.tables, drag.points, drag.pointIndex, desired,
-          controller.diagram.visual.tableRouteMargin, controller.snapToGrid ? gridSize : 4,
-        ),
-      });
-    }
   };
 
   const stopDrag = (event: PointerEvent<SVGSVGElement>) => {
+    if (relationEditor.finish(event)) return;
     if (!drag) return;
     if (event.currentTarget.hasPointerCapture(event.pointerId)) {
       event.currentTarget.releasePointerCapture(event.pointerId);
@@ -355,6 +316,11 @@ export function SvgCanvas({ controller, svgRef: externalSvgRef }: SvgCanvasProps
       controller.endHistoryBatch();
     }
     setDrag(undefined);
+  };
+
+  const cancelDrag = (event: PointerEvent<SVGSVGElement>) => {
+    if (relationEditor.cancel(event)) return;
+    stopDrag(event);
   };
 
   const beginSvgDrag = (event: PointerEvent<SVGElement>, state: DragState) => {
@@ -479,12 +445,13 @@ export function SvgCanvas({ controller, svgRef: externalSvgRef }: SvgCanvasProps
     <>
       <svg
         ref={svgRef}
-        className={`diagram-canvas${drag?.kind === "pan" ? " is-panning" : ""}${relationMode ? " is-relation-mode" : ""}`}
+        className={`diagram-canvas${drag?.kind === "pan" ? " is-panning" : ""}${relationEditor.dragging ? " is-editing-relation" : ""}${relationMode ? " is-relation-mode" : ""}`}
+        data-testid="diagram-canvas"
         viewBox={`${viewport.x} ${viewport.y} ${viewport.width} ${viewport.height}`}
         data-export-viewbox={`${computedBounds.x} ${computedBounds.y} ${computedBounds.width} ${computedBounds.height}`}
         onPointerMove={onPointerMove}
         onPointerUp={stopDrag}
-        onPointerCancel={stopDrag}
+        onPointerCancel={cancelDrag}
         onPointerDown={beginPan}
         onWheel={onWheel}
       >
@@ -551,7 +518,7 @@ export function SvgCanvas({ controller, svgRef: externalSvgRef }: SvgCanvasProps
           />
         ))}
         {relationRenderOrder.map((sourceRelation) => {
-          const relation = sourceRelation;
+          const relation = relationEditor.displayRelation(sourceRelation);
           const fromTable = tableMap.get(sourceRelation.fromTable);
           const toTable = tableMap.get(sourceRelation.toTable);
           if (!fromTable || !toTable) return null;
@@ -593,35 +560,16 @@ export function SvgCanvas({ controller, svgRef: externalSvgRef }: SvgCanvasProps
               flowColor={flowColor}
               exportFlowDirection="reverse"
               exportFlowColor={exportFlowColor}
-              renderedPath={relationPaths.get(sourceRelation.id)}
-              onPathPointerDown={(event, item) => {
-                event.stopPropagation();
-                event.preventDefault();
-                controller.setSelected({ type: "relation", id: item.id });
-              }}
-              onSegmentPointerDown={(event, item, segmentIndex) => {
-                const geometry = getRelationGeometry(item, fromTable, toTable);
-                const start = toSvgPoint(event);
-                const a = geometry.points[segmentIndex];
-                const b = geometry.points[segmentIndex + 1];
-                beginSvgDrag(event, {
-                  kind: "relation-segment",
-                  id: item.id,
-                  start,
-                  points: geometry.points,
-                  segmentIndex,
-                  horizontal: Math.abs(b.x - a.x) >= Math.abs(b.y - a.y),
-                });
-              }}
-              onCornerPointerDown={(event, item, pointIndex) => {
-                const geometry = getRelationGeometry(item, fromTable, toTable);
-                beginSvgDrag(event, {
-                  kind: "relation-corner",
-                  id: item.id,
-                  points: geometry.points,
-                  pointIndex,
-                });
-              }}
+              renderedPath={relationEditor.relationId === sourceRelation.id ? undefined : relationPaths.get(sourceRelation.id)}
+              editing={relationEditor.dragging && relationEditor.relationId === sourceRelation.id}
+              constrained={relationEditor.constrained && relationEditor.relationId === sourceRelation.id}
+              onSelectPointerDown={relationEditor.selectRelation}
+              onSegmentPointPointerDown={(event, item, segmentIndex) =>
+                relationEditor.armMidpoint(event, item, fromTable, toTable, segmentIndex)
+              }
+              onCornerPointPointerDown={(event, item, pointIndex) =>
+                relationEditor.armCorner(event, item, fromTable, toTable, pointIndex)
+              }
             />
           );
         })}
@@ -633,6 +581,7 @@ export function SvgCanvas({ controller, svgRef: externalSvgRef }: SvgCanvasProps
             groupVisual={getTableGroupVisual(table, controller.diagram.groups)}
             badgeVisuals={controller.diagram.visual.badges}
             selected={selected?.type === "table" && selected.id === table.id}
+            relationObstacle={relationEditor.obstacleTableIds.has(table.id)}
             relationMode={relationMode}
             relationSource={relationSource}
             onPointerDown={(event, item) => {
@@ -661,6 +610,7 @@ export function SvgCanvas({ controller, svgRef: externalSvgRef }: SvgCanvasProps
             }}
           />
         ))}
+        {relationEditor.feedback && <RelationConstraintFeedback feedback={relationEditor.feedback} />}
       </svg>
       <CanvasToolbar
         position={zoomPanelPosition} dragging={Boolean(zoomPanelDrag)} relationMode={relationMode}
@@ -676,6 +626,29 @@ export function SvgCanvas({ controller, svgRef: externalSvgRef }: SvgCanvasProps
         onZoomOut={() => zoomAt(1 / 1.2)} onZoomIn={() => zoomAt(1.2)} onFit={fitDiagram}
       />
     </>
+  );
+}
+
+function RelationConstraintFeedback({ feedback }: { feedback: RelationEditFeedback }) {
+  const labelX = feedback.applied.x + 14;
+  const labelY = feedback.applied.y - 16;
+  const width = Math.min(330, Math.max(210, feedback.message.length * 5.7));
+  return (
+    <g className="relation-edit-feedback" data-testid="relation-edit-feedback" pointerEvents="none">
+      <line
+        x1={feedback.requested.x}
+        y1={feedback.requested.y}
+        x2={feedback.applied.x}
+        y2={feedback.applied.y}
+        className="relation-constraint-guide"
+      />
+      <circle cx={feedback.requested.x} cy={feedback.requested.y} r={4} className="relation-requested-point" />
+      <circle cx={feedback.applied.x} cy={feedback.applied.y} r={5} className="relation-applied-point" />
+      <g transform={`translate(${labelX} ${labelY})`}>
+        <rect x={0} y={-17} width={width} height={27} rx={7} className="relation-feedback-bubble" />
+        <text x={9} y={1} className="relation-feedback-text">{feedback.message}</text>
+      </g>
+    </g>
   );
 }
 

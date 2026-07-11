@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { defaultRelationVisual, defaultTableVisual } from "../model/defaults";
 import type { RelationModel, TableModel } from "../model/types";
 import { relationKeepsTableMargin } from "./relationRouting";
-import { snapCornerEdit, snapSegmentEdit } from "./safeRelationEditing";
+import { resolveSafeCornerEdit, resolveSafeSegmentEdit, snapCornerEdit, snapSegmentEdit } from "./safeRelationEditing";
 
 const source = table("source", 0, 80);
 const target = table("target", 620, 80);
@@ -25,6 +25,65 @@ describe("safe relation editing", () => {
   it("keeps segment edits safe instead of resetting the whole route", () => {
     const viaPoints = snapSegmentEdit(relation, tables, geometry, 2, 100, 28, 4);
     expect(relationKeepsTableMargin({ ...relation, viaPoints }, tables, 28)).toBe(true);
+  });
+
+  it("keeps fractional pointer movement continuous while the grid is enabled elsewhere", () => {
+    const result = resolveSafeSegmentEdit({
+      relation, tables, sourcePoints: geometry, segmentIndex: 2,
+      anchor: { x: 450, y: 0 }, desiredDelta: -13.75, margin: 28, mode: "move",
+    });
+
+    expect(result.constrained).toBe(false);
+    expect(result.resolvedDelta).toBe(-13.75);
+  });
+
+  it("reports the blocking table and projects to the nearest safe axis position", () => {
+    const result = resolveSafeSegmentEdit({
+      relation, tables, sourcePoints: geometry, segmentIndex: 2,
+      anchor: { x: 450, y: 0 }, desiredDelta: 100, margin: 28, mode: "move",
+    });
+
+    expect(result.constrained).toBe(true);
+    expect(result.blockingTableIds).toContain("blocker");
+    expect(Math.abs(result.resolvedDelta - result.desiredDelta)).toBeLessThan(100);
+    expect(relationKeepsTableMargin({ ...relation, viaPoints: result.viaPoints }, tables, 28)).toBe(true);
+  });
+
+  it("creates a safe local bend centered at the exact grab position", () => {
+    const result = resolveSafeSegmentEdit({
+      relation, tables, sourcePoints: geometry, segmentIndex: 2,
+      anchor: { x: 380, y: 0 }, desiredDelta: -48, margin: 28, mode: "bend",
+    });
+    const bendXs = result.viaPoints.filter((point) => point.y === -48).map((point) => point.x);
+
+    expect(result.constrained).toBe(false);
+    expect(Math.min(...bendXs)).toBeLessThan(380);
+    expect(Math.max(...bendXs)).toBeGreaterThan(380);
+    expect(relationKeepsTableMargin({ ...relation, viaPoints: result.viaPoints }, tables, 28)).toBe(true);
+  });
+
+  it("moves a curve point freely in two dimensions when the position is safe", () => {
+    const result = resolveSafeCornerEdit({
+      relation, tables, sourcePoints: geometry, pointIndex: 2,
+      desired: { x: 265, y: -40 }, previousPosition: geometry[2], margin: 28,
+    });
+
+    expect(result.constrained).toBe(false);
+    expect(result.resolved).toEqual({ x: 265, y: -40 });
+    expect(result.viaPoints).toContainEqual({ x: 265, y: -40 });
+    expect(relationKeepsTableMargin({ ...relation, viaPoints: result.viaPoints }, tables, 28)).toBe(true);
+  });
+
+  it("keeps a dragged curve point at the nearest safe position and reports the obstacle", () => {
+    const result = resolveSafeCornerEdit({
+      relation, tables, sourcePoints: geometry, pointIndex: 2,
+      desired: { x: 400, y: 100 }, previousPosition: geometry[2], margin: 28,
+    });
+
+    expect(result.constrained).toBe(true);
+    expect(result.blockingTableIds).toContain("blocker");
+    expect(result.resolved).not.toEqual(result.desired);
+    expect(relationKeepsTableMargin({ ...relation, viaPoints: result.viaPoints }, tables, 28)).toBe(true);
   });
 });
 

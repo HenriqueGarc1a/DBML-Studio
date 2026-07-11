@@ -1,6 +1,6 @@
-import type { DiagramModel, Point, TableModel } from "../model/types";
+import type { DiagramModel, Point, RelationModel, TableModel } from "../model/types";
 import { getRelationGeometry } from "../utils/geometry";
-import { organizeRelationRoute } from "../utils/relationRouting";
+import { organizeRelationRoute, relationKeepsTableMargin } from "../utils/relationRouting";
 import { layoutDiagram, type LayoutOptions } from "./autoLayout";
 
 export async function layoutDiagramForMinimumCrossings(diagram: DiagramModel): Promise<DiagramModel> {
@@ -15,9 +15,10 @@ export async function layoutDiagramForMinimumCrossings(diagram: DiagramModel): P
 
   const generated = await Promise.all(variants.map(async (options) => {
     const positioned = await layoutDiagram(diagram, options);
-    return routeAllRelations(reframeGroups(optimizeVisualColumnOrder(positioned)));
+    const prepared = reframeGroups(optimizeVisualColumnOrder(positioned));
+    return [routeAllRelations(prepared), routeAllRelations(prepared, true)];
   }));
-  const candidates = [routeAllRelations(diagram), ...generated];
+  const candidates = [routeAllRelations(diagram), routeAllRelations(diagram, true), ...generated.flat()];
   return candidates.reduce((best, candidate) =>
     layoutScore(candidate) < layoutScore(best) ? candidate : best);
 }
@@ -94,20 +95,73 @@ export function countRelationCrossings(diagram: DiagramModel): number {
   return crossings;
 }
 
-function routeAllRelations(diagram: DiagramModel): DiagramModel {
+export function relationCongestionScore(diagram: DiagramModel): number {
+  const paths = relationPaths(diagram);
+  let score = 0;
+  for (let first = 0; first < paths.length; first += 1) {
+    for (let second = first + 1; second < paths.length; second += 1) {
+      score += pathCongestion(paths[first], paths[second], diagram.visual.gridSize);
+    }
+  }
+  return score;
+}
+
+function routeAllRelations(diagram: DiagramModel, reverse = false): DiagramModel {
   const tableMap = new Map(diagram.tables.map((table) => [table.id, table]));
+  const routed: RelationModel[] = [];
+  const previousPaths: Point[][] = [];
+  const relationOrder = reverse ? [...diagram.relations].reverse() : diagram.relations;
+  for (const relation of relationOrder) {
+    const from = tableMap.get(relation.fromTable);
+    const to = tableMap.get(relation.toTable);
+    if (!from || !to) { routed.push(relation); continue; }
+    const route = organizeRelationRoute(
+      relation, from, to, diagram.tables, relation.fromSide, relation.toSide, diagram.visual.tableRouteMargin,
+    );
+    const base = { ...relation, ...route, route: "orthogonal" as const };
+    const candidates = laneCandidates(base, diagram.visual.gridSize)
+      .filter((candidate) => relationKeepsTableMargin(candidate, diagram.tables, diagram.visual.tableRouteMargin));
+    const selected = (candidates.length ? candidates : [base]).reduce((best, candidate) => {
+      const bestPoints = getRelationGeometry(best, from, to).points;
+      const points = getRelationGeometry(candidate, from, to).points;
+      return laneScore(points, previousPaths, diagram.visual.gridSize) < laneScore(bestPoints, previousPaths, diagram.visual.gridSize)
+        ? candidate : best;
+    });
+    routed.push(selected);
+    previousPaths.push(getRelationGeometry(selected, from, to).points);
+  }
   return {
     ...diagram,
-    relations: diagram.relations.map((relation) => {
-      const from = tableMap.get(relation.fromTable);
-      const to = tableMap.get(relation.toTable);
-      if (!from || !to) return relation;
-      const route = organizeRelationRoute(
-        relation, from, to, diagram.tables, relation.fromSide, relation.toSide, diagram.visual.tableRouteMargin,
-      );
-      return { ...relation, ...route, route: "orthogonal" as const };
-    }),
+    relations: diagram.relations.map((relation) => routed.find((item) => item.id === relation.id) ?? relation),
   };
+}
+
+function laneCandidates(relation: RelationModel, gridSize: number): RelationModel[] {
+  const step = Math.max(2, gridSize);
+  const variants = [relation];
+  for (let lane = 1; lane <= 6; lane += 1) {
+    const offset = lane * step;
+    for (const [dx, dy] of [[-offset, 0], [offset, 0], [0, -offset], [0, offset]]) {
+      variants.push({ ...relation, viaPoints: offsetLane(relation.viaPoints, dx, dy) });
+    }
+  }
+  return variants;
+}
+
+function offsetLane(points: Point[], dx: number, dy: number): Point[] {
+  if (points.length === 2) {
+    const [start, end] = points;
+    return [start, { x: start.x + dx, y: start.y + dy }, { x: end.x + dx, y: end.y + dy }, end];
+  }
+  return points.map((point, index) => index === 0 || index === points.length - 1
+    ? point : { x: point.x + dx, y: point.y + dy });
+}
+
+function laneScore(points: Point[], previous: Point[][], gridSize: number): number {
+  const crossings = previous.reduce((sum, path) => sum + polylineCrossings(points, path), 0);
+  const congestion = previous.reduce((sum, path) => sum + pathCongestion(points, path, gridSize), 0);
+  const length = points.slice(1).reduce((sum, point, index) => sum + manhattan(points[index], point), 0);
+  return crossings * 1_000_000_000 + congestion * 1_000_000 + length;
 }
 
 function candidateOrders(diagram: DiagramModel): string[][] {
@@ -123,6 +177,7 @@ function candidateOrders(diagram: DiagramModel): string[][] {
 
 function layoutScore(diagram: DiagramModel): number {
   const crossings = countRelationCrossings(diagram);
+  const congestion = relationCongestionScore(diagram);
   const tableMap = new Map(diagram.tables.map((table) => [table.id, table]));
   let length = 0;
   let bends = 0;
@@ -135,7 +190,43 @@ function layoutScore(diagram: DiagramModel): number {
     length += points.slice(1).reduce((sum, point, index) => sum + manhattan(points[index], point), 0);
   }
   const area = layoutArea(diagram.tables);
-  return crossings * 1_000_000_000 + length + bends * 80 + area * 0.0005;
+  return crossings * 1_000_000_000 + congestion * 1_000_000 + length + bends * 80 + area * 0.0005;
+}
+
+function relationPaths(diagram: DiagramModel): Point[][] {
+  const tableMap = new Map(diagram.tables.map((table) => [table.id, table]));
+  return diagram.relations.flatMap((relation) => {
+    const from = tableMap.get(relation.fromTable);
+    const to = tableMap.get(relation.toTable);
+    return from && to ? [getRelationGeometry(relation, from, to).points] : [];
+  });
+}
+
+function pathCongestion(a: Point[], b: Point[], gridSize: number): number {
+  let score = 0;
+  const minimumGap = Math.max(1, gridSize);
+  for (const [aStart, aEnd] of internalSegments(a)) {
+    for (const [bStart, bEnd] of internalSegments(b)) {
+      const aVertical = aStart.x === aEnd.x;
+      const bVertical = bStart.x === bEnd.x;
+      if (aVertical !== bVertical) continue;
+      const gap = aVertical ? Math.abs(aStart.x - bStart.x) : Math.abs(aStart.y - bStart.y);
+      if (gap >= minimumGap) continue;
+      const overlap = aVertical
+        ? overlapLength(aStart.y, aEnd.y, bStart.y, bEnd.y)
+        : overlapLength(aStart.x, aEnd.x, bStart.x, bEnd.x);
+      if (overlap > 0) score += (minimumGap - gap + 1) * overlap;
+    }
+  }
+  return score;
+}
+
+function internalSegments(points: Point[]): Array<[Point, Point]> {
+  return points.slice(1, -2).map((point, index): [Point, Point] => [point, points[index + 2]]);
+}
+
+function overlapLength(a: number, b: number, c: number, d: number): number {
+  return Math.max(0, Math.min(Math.max(a, b), Math.max(c, d)) - Math.max(Math.min(a, b), Math.min(c, d)));
 }
 
 function polylineCrossings(a: Point[], b: Point[]): number {

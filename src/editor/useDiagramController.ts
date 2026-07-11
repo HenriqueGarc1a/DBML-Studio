@@ -313,6 +313,7 @@ export function useDiagramController(): DiagramController {
 
   useEffect(() => {
     let cancelled = false;
+    let timer: number | undefined;
 
     async function updateExports() {
       const { exportTikz } = await import("../exporter/tikzExporter");
@@ -330,10 +331,11 @@ export function useDiagramController(): DiagramController {
       }
     }
 
-    void updateExports();
+    timer = window.setTimeout(() => void updateExports(), 120);
 
     return () => {
       cancelled = true;
+      if (timer !== undefined) window.clearTimeout(timer);
     };
   }, [diagram, scheduleWorkspaceSave]);
 

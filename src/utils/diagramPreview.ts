@@ -3,7 +3,7 @@ import type { TableModel } from "../model/types";
 export async function captureDiagramPreview(svg: SVGSVGElement | null, tables: TableModel[]): Promise<string | undefined> {
   if (!svg) return undefined;
   const clone = svg.cloneNode(true) as SVGSVGElement;
-  clone.querySelectorAll(".relation-edit-handles, .resize-handle, .relation-flow-arrow").forEach((node) => node.remove());
+  clone.querySelectorAll(".relation-edit-handles, .relation-segment-hitbox, .relation-edit-feedback, .table-route-obstacle-indicator, .resize-handle, .relation-flow-arrow").forEach((node) => node.remove());
   const style = document.createElementNS("http://www.w3.org/2000/svg", "style");
   style.textContent = `
     .table-title { font: 700 14px Arial, sans-serif; }

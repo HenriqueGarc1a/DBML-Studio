@@ -671,7 +671,7 @@ function RelationProperties({ controller, relationId }: { controller: DiagramCon
       <h3>Linha</h3>
       <div className="selection-context">
         <strong>{relationTitle(relation, tableMap)}</strong>
-        <span>Arraste qualquer trecho da linha para ajustar a rota.</span>
+        <span>Arraste os pontos da linha para ajustar a rota.</span>
       </div>
       <CollapsibleGroup id="relation.general" title="Geral">
         <TextField label="Rótulo" value={relation.label} onChange={(label) => controller.updateRelation(relation.id, { label })} />
@@ -693,8 +693,8 @@ function RelationProperties({ controller, relationId }: { controller: DiagramCon
       </CollapsibleGroup>
       <CollapsibleGroup id="relation.route" title="Rota" defaultOpen={false}>
         <div className="relation-point-status">
-          Círculos no meio movem um trecho reto inteiro. Losangos nas curvas reposicionam a curva. Os handles
-          aparecem e se reorganizam automaticamente conforme a linha muda.
+          Arraste qualquer ponto livremente. Os pontos entre trechos criam novas âncoras; os pontos das curvas
+          movem âncoras existentes. Novos pontos aparecem automaticamente conforme você cria dobras.
         </div>
         <SelectField<LineStyle>
           label="Estilo"

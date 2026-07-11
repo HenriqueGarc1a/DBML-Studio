@@ -20,6 +20,12 @@ export interface OrganizedRelationRoute {
   viaPoints: Point[];
 }
 
+export interface RelationSafetyInspection {
+  valid: boolean;
+  selfIntersection: boolean;
+  blockingTableIds: string[];
+}
+
 export function organizeRelationRoute(
   relation: RelationModel,
   fromTable: TableModel,
@@ -29,13 +35,14 @@ export function organizeRelationRoute(
   preferredToSide: Direction,
   margin = TABLE_ROUTE_MARGIN,
 ): OrganizedRelationRoute {
+  const effectiveMargin = relationClearanceMargin(relation, margin);
   const lateralCandidates = rankSidePairs(
     preferredLateralPairs(fromTable, toTable),
     relation,
     fromTable,
     toTable,
     tables,
-    margin,
+    effectiveMargin,
   );
   const candidates = lateralCandidates.length
     ? lateralCandidates
@@ -50,7 +57,7 @@ export function organizeRelationRoute(
         fromTable,
         toTable,
         tables,
-        margin,
+        effectiveMargin,
       );
 
   if (candidates[0]) {
@@ -67,7 +74,7 @@ export function organizeRelationRoute(
   return {
     fromSide: normalizedFromSide,
     toSide: normalizedToSide,
-    viaPoints: routeRelationAroundTables(relation, fromTable, toTable, tables, normalizedFromSide, normalizedToSide, margin),
+    viaPoints: routeRelationAroundTables(relation, fromTable, toTable, tables, normalizedFromSide, normalizedToSide, effectiveMargin),
   };
 }
 
@@ -111,11 +118,65 @@ export function relationKeepsTableMargin(
   tables: TableModel[],
   margin = TABLE_ROUTE_MARGIN,
 ): boolean {
+  return inspectRelationSafety(relation, tables, margin).valid;
+}
+
+/**
+ * Describes why a relation route is unsafe so the editor can keep the hard
+ * invariant while still explaining a constrained drag to the user.
+ */
+export function inspectRelationSafety(
+  relation: RelationModel,
+  tables: TableModel[],
+  margin = TABLE_ROUTE_MARGIN,
+): RelationSafetyInspection {
   const fromTable = tables.find((table) => table.id === relation.fromTable);
   const toTable = tables.find((table) => table.id === relation.toTable);
-  if (!fromTable || !toTable) return true;
+  if (!fromTable || !toTable) {
+    return { valid: true, selfIntersection: false, blockingTableIds: [] };
+  }
   const points = getRelationGeometry(relation, fromTable, toTable).points;
-  return !pathHasSelfIntersection(points) && pathKeepsTableMargin(points, tables, fromTable.id, toTable.id, margin);
+  const selfIntersection = pathHasSelfIntersection(points);
+  const clearance = relationClearanceMargin(relation, margin);
+  const marginBlockingTableIds = tables
+    .filter((table) => !pathKeepsTableMargin(points, [table], fromTable.id, toTable.id, clearance))
+    .map((table) => table.id);
+  const invalidEndpointTableIds = [
+    endpointLeavesThroughProtectedStub(points[0], points[1], fromTable, normalizeRelationSide(relation.fromSide), clearance)
+      ? undefined
+      : fromTable.id,
+    endpointLeavesThroughProtectedStub(
+      points[points.length - 1],
+      points[points.length - 2],
+      toTable,
+      normalizeRelationSide(relation.toSide),
+      clearance,
+    ) ? undefined : toTable.id,
+  ].filter(Boolean) as string[];
+  const blockingTableIds = Array.from(new Set([...marginBlockingTableIds, ...invalidEndpointTableIds]));
+
+  return {
+    valid: !selfIntersection && blockingTableIds.length === 0,
+    selfIntersection,
+    blockingTableIds,
+  };
+}
+
+function endpointLeavesThroughProtectedStub(
+  endpoint: Point | undefined,
+  neighbor: Point | undefined,
+  table: TableModel,
+  side: Direction,
+  clearance: number,
+): boolean {
+  if (!endpoint || !neighbor || Math.abs(endpoint.y - neighbor.y) > 0.01) return false;
+  return side === "east"
+    ? neighbor.x >= table.x + table.width + clearance - 0.01
+    : neighbor.x <= table.x - clearance + 0.01;
+}
+
+export function relationClearanceMargin(relation: Pick<RelationModel, "strokeWidth">, margin: number): number {
+  return margin + Math.max(1, relation.strokeWidth / 2) + 1;
 }
 
 export function pathHasSelfIntersection(points: Point[]): boolean {

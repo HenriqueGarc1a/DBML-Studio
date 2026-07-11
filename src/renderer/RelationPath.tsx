@@ -1,7 +1,9 @@
 import type { PointerEvent } from "react";
+import { useState } from "react";
 import type { RelationModel, TableModel } from "../model/types";
 import { getRelationGeometry } from "../utils/geometry";
 import { buildJumpPath } from "../utils/lineJumps";
+import { relationSegmentLength, relationSegmentOrientation } from "../utils/relationInteraction";
 
 interface RelationPathProps {
   relation: RelationModel;
@@ -15,9 +17,15 @@ interface RelationPathProps {
   exportFlowDirection?: "forward" | "reverse";
   exportFlowColor?: string;
   renderedPath?: string;
-  onPathPointerDown: (event: PointerEvent<SVGPathElement>, relation: RelationModel) => void;
-  onSegmentPointerDown: (event: PointerEvent<SVGGElement>, relation: RelationModel, index: number) => void;
-  onCornerPointerDown: (event: PointerEvent<SVGRectElement>, relation: RelationModel, index: number) => void;
+  editing?: boolean;
+  constrained?: boolean;
+  onSelectPointerDown: (event: PointerEvent<SVGElement>, relation: RelationModel) => void;
+  onSegmentPointPointerDown: (
+    event: PointerEvent<SVGElement>,
+    relation: RelationModel,
+    index: number,
+  ) => void;
+  onCornerPointPointerDown: (event: PointerEvent<SVGElement>, relation: RelationModel, index: number) => void;
 }
 
 export function RelationPath({
@@ -32,10 +40,13 @@ export function RelationPath({
   exportFlowDirection,
   exportFlowColor,
   renderedPath,
-  onPathPointerDown,
-  onSegmentPointerDown,
-  onCornerPointerDown,
+  editing = false,
+  constrained = false,
+  onSelectPointerDown,
+  onSegmentPointPointerDown,
+  onCornerPointPointerDown,
 }: RelationPathProps) {
+  const [hoveredSegment, setHoveredSegment] = useState<number>();
   const geometry = getRelationGeometry(relation, fromTable, toTable);
   const path = renderedPath ?? geometry.path;
   const dash = relation.style === "dashed" ? "9 7" : relation.style === "dotted" ? "1 7" : undefined;
@@ -56,18 +67,14 @@ export function RelationPath({
 
   return (
     <g
-      className={`relation-path${selected ? " is-selected" : ""}${highlighted ? " is-table-highlighted" : ""}`}
+      className={`relation-path${selected ? " is-selected" : ""}${highlighted ? " is-table-highlighted" : ""}${editing ? " is-editing" : ""}${constrained ? " is-constrained" : ""}`}
+      data-relation-id={relation.id}
+      data-route-points={JSON.stringify(geometry.points)}
+      data-drag-state={editing ? "dragging" : "idle"}
+      data-blocked={constrained ? "true" : "false"}
       data-export-flow-direction={pdfFlowDirection}
       data-export-flow-color={pdfFlowColor}
     >
-      <path
-        d={path}
-        fill="none"
-        stroke="transparent"
-        strokeWidth={Math.max(12, relation.strokeWidth + 8)}
-        className="relation-hitbox"
-        onPointerDown={(event) => onPathPointerDown(event, relation)}
-      />
       {highlighted && (
         <path
           d={path}
@@ -93,6 +100,16 @@ export function RelationPath({
         className="relation-stroke"
         pointerEvents="none"
       />
+      {!editing && hoveredSegment !== undefined && geometry.points[hoveredSegment + 1] && (
+        <path
+          d={segmentPath(geometry.points[hoveredSegment], geometry.points[hoveredSegment + 1])}
+          fill="none"
+          className="relation-segment-highlight"
+          pointerEvents="none"
+          vectorEffect="non-scaling-stroke"
+          data-testid="relation-segment-highlight"
+        />
+      )}
       {Array.from({ length: flowArrowCount }, (_, index) => (
         <g key={`${relation.id}-flow-${index}`} className="relation-flow-arrow" style={{ color: arrowColor }}>
           <path d="M -8 -4.5 L 2 0 L -8 4.5" className="relation-flow-arrow-outline" />
@@ -111,59 +128,84 @@ export function RelationPath({
           {relation.label}
         </text>
       )}
-      <text
-        x={startCardinalityPoint.x}
-        y={startCardinalityPoint.y}
-        className="relation-cardinality"
-      >
+      <text x={startCardinalityPoint.x} y={startCardinalityPoint.y} className="relation-cardinality">
         {cardinalityLabel(relation.fromCardinality)}
       </text>
-      <text
-        x={endCardinalityPoint.x}
-        y={endCardinalityPoint.y}
-        className="relation-cardinality"
-      >
+      <text x={endCardinalityPoint.x} y={endCardinalityPoint.y} className="relation-cardinality">
         {cardinalityLabel(relation.toCardinality)}
       </text>
-      {selected && (
+      {!editing && geometry.points.slice(0, -1).map((point, index) => {
+        const next = geometry.points[index + 1];
+        const orientation = relationSegmentOrientation(geometry.points, index);
+        const editable = relationSegmentLength(geometry.points, index) >= 36;
+        return (
+          <path
+            key={`${relation.id}-hitbox-${index}`}
+            d={segmentPath(point, next)}
+            fill="none"
+            stroke="transparent"
+            strokeWidth={18}
+            vectorEffect="non-scaling-stroke"
+            className={`relation-segment-hitbox is-${orientation}`}
+            data-testid="relation-segment"
+            data-relation-id={relation.id}
+            data-segment-index={index}
+            data-orientation={orientation}
+            data-editable={editable ? "true" : "false"}
+            onPointerEnter={() => setHoveredSegment(index)}
+            onPointerLeave={() => setHoveredSegment((current) => current === index ? undefined : current)}
+            onPointerDown={(event) => onSelectPointerDown(event, relation)}
+          >
+            <title>Clique para selecionar; use os pontos para ajustar a linha</title>
+          </path>
+        );
+      })}
+      {selected && !editing && (
         <g className="relation-edit-handles">
           {geometry.points.slice(0, -1).map((point, index) => {
             const next = geometry.points[index + 1];
-            if (Math.hypot(next.x - point.x, next.y - point.y) < 24) return null;
+            if (relationSegmentLength(geometry.points, index) < 36) return null;
             const middle = { x: (point.x + next.x) / 2, y: (point.y + next.y) / 2 };
-            const horizontal = Math.abs(next.x - point.x) >= Math.abs(next.y - point.y);
+            const orientation = relationSegmentOrientation(geometry.points, index);
             return (
               <g
                 key={`${relation.id}-segment-${index}`}
-                className={`segment-handle is-${horizontal ? "horizontal" : "vertical"}`}
+                className="segment-handle"
                 transform={`translate(${middle.x} ${middle.y})`}
-                onPointerDown={(event) => onSegmentPointerDown(event, relation, index)}
+                data-testid="relation-segment-handle"
+                data-segment-index={index}
+                onPointerEnter={() => setHoveredSegment(index)}
+                onPointerLeave={() => setHoveredSegment((current) => current === index ? undefined : current)}
+                onPointerDown={(event) => onSegmentPointPointerDown(event, relation, index)}
               >
-                <title>Arraste para mover este trecho</title>
-                <circle r={6} />
-                <path d={horizontal ? "M -3 0 H 3" : "M 0 -3 V 3"} />
+                <title>Arraste livremente para criar um novo ponto nesta parte da linha</title>
+                <circle className="segment-handle-hitbox" r={13} />
+                <circle className="relation-point-control" r={5.5} />
               </g>
             );
           })}
           {geometry.points.slice(1, -1).map((point, index) => (
-            <rect
+            <g
               key={`${relation.id}-corner-${index + 1}`}
-              x={point.x - 5}
-              y={point.y - 5}
-              width={10}
-              height={10}
-              rx={2}
-              transform={`rotate(45 ${point.x} ${point.y})`}
-              className="corner-handle"
-              onPointerDown={(event) => onCornerPointerDown(event, relation, index + 1)}
+              className="corner-point-handle"
+              transform={`translate(${point.x} ${point.y})`}
+              data-testid="relation-corner-handle"
+              data-point-index={index + 1}
+              onPointerDown={(event) => onCornerPointPointerDown(event, relation, index + 1)}
             >
               <title>Arraste para mover esta curva</title>
-            </rect>
+              <circle className="corner-point-hitbox" r={13} />
+              <circle className="relation-point-control" r={5.5} />
+            </g>
           ))}
         </g>
       )}
     </g>
   );
+}
+
+function segmentPath(a: { x: number; y: number }, b: { x: number; y: number }): string {
+  return `M ${a.x} ${a.y} L ${b.x} ${b.y}`;
 }
 
 function cardinalityLabel(value: RelationModel["fromCardinality"]): string {
@@ -172,7 +214,6 @@ function cardinalityLabel(value: RelationModel["fromCardinality"]): string {
 
 function getFlowArrowCount(length: number): number {
   if (length < 12) return 0;
-
   if (length > 320) return 4;
   if (length > 140) return 3;
   return 2;
@@ -189,14 +230,12 @@ function brightenHex(hex: string, amount: number): string {
   const normalized = hex.trim();
   const match = normalized.match(/^#?([0-9a-fA-F]{6})$/);
   if (!match) return "#5eead4";
-
   const value = match[1];
   const channels = [0, 2, 4].map((offset) => parseInt(value.slice(offset, offset + 2), 16));
   const next = channels
     .map((channel) => Math.round(channel + (255 - channel) * amount))
     .map((channel) => channel.toString(16).padStart(2, "0"))
     .join("");
-
   return `#${next}`;
 }
 
@@ -204,15 +243,8 @@ function cardinalityPoint(endpoint: { x: number; y: number }, neighbor: { x: num
   const dx = neighbor.x - endpoint.x;
   const dy = neighbor.y - endpoint.y;
   const length = Math.hypot(dx, dy) || 1;
-  const along = {
-    x: dx / length,
-    y: dy / length,
-  };
-  const normal = {
-    x: -along.y,
-    y: along.x,
-  };
-
+  const along = { x: dx / length, y: dy / length };
+  const normal = { x: -along.y, y: along.x };
   return {
     x: endpoint.x + along.x * 18 + normal.x * 8,
     y: endpoint.y + along.y * 18 + normal.y * 8 + 4,

@@ -16,6 +16,7 @@ interface TableNodeProps {
   groupVisual?: TableVisual;
   badgeVisuals: BadgeVisualSet;
   selected: boolean;
+  relationObstacle?: boolean;
   relationMode: boolean;
   relationSource?: RelationFieldEndpoint;
   onPointerDown: (event: PointerEvent<SVGGElement>, table: TableModel) => void;
@@ -33,6 +34,7 @@ export function TableNode({
   groupVisual,
   badgeVisuals,
   selected,
+  relationObstacle = false,
   relationMode,
   relationSource,
   onPointerDown,
@@ -54,11 +56,24 @@ export function TableNode({
 
   return (
     <g
-      className={`table-node${selected ? " is-selected" : ""}`}
+      className={`table-node${selected ? " is-selected" : ""}${relationObstacle ? " is-route-obstacle" : ""}`}
+      data-table-id={table.id}
+      data-route-obstacle={relationObstacle ? "true" : "false"}
       transform={`translate(${table.x} ${table.y})`}
       opacity={visual.opacity}
       onPointerDown={(event) => onPointerDown(event, table)}
     >
+      {relationObstacle && (
+        <rect
+          x={-7}
+          y={-7}
+          width={table.width + 14}
+          height={table.height + 14}
+          rx={11}
+          className="table-route-obstacle-indicator"
+          pointerEvents="none"
+        />
+      )}
       <rect
         width={table.width}
         height={table.height}
