@@ -1,0 +1,16 @@
+.git
+.gitignore
+.agents
+.codex
+node_modules
+dist
+saves
+dbml
+coverage
+*.log
+*.tsbuildinfo
+Dockerfile*
+compose*.yaml
+docs
+bugs.txt
+PROMPT.md

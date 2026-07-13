@@ -1,0 +1,1133 @@
+{
+  "version": 2,
+  "project": {
+    "title": "Esquema SQL 2",
+    "summary": "Esta wiki reúne a documentação técnica e funcional do banco de dados do projeto **Esquema SQL 2**.",
+    "introduction": "O projeto **Esquema SQL 2** utiliza o esquema descrito abaixo. Use esta seção para registrar o contexto do produto, seus objetivos e o escopo desta documentação.",
+    "overview": "",
+    "conclusion": "Use esta seção para resumir os principais pontos do modelo de dados, decisões relevantes e próximos passos da documentação."
+  },
+  "tables": [
+    {
+      "id": "wiki-table-ages_user-0k1exhi",
+      "binding": {
+        "sourceId": "ages_user",
+        "name": "ages_user",
+        "aliases": [],
+        "signature": "char(8)|||required|||course|||required|||user_type|||required|||uuid|pk|fk|nullable|||varchar(255)|||nullable|||varchar(255)|||required|||varchar(255)|||required|||varchar(255)|||required|"
+      },
+      "description": "",
+      "fields": [
+        {
+          "id": "wiki-field-id-proi9uq",
+          "binding": {
+            "sourceId": "column-ages_user-id-0",
+            "name": "id",
+            "aliases": [],
+            "signature": "uuid|pk|fk|nullable|"
+          },
+          "description": ""
+        },
+        {
+          "id": "wiki-field-email-jbziau5",
+          "binding": {
+            "sourceId": "column-ages_user-email-1",
+            "name": "email",
+            "aliases": [],
+            "signature": "varchar(255)|||required|"
+          },
+          "description": ""
+        },
+        {
+          "id": "wiki-field-pucrs_id-ltc500o",
+          "binding": {
+            "sourceId": "column-ages_user-pucrs_id-2",
+            "name": "pucrs_id",
+            "aliases": [],
+            "signature": "char(8)|||required|"
+          },
+          "description": ""
+        },
+        {
+          "id": "wiki-field-name-7a3c4qw",
+          "binding": {
+            "sourceId": "column-ages_user-name-3",
+            "name": "name",
+            "aliases": [],
+            "signature": "varchar(255)|||required|"
+          },
+          "description": ""
+        },
+        {
+          "id": "wiki-field-password-l7frx7e",
+          "binding": {
+            "sourceId": "column-ages_user-password-4",
+            "name": "password",
+            "aliases": [],
+            "signature": "varchar(255)|||required|"
+          },
+          "description": ""
+        },
+        {
+          "id": "wiki-field-image_url-5zlt00i",
+          "binding": {
+            "sourceId": "column-ages_user-image_url-5",
+            "name": "image_url",
+            "aliases": [],
+            "signature": "varchar(255)|||nullable|"
+          },
+          "description": ""
+        },
+        {
+          "id": "wiki-field-course-ytzirc5",
+          "binding": {
+            "sourceId": "column-ages_user-course-6",
+            "name": "course",
+            "aliases": [],
+            "signature": "course|||required|"
+          },
+          "description": ""
+        },
+        {
+          "id": "wiki-field-type-qo764x9",
+          "binding": {
+            "sourceId": "column-ages_user-type-7",
+            "name": "type",
+            "aliases": [],
+            "signature": "user_type|||required|"
+          },
+          "description": ""
+        }
+      ],
+      "archivedFields": [],
+      "businessRules": []
+    },
+    {
+      "id": "wiki-table-project-o1ayk7l",
+      "binding": {
+        "sourceId": "project",
+        "name": "project",
+        "aliases": [],
+        "signature": "boolean|||required|||int|||required|||semester|||required|||text|||required|||uuid|pk|fk|nullable|||varchar(255)|||nullable|||varchar(255)|||nullable|||varchar(255)|||nullable|||varchar(255)|||required|"
+      },
+      "description": "",
+      "fields": [
+        {
+          "id": "wiki-field-id-aaoj3fu",
+          "binding": {
+            "sourceId": "column-project-id-0",
+            "name": "id",
+            "aliases": [],
+            "signature": "uuid|pk|fk|nullable|"
+          },
+          "description": ""
+        },
+        {
+          "id": "wiki-field-description-0ofwu47",
+          "binding": {
+            "sourceId": "column-project-description-1",
+            "name": "description",
+            "aliases": [],
+            "signature": "text|||required|"
+          },
+          "description": ""
+        },
+        {
+          "id": "wiki-field-git_lab-4ep43a3",
+          "binding": {
+            "sourceId": "column-project-git_lab-2",
+            "name": "git_lab",
+            "aliases": [],
+            "signature": "varchar(255)|||nullable|"
+          },
+          "description": ""
+        },
+        {
+          "id": "wiki-field-name-u9oj80k",
+          "binding": {
+            "sourceId": "column-project-name-3",
+            "name": "name",
+            "aliases": [],
+            "signature": "varchar(255)|||required|"
+          },
+          "description": ""
+        },
+        {
+          "id": "wiki-field-active-ezdc5ac",
+          "binding": {
+            "sourceId": "column-project-active-4",
+            "name": "active",
+            "aliases": [],
+            "signature": "boolean|||required|"
+          },
+          "description": ""
+        },
+        {
+          "id": "wiki-field-group_photo_url-ejs72hx",
+          "binding": {
+            "sourceId": "column-project-group_photo_url-5",
+            "name": "group_photo_url",
+            "aliases": [],
+            "signature": "varchar(255)|||nullable|"
+          },
+          "description": ""
+        },
+        {
+          "id": "wiki-field-year-yl8vs3k",
+          "binding": {
+            "sourceId": "column-project-year-6",
+            "name": "year",
+            "aliases": [],
+            "signature": "int|||required|"
+          },
+          "description": ""
+        },
+        {
+          "id": "wiki-field-semester-khk6ppd",
+          "binding": {
+            "sourceId": "column-project-semester-7",
+            "name": "semester",
+            "aliases": [],
+            "signature": "semester|||required|"
+          },
+          "description": ""
+        },
+        {
+          "id": "wiki-field-logo_url-00f8qk4",
+          "binding": {
+            "sourceId": "column-project-logo_url-8",
+            "name": "logo_url",
+            "aliases": [],
+            "signature": "varchar(255)|||nullable|"
+          },
+          "description": ""
+        }
+      ],
+      "archivedFields": [],
+      "businessRules": []
+    },
+    {
+      "id": "wiki-table-team-6alqhfk",
+      "binding": {
+        "sourceId": "team",
+        "name": "team",
+        "aliases": [],
+        "signature": "uuid|pk|fk|nullable|||uuid|||required|||uuid|||required|"
+      },
+      "description": "",
+      "fields": [
+        {
+          "id": "wiki-field-id-mbdkcvf",
+          "binding": {
+            "sourceId": "column-team-id-0",
+            "name": "id",
+            "aliases": [],
+            "signature": "uuid|pk|fk|nullable|"
+          },
+          "description": ""
+        },
+        {
+          "id": "wiki-field-teacher_id-6xmw5ee",
+          "binding": {
+            "sourceId": "column-team-teacher_id-1",
+            "name": "teacher_id",
+            "aliases": [],
+            "signature": "uuid|||required|"
+          },
+          "description": ""
+        },
+        {
+          "id": "wiki-field-project_id-dzxxhph",
+          "binding": {
+            "sourceId": "column-team-project_id-2",
+            "name": "project_id",
+            "aliases": [],
+            "signature": "uuid|||required|"
+          },
+          "description": ""
+        }
+      ],
+      "archivedFields": [],
+      "businessRules": []
+    },
+    {
+      "id": "wiki-table-class-8oolurt",
+      "binding": {
+        "sourceId": "class",
+        "name": "class",
+        "aliases": [],
+        "signature": "boolean|||required|||int|||required|||int|||required|||semester|||required|||uuid|pk|fk|nullable|||uuid|||required|"
+      },
+      "description": "",
+      "fields": [
+        {
+          "id": "wiki-field-id-fjwfc4o",
+          "binding": {
+            "sourceId": "column-class-id-0",
+            "name": "id",
+            "aliases": [],
+            "signature": "uuid|pk|fk|nullable|"
+          },
+          "description": ""
+        },
+        {
+          "id": "wiki-field-number-3qazedx",
+          "binding": {
+            "sourceId": "column-class-number-1",
+            "name": "number",
+            "aliases": [],
+            "signature": "int|||required|"
+          },
+          "description": ""
+        },
+        {
+          "id": "wiki-field-year-gc1p0re",
+          "binding": {
+            "sourceId": "column-class-year-2",
+            "name": "year",
+            "aliases": [],
+            "signature": "int|||required|"
+          },
+          "description": ""
+        },
+        {
+          "id": "wiki-field-semester-p9xw5kc",
+          "binding": {
+            "sourceId": "column-class-semester-3",
+            "name": "semester",
+            "aliases": [],
+            "signature": "semester|||required|"
+          },
+          "description": ""
+        },
+        {
+          "id": "wiki-field-teacher_id-e4h9hkh",
+          "binding": {
+            "sourceId": "column-class-teacher_id-4",
+            "name": "teacher_id",
+            "aliases": [],
+            "signature": "uuid|||required|"
+          },
+          "description": ""
+        },
+        {
+          "id": "wiki-field-active-k8nq2s0",
+          "binding": {
+            "sourceId": "column-class-active-5",
+            "name": "active",
+            "aliases": [],
+            "signature": "boolean|||required|"
+          },
+          "description": ""
+        }
+      ],
+      "archivedFields": [],
+      "businessRules": []
+    },
+    {
+      "id": "wiki-table-semester_profile-s7uc0h4",
+      "binding": {
+        "sourceId": "semester_profile",
+        "name": "semester_profile",
+        "aliases": [],
+        "signature": "ages_role|||required|||numeric(4,2)|||nullable|||semester_status|||required|||uuid|pk|fk|nullable|||uuid|||required|||uuid|||required|||uuid|||required|"
+      },
+      "description": "",
+      "fields": [
+        {
+          "id": "wiki-field-id-z1hgaqy",
+          "binding": {
+            "sourceId": "column-semester_profile-id-0",
+            "name": "id",
+            "aliases": [],
+            "signature": "uuid|pk|fk|nullable|"
+          },
+          "description": ""
+        },
+        {
+          "id": "wiki-field-grade-m905csm",
+          "binding": {
+            "sourceId": "column-semester_profile-grade-1",
+            "name": "grade",
+            "aliases": [],
+            "signature": "numeric(4,2)|||nullable|"
+          },
+          "description": ""
+        },
+        {
+          "id": "wiki-field-ages_role-o9m3m8r",
+          "binding": {
+            "sourceId": "column-semester_profile-ages_role-2",
+            "name": "ages_role",
+            "aliases": [],
+            "signature": "ages_role|||required|"
+          },
+          "description": ""
+        },
+        {
+          "id": "wiki-field-student_status-s30krt3",
+          "binding": {
+            "sourceId": "column-semester_profile-student_status-3",
+            "name": "student_status",
+            "aliases": [],
+            "signature": "semester_status|||required|"
+          },
+          "description": ""
+        },
+        {
+          "id": "wiki-field-user_id-lxbhvau",
+          "binding": {
+            "sourceId": "column-semester_profile-user_id-4",
+            "name": "user_id",
+            "aliases": [],
+            "signature": "uuid|||required|"
+          },
+          "description": ""
+        },
+        {
+          "id": "wiki-field-class_id-hhc9sle",
+          "binding": {
+            "sourceId": "column-semester_profile-class_id-5",
+            "name": "class_id",
+            "aliases": [],
+            "signature": "uuid|||required|"
+          },
+          "description": ""
+        },
+        {
+          "id": "wiki-field-team_id-ebe99bk",
+          "binding": {
+            "sourceId": "column-semester_profile-team_id-6",
+            "name": "team_id",
+            "aliases": [],
+            "signature": "uuid|||required|"
+          },
+          "description": ""
+        }
+      ],
+      "archivedFields": [],
+      "businessRules": []
+    },
+    {
+      "id": "wiki-table-lesson-6etnjyx",
+      "binding": {
+        "sourceId": "lesson",
+        "name": "lesson",
+        "aliases": [],
+        "signature": "timestamp|||required|||uuid|pk|fk|nullable|||uuid|||required|"
+      },
+      "description": "",
+      "fields": [
+        {
+          "id": "wiki-field-id-eieyeju",
+          "binding": {
+            "sourceId": "column-lesson-id-0",
+            "name": "id",
+            "aliases": [],
+            "signature": "uuid|pk|fk|nullable|"
+          },
+          "description": ""
+        },
+        {
+          "id": "wiki-field-date-kvpbr5h",
+          "binding": {
+            "sourceId": "column-lesson-date-1",
+            "name": "date",
+            "aliases": [],
+            "signature": "timestamp|||required|"
+          },
+          "description": ""
+        },
+        {
+          "id": "wiki-field-class_id-uxwcgef",
+          "binding": {
+            "sourceId": "column-lesson-class_id-2",
+            "name": "class_id",
+            "aliases": [],
+            "signature": "uuid|||required|"
+          },
+          "description": ""
+        }
+      ],
+      "archivedFields": [],
+      "businessRules": []
+    },
+    {
+      "id": "wiki-table-otp-rfezt1w",
+      "binding": {
+        "sourceId": "otp",
+        "name": "otp",
+        "aliases": [],
+        "signature": "boolean|||required|||timestamp|||required|||uuid|pk||nullable|||uuid|||required|||varchar(255)|||required|"
+      },
+      "description": "",
+      "fields": [
+        {
+          "id": "wiki-field-id-gj3bk3e",
+          "binding": {
+            "sourceId": "column-otp-id-0",
+            "name": "id",
+            "aliases": [],
+            "signature": "uuid|pk||nullable|"
+          },
+          "description": ""
+        },
+        {
+          "id": "wiki-field-user_id-h28fwu4",
+          "binding": {
+            "sourceId": "column-otp-user_id-1",
+            "name": "user_id",
+            "aliases": [],
+            "signature": "uuid|||required|"
+          },
+          "description": ""
+        },
+        {
+          "id": "wiki-field-expires_at-bwexd3f",
+          "binding": {
+            "sourceId": "column-otp-expires_at-2",
+            "name": "expires_at",
+            "aliases": [],
+            "signature": "timestamp|||required|"
+          },
+          "description": ""
+        },
+        {
+          "id": "wiki-field-token-uiwkp1x",
+          "binding": {
+            "sourceId": "column-otp-token-3",
+            "name": "token",
+            "aliases": [],
+            "signature": "varchar(255)|||required|"
+          },
+          "description": ""
+        },
+        {
+          "id": "wiki-field-used-q1tka8x",
+          "binding": {
+            "sourceId": "column-otp-used-4",
+            "name": "used",
+            "aliases": [],
+            "signature": "boolean|||required|"
+          },
+          "description": ""
+        }
+      ],
+      "archivedFields": [],
+      "businessRules": []
+    },
+    {
+      "id": "wiki-table-schedule-l2fzsaj",
+      "binding": {
+        "sourceId": "schedule",
+        "name": "schedule",
+        "aliases": [],
+        "signature": "char(10)|||required|||char(10)|||required|||time(0)|||required|||timestamp|||required|||uuid|pk||nullable|||uuid|||required|"
+      },
+      "description": "",
+      "fields": [
+        {
+          "id": "wiki-field-id-e7cqzp8",
+          "binding": {
+            "sourceId": "column-schedule-id-0",
+            "name": "id",
+            "aliases": [],
+            "signature": "uuid|pk||nullable|"
+          },
+          "description": ""
+        },
+        {
+          "id": "wiki-field-admin_id-bjk2j8w",
+          "binding": {
+            "sourceId": "column-schedule-admin_id-1",
+            "name": "admin_id",
+            "aliases": [],
+            "signature": "uuid|||required|"
+          },
+          "description": ""
+        },
+        {
+          "id": "wiki-field-event-fo8fghr",
+          "binding": {
+            "sourceId": "column-schedule-event-2",
+            "name": "event",
+            "aliases": [],
+            "signature": "char(10)|||required|"
+          },
+          "description": ""
+        },
+        {
+          "id": "wiki-field-event_date-zl7z67c",
+          "binding": {
+            "sourceId": "column-schedule-event_date-3",
+            "name": "event_date",
+            "aliases": [],
+            "signature": "timestamp|||required|"
+          },
+          "description": ""
+        },
+        {
+          "id": "wiki-field-event_period-mnqbe3j",
+          "binding": {
+            "sourceId": "column-schedule-event_period-4",
+            "name": "event_period",
+            "aliases": [],
+            "signature": "char(10)|||required|"
+          },
+          "description": ""
+        },
+        {
+          "id": "wiki-field-event_time-7aj38hl",
+          "binding": {
+            "sourceId": "column-schedule-event_time-5",
+            "name": "event_time",
+            "aliases": [],
+            "signature": "time(0)|||required|"
+          },
+          "description": ""
+        }
+      ],
+      "archivedFields": [],
+      "businessRules": []
+    },
+    {
+      "id": "wiki-table-technology-grtbqo4",
+      "binding": {
+        "sourceId": "technology",
+        "name": "technology",
+        "aliases": [],
+        "signature": "technology_type|||required|||uuid|pk|fk|nullable|||varchar(255)|||required|"
+      },
+      "description": "",
+      "fields": [
+        {
+          "id": "wiki-field-id-ktml386",
+          "binding": {
+            "sourceId": "column-technology-id-0",
+            "name": "id",
+            "aliases": [],
+            "signature": "uuid|pk|fk|nullable|"
+          },
+          "description": ""
+        },
+        {
+          "id": "wiki-field-name-wz1s0ah",
+          "binding": {
+            "sourceId": "column-technology-name-1",
+            "name": "name",
+            "aliases": [],
+            "signature": "varchar(255)|||required|"
+          },
+          "description": ""
+        },
+        {
+          "id": "wiki-field-type-tu77vyu",
+          "binding": {
+            "sourceId": "column-technology-type-2",
+            "name": "type",
+            "aliases": [],
+            "signature": "technology_type|||required|"
+          },
+          "description": ""
+        }
+      ],
+      "archivedFields": [],
+      "businessRules": []
+    },
+    {
+      "id": "wiki-table-project_stack-4wlqdkn",
+      "binding": {
+        "sourceId": "project_stack",
+        "name": "project_stack",
+        "aliases": [],
+        "signature": "uuid|pk||nullable|||uuid|||required|||uuid|||required|"
+      },
+      "description": "",
+      "fields": [
+        {
+          "id": "wiki-field-id-85ugt6j",
+          "binding": {
+            "sourceId": "column-project_stack-id-0",
+            "name": "id",
+            "aliases": [],
+            "signature": "uuid|pk||nullable|"
+          },
+          "description": ""
+        },
+        {
+          "id": "wiki-field-project_id-c2v6wa4",
+          "binding": {
+            "sourceId": "column-project_stack-project_id-1",
+            "name": "project_id",
+            "aliases": [],
+            "signature": "uuid|||required|"
+          },
+          "description": ""
+        },
+        {
+          "id": "wiki-field-technology_id-3urqn82",
+          "binding": {
+            "sourceId": "column-project_stack-technology_id-2",
+            "name": "technology_id",
+            "aliases": [],
+            "signature": "uuid|||required|"
+          },
+          "description": ""
+        }
+      ],
+      "archivedFields": [],
+      "businessRules": []
+    },
+    {
+      "id": "wiki-table-report-ouw427r",
+      "binding": {
+        "sourceId": "report",
+        "name": "report",
+        "aliases": [],
+        "signature": "numeric(4,2)|||nullable|||report_type|||required|||text|||nullable|||timestamp|||required|||timestamp|||required|||timestap|||nullable|||uuid|pk|fk|nullable|||uuid|||required|||varchar(255)|||nullable|||varchar(255)|||nullable|"
+      },
+      "description": "",
+      "fields": [
+        {
+          "id": "wiki-field-id-e1hfn44",
+          "binding": {
+            "sourceId": "column-report-id-0",
+            "name": "id",
+            "aliases": [],
+            "signature": "uuid|pk|fk|nullable|"
+          },
+          "description": ""
+        },
+        {
+          "id": "wiki-field-student_id-f383uqx",
+          "binding": {
+            "sourceId": "column-report-student_id-1",
+            "name": "student_id",
+            "aliases": [],
+            "signature": "uuid|||required|"
+          },
+          "description": ""
+        },
+        {
+          "id": "wiki-field-create_date-ubx1xb2",
+          "binding": {
+            "sourceId": "column-report-create_date-2",
+            "name": "create_date",
+            "aliases": [],
+            "signature": "timestamp|||required|"
+          },
+          "description": ""
+        },
+        {
+          "id": "wiki-field-edit_date-cu9mhut",
+          "binding": {
+            "sourceId": "column-report-edit_date-3",
+            "name": "edit_date",
+            "aliases": [],
+            "signature": "timestamp|||required|"
+          },
+          "description": ""
+        },
+        {
+          "id": "wiki-field-grade-os8gml7",
+          "binding": {
+            "sourceId": "column-report-grade-4",
+            "name": "grade",
+            "aliases": [],
+            "signature": "numeric(4,2)|||nullable|"
+          },
+          "description": ""
+        },
+        {
+          "id": "wiki-field-type-l36lkhf",
+          "binding": {
+            "sourceId": "column-report-type-5",
+            "name": "type",
+            "aliases": [],
+            "signature": "report_type|||required|"
+          },
+          "description": ""
+        },
+        {
+          "id": "wiki-field-url_archive-pptmvnm",
+          "binding": {
+            "sourceId": "column-report-url_archive-6",
+            "name": "url_archive",
+            "aliases": [],
+            "signature": "varchar(255)|||nullable|"
+          },
+          "description": ""
+        },
+        {
+          "id": "wiki-field-comment-n7we5l5",
+          "binding": {
+            "sourceId": "column-report-comment-7",
+            "name": "comment",
+            "aliases": [],
+            "signature": "text|||nullable|"
+          },
+          "description": ""
+        },
+        {
+          "id": "wiki-field-correction_url-koiip7t",
+          "binding": {
+            "sourceId": "column-report-correction_url-8",
+            "name": "correction_url",
+            "aliases": [],
+            "signature": "varchar(255)|||nullable|"
+          },
+          "description": ""
+        },
+        {
+          "id": "wiki-field-revision_date-oq44kmi",
+          "binding": {
+            "sourceId": "column-report-revision_date-9",
+            "name": "revision_date",
+            "aliases": [],
+            "signature": "timestap|||nullable|"
+          },
+          "description": ""
+        }
+      ],
+      "archivedFields": [],
+      "businessRules": []
+    },
+    {
+      "id": "wiki-table-examining_board-07vubjx",
+      "binding": {
+        "sourceId": "examining_board",
+        "name": "examining_board",
+        "aliases": [],
+        "signature": "date|||required|||numeric(4,2)|||required|||uuid|pk|fk|nullable|||uuid|||required|||varchar(255)|||required|"
+      },
+      "description": "",
+      "fields": [
+        {
+          "id": "wiki-field-id-5n5ff2n",
+          "binding": {
+            "sourceId": "column-examining_board-id-0",
+            "name": "id",
+            "aliases": [],
+            "signature": "uuid|pk|fk|nullable|"
+          },
+          "description": ""
+        },
+        {
+          "id": "wiki-field-date-x72abe5",
+          "binding": {
+            "sourceId": "column-examining_board-date-1",
+            "name": "date",
+            "aliases": [],
+            "signature": "date|||required|"
+          },
+          "description": ""
+        },
+        {
+          "id": "wiki-field-grade-604v7o9",
+          "binding": {
+            "sourceId": "column-examining_board-grade-2",
+            "name": "grade",
+            "aliases": [],
+            "signature": "numeric(4,2)|||required|"
+          },
+          "description": ""
+        },
+        {
+          "id": "wiki-field-room-tntse0a",
+          "binding": {
+            "sourceId": "column-examining_board-room-3",
+            "name": "room",
+            "aliases": [],
+            "signature": "varchar(255)|||required|"
+          },
+          "description": ""
+        },
+        {
+          "id": "wiki-field-student_id-j3dhogx",
+          "binding": {
+            "sourceId": "column-examining_board-student_id-4",
+            "name": "student_id",
+            "aliases": [],
+            "signature": "uuid|||required|"
+          },
+          "description": ""
+        }
+      ],
+      "archivedFields": [],
+      "businessRules": []
+    },
+    {
+      "id": "wiki-table-examining_board_member-loq8189",
+      "binding": {
+        "sourceId": "examining_board_member",
+        "name": "examining_board_member",
+        "aliases": [],
+        "signature": "uuid|pk||nullable|||uuid|||required|||uuid|||required|"
+      },
+      "description": "",
+      "fields": [
+        {
+          "id": "wiki-field-id-t1ivb9n",
+          "binding": {
+            "sourceId": "column-examining_board_member-id-0",
+            "name": "id",
+            "aliases": [],
+            "signature": "uuid|pk||nullable|"
+          },
+          "description": ""
+        },
+        {
+          "id": "wiki-field-examining_board_id-34f190v",
+          "binding": {
+            "sourceId": "column-examining_board_member-examining_board_id-1",
+            "name": "examining_board_id",
+            "aliases": [],
+            "signature": "uuid|||required|"
+          },
+          "description": ""
+        },
+        {
+          "id": "wiki-field-teacher_id-lcab4zk",
+          "binding": {
+            "sourceId": "column-examining_board_member-teacher_id-2",
+            "name": "teacher_id",
+            "aliases": [],
+            "signature": "uuid|||required|"
+          },
+          "description": ""
+        }
+      ],
+      "archivedFields": [],
+      "businessRules": []
+    },
+    {
+      "id": "wiki-table-attendance-e57rwov",
+      "binding": {
+        "sourceId": "attendance",
+        "name": "attendance",
+        "aliases": [],
+        "signature": "uuid|pk||nullable|||uuid|||required|||uuid|||required|"
+      },
+      "description": "",
+      "fields": [
+        {
+          "id": "wiki-field-id-h8u96ky",
+          "binding": {
+            "sourceId": "column-attendance-id-0",
+            "name": "id",
+            "aliases": [],
+            "signature": "uuid|pk||nullable|"
+          },
+          "description": ""
+        },
+        {
+          "id": "wiki-field-lesson_id-9eta7w9",
+          "binding": {
+            "sourceId": "column-attendance-lesson_id-1",
+            "name": "lesson_id",
+            "aliases": [],
+            "signature": "uuid|||required|"
+          },
+          "description": ""
+        },
+        {
+          "id": "wiki-field-student_id-hz11jc4",
+          "binding": {
+            "sourceId": "column-attendance-student_id-2",
+            "name": "student_id",
+            "aliases": [],
+            "signature": "uuid|||required|"
+          },
+          "description": ""
+        }
+      ],
+      "archivedFields": [],
+      "businessRules": []
+    },
+    {
+      "id": "wiki-table-sprint_report-blwynum",
+      "binding": {
+        "sourceId": "sprint_report",
+        "name": "sprint_report",
+        "aliases": [],
+        "signature": "sprint|||required|||text|||required|||text|||required|||text|||required|||text|||required|||text|||required|||uuid|pk||nullable|||uuid|||required|unique"
+      },
+      "description": "",
+      "fields": [
+        {
+          "id": "wiki-field-id-efx4qgz",
+          "binding": {
+            "sourceId": "column-sprint_report-id-0",
+            "name": "id",
+            "aliases": [],
+            "signature": "uuid|pk||nullable|"
+          },
+          "description": ""
+        },
+        {
+          "id": "wiki-field-activity_completed-f7z95yi",
+          "binding": {
+            "sourceId": "column-sprint_report-activity_completed-1",
+            "name": "activity_completed",
+            "aliases": [],
+            "signature": "text|||required|"
+          },
+          "description": ""
+        },
+        {
+          "id": "wiki-field-learned_lessons-j8wfc4d",
+          "binding": {
+            "sourceId": "column-sprint_report-learned_lessons-2",
+            "name": "learned_lessons",
+            "aliases": [],
+            "signature": "text|||required|"
+          },
+          "description": ""
+        },
+        {
+          "id": "wiki-field-next_steps-c42vl1r",
+          "binding": {
+            "sourceId": "column-sprint_report-next_steps-3",
+            "name": "next_steps",
+            "aliases": [],
+            "signature": "text|||required|"
+          },
+          "description": ""
+        },
+        {
+          "id": "wiki-field-predicted_activity-70z53aj",
+          "binding": {
+            "sourceId": "column-sprint_report-predicted_activity-4",
+            "name": "predicted_activity",
+            "aliases": [],
+            "signature": "text|||required|"
+          },
+          "description": ""
+        },
+        {
+          "id": "wiki-field-problems_encountered-ymx5mo6",
+          "binding": {
+            "sourceId": "column-sprint_report-problems_encountered-5",
+            "name": "problems_encountered",
+            "aliases": [],
+            "signature": "text|||required|"
+          },
+          "description": ""
+        },
+        {
+          "id": "wiki-field-sprint-uqcuk6b",
+          "binding": {
+            "sourceId": "column-sprint_report-sprint-6",
+            "name": "sprint",
+            "aliases": [],
+            "signature": "sprint|||required|"
+          },
+          "description": ""
+        },
+        {
+          "id": "wiki-field-report_id-rvpgcju",
+          "binding": {
+            "sourceId": "column-sprint_report-report_id-7",
+            "name": "report_id",
+            "aliases": [],
+            "signature": "uuid|||required|unique"
+          },
+          "description": ""
+        }
+      ],
+      "archivedFields": [],
+      "businessRules": []
+    },
+    {
+      "id": "wiki-table-hours_report-qfyjo2h",
+      "binding": {
+        "sourceId": "hours_report",
+        "name": "hours_report",
+        "aliases": [],
+        "signature": "boolean|||required|||text|||nullable|||text|||nullable|||timestamp|||nullable|||timestamp|||required|||uuid|pk||nullable|||uuid|||required|unique"
+      },
+      "description": "",
+      "fields": [
+        {
+          "id": "wiki-field-id-cd35fd5",
+          "binding": {
+            "sourceId": "column-hours_report-id-0",
+            "name": "id",
+            "aliases": [],
+            "signature": "uuid|pk||nullable|"
+          },
+          "description": ""
+        },
+        {
+          "id": "wiki-field-activities-nbthcr8",
+          "binding": {
+            "sourceId": "column-hours_report-activities-1",
+            "name": "activities",
+            "aliases": [],
+            "signature": "text|||nullable|"
+          },
+          "description": ""
+        },
+        {
+          "id": "wiki-field-entry_time-muhwewl",
+          "binding": {
+            "sourceId": "column-hours_report-entry_time-2",
+            "name": "entry_time",
+            "aliases": [],
+            "signature": "timestamp|||required|"
+          },
+          "description": ""
+        },
+        {
+          "id": "wiki-field-exit_time-x2ino9r",
+          "binding": {
+            "sourceId": "column-hours_report-exit_time-3",
+            "name": "exit_time",
+            "aliases": [],
+            "signature": "timestamp|||nullable|"
+          },
+          "description": ""
+        },
+        {
+          "id": "wiki-field-rejection_justification-56rorzu",
+          "binding": {
+            "sourceId": "column-hours_report-rejection_justification-4",
+            "name": "rejection_justification",
+            "aliases": [],
+            "signature": "text|||nullable|"
+          },
+          "description": ""
+        },
+        {
+          "id": "wiki-field-approved-wx8l18o",
+          "binding": {
+            "sourceId": "column-hours_report-approved-5",
+            "name": "approved",
+            "aliases": [],
+            "signature": "boolean|||required|"
+          },
+          "description": ""
+        },
+        {
+          "id": "wiki-field-report_id-qyfdav4",
+          "binding": {
+            "sourceId": "column-hours_report-report_id-6",
+            "name": "report_id",
+            "aliases": [],
+            "signature": "uuid|||required|unique"
+          },
+          "description": ""
+        }
+      ],
+      "archivedFields": [],
+      "businessRules": []
+    }
+  ],
+  "archivedTables": [],
+  "customSections": [],
+  "options": {
+    "includeToc": true,
+    "includeEnums": true,
+    "includeRelationships": true
+  }
+}

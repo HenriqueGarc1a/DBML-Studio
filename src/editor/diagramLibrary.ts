@@ -1,5 +1,4 @@
 import { defaultDiagramVisual } from "../model/defaults";
-import { uniqueId } from "../utils/id";
 import { readJson, safeGetItem, safeSetItem, writeJson } from "../utils/storage";
 import { demoDbml } from "./demoDbml";
 
@@ -8,6 +7,7 @@ export interface SavedDiagram {
   name: string;
   dbml: string;
   wiki?: string;
+  wikiDocument?: string;
   uiLayout?: string;
   previewDataUrl?: string;
   updatedAt: number;
@@ -29,7 +29,7 @@ export function loadDiagramLibrary(): DiagramLibrary {
   const stored = readStoredDiagrams();
   const legacyDbml = safeGetItem(LEGACY_SAVED_DBML_KEY);
   const diagrams = stored.length ? stored : [{
-    id: uniqueId("diagram"), name: "Diagrama 1", dbml: migrateDarkOnlyDbml(legacyDbml ?? demoDbml),
+    id: `file:${dbmlFilename("Diagrama 1")}`, name: "Diagrama 1", dbml: migrateDarkOnlyDbml(legacyDbml ?? demoDbml),
     updatedAt: Date.now(), filename: dbmlFilename("Diagrama 1"),
   }];
   const activeId = safeGetItem(ACTIVE_DIAGRAM_STORAGE_KEY);
@@ -80,5 +80,7 @@ function readStoredDiagrams(): SavedDiagram[] {
 function isStoredDiagram(value: unknown): value is SavedDiagram {
   if (!value || typeof value !== "object") return false;
   const item = value as Partial<SavedDiagram>;
-  return typeof item.id === "string" && typeof item.name === "string" && typeof item.dbml === "string" && typeof item.updatedAt === "number";
+  return typeof item.id === "string" && typeof item.name === "string" && typeof item.dbml === "string" &&
+    (item.wiki === undefined || typeof item.wiki === "string") &&
+    (item.wikiDocument === undefined || typeof item.wikiDocument === "string") && typeof item.updatedAt === "number";
 }

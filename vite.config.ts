@@ -26,30 +26,37 @@ function dbmlFilesPlugin(configuredSavesDir?: string, configuredLegacyDir?: stri
           await migrateLegacySaves(legacyDir, savesDir);
           await mkdir(savesDir, { recursive: true });
           const entries = await readdir(savesDir);
-          const files = await Promise.all(
+          const candidates = await Promise.all(
             entries
               .map(async (folder) => {
-                const saveDir = path.join(savesDir, folder);
-                const filePath = path.join(saveDir, "diagram.dbml");
-                const [dbml, stats, uiLayout, preview, wiki] = await Promise.all([
-                  readFile(filePath, "utf8"),
-                  stat(filePath),
-                  readFile(path.join(saveDir, "ui.json"), "utf8").catch(() => undefined),
-                  readFile(path.join(saveDir, "preview.webp")).catch(() => undefined),
-                  readFile(path.join(saveDir, "wiki.md"), "utf8").catch(() => undefined),
-                ]);
+                try {
+                  const saveDir = path.join(savesDir, folder);
+                  const filePath = path.join(saveDir, "diagram.dbml");
+                  const [dbml, stats, uiLayout, preview, wiki, wikiDocument] = await Promise.all([
+                    readFile(filePath, "utf8"),
+                    stat(filePath),
+                    readFile(path.join(saveDir, "ui.json"), "utf8").catch(() => undefined),
+                    readFile(path.join(saveDir, "preview.webp")).catch(() => undefined),
+                    readFile(path.join(saveDir, "wiki.md"), "utf8").catch(() => undefined),
+                    readFile(path.join(saveDir, "wiki.json"), "utf8").catch(() => undefined),
+                  ]);
 
-                return {
-                  filename: `${folder}.dbml`,
-                  name: folder.replace(/-/g, " "),
-                  dbml,
-                  wiki,
-                  uiLayout,
-                  previewDataUrl: preview ? `data:image/webp;base64,${preview.toString("base64")}` : undefined,
-                  updatedAt: stats.mtimeMs,
-                };
+                  return {
+                    filename: `${folder}.dbml`,
+                    name: folder.replace(/-/g, " "),
+                    dbml,
+                    wiki,
+                    wikiDocument,
+                    uiLayout,
+                    previewDataUrl: preview ? `data:image/webp;base64,${preview.toString("base64")}` : undefined,
+                    updatedAt: stats.mtimeMs,
+                  };
+                } catch {
+                  return undefined;
+                }
               }),
           );
+          const files = candidates.filter((file) => file !== undefined);
 
           sendJson(response, 200, { files });
         } catch (error) {
@@ -99,14 +106,27 @@ function dbmlFilesPlugin(configuredSavesDir?: string, configuredLegacyDir?: stri
           const body = await readJsonBody(request);
           const filename = safeDbmlFilename(String(body.filename ?? ""));
           const contents = typeof body.contents === "string" ? body.contents : "";
+          const document = typeof body.document === "string" ? body.document : undefined;
           if (!filename) {
             sendJson(response, 400, { error: "Invalid wiki payload" });
             return;
           }
 
           const saveDir = saveDirectory(savesDir, filename);
-          await mkdir(saveDir, { recursive: true });
+          await stat(path.join(saveDir, "diagram.dbml"));
+          if (document !== undefined) {
+            try {
+              const parsed = JSON.parse(document);
+              if (!parsed || typeof parsed !== "object") throw new Error("Invalid Wiki document");
+            } catch {
+              sendJson(response, 400, { error: "Invalid structured Wiki document" });
+              return;
+            }
+          }
           await writeFile(path.join(saveDir, "wiki.md"), contents, "utf8");
+          if (document !== undefined) {
+            await writeFile(path.join(saveDir, "wiki.json"), document, "utf8");
+          }
           sendJson(response, 200, { filename });
         } catch (error) {
           sendJson(response, 500, { error: formatError(error) });
@@ -122,6 +142,10 @@ function dbmlFilesPlugin(configuredSavesDir?: string, configuredLegacyDir?: stri
           const body = await readJsonBody(request);
           const from = safeDbmlFilename(String(body.from ?? ""));
           const to = safeDbmlFilename(String(body.to ?? ""));
+          if (!from || !to) {
+            sendJson(response, 400, { error: "Invalid rename payload" });
+            return;
+          }
           if (from !== to) {
             await rename(saveDirectory(savesDir, from), saveDirectory(savesDir, to));
           }
@@ -139,6 +163,10 @@ function dbmlFilesPlugin(configuredSavesDir?: string, configuredLegacyDir?: stri
         try {
           const body = await readJsonBody(request);
           const filename = safeDbmlFilename(String(body.filename ?? ""));
+          if (!filename) {
+            sendJson(response, 400, { error: "Invalid delete payload" });
+            return;
+          }
           await rm(saveDirectory(savesDir, filename), { recursive: true, force: true });
           sendJson(response, 200, { filename });
         } catch (error) {
@@ -173,8 +201,10 @@ function safeDbmlFilename(value: string): string {
     .replace(/[/\\]/g, "-")
     .replace(/[^a-zA-Z0-9_.-]+/g, "-")
     .replace(/^-+|-+$/g, "");
-  const filename = cleaned || "diagram.dbml";
-  return filename.endsWith(".dbml") ? filename : `${filename}.dbml`;
+  if (!cleaned) return "";
+  const filename = cleaned.endsWith(".dbml") ? cleaned : `${cleaned}.dbml`;
+  const stem = filename.replace(/\.dbml$/i, "");
+  return !stem || stem === "." || stem === ".." ? "" : filename;
 }
 
 function readJsonBody(request: IncomingMessage): Promise<Record<string, unknown>> {

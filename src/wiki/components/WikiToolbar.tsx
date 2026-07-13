@@ -12,15 +12,15 @@ import {
   Pilcrow,
   Quote,
   Table2,
+  type LucideIcon,
 } from "lucide-react";
-import type { ComponentType } from "react";
 import type { MarkdownEditAction } from "../markdownEditing";
 
 interface WikiToolbarProps {
   onAction(action: MarkdownEditAction): void;
 }
 
-const tools: Array<{ action: MarkdownEditAction; label: string; icon: ComponentType<{ size?: number }> }> = [
+const tools: Array<{ action: MarkdownEditAction; label: string; icon: LucideIcon }> = [
   { action: "heading-1", label: "Título 1", icon: Heading1 },
   { action: "heading-2", label: "Título 2", icon: Heading2 },
   { action: "bold", label: "Negrito (Ctrl+B)", icon: Bold },

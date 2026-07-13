@@ -1,0 +1,22 @@
+services:
+  dbml-studio:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: dbml-studio:local
+    container_name: dbml-studio
+    init: true
+    restart: unless-stopped
+    ports:
+      - "${DBML_STUDIO_HOST:-127.0.0.1}:${DBML_STUDIO_PORT:-8080}:8080"
+    environment:
+      MAX_BODY_BYTES: "${MAX_BODY_BYTES:-33554432}"
+    volumes:
+      - ./saves:/data/saves
+    read_only: true
+    tmpfs:
+      - /tmp:size=16m,mode=1777
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL

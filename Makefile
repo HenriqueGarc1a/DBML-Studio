@@ -1,4 +1,4 @@
-.PHONY: install dev build test test-watch typecheck preview audit clean
+.PHONY: install dev build test test-watch typecheck preview audit docker-build docker-up docker-down docker-logs clean
 
 install:
 	npm install
@@ -23,6 +23,18 @@ preview:
 
 audit:
 	npm audit
+
+docker-build:
+	docker compose build
+
+docker-up:
+	docker compose up --build -d
+
+docker-down:
+	docker compose down
+
+docker-logs:
+	docker compose logs -f
 
 clean:
 	rm -rf dist

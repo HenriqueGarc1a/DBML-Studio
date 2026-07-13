@@ -183,6 +183,11 @@ button.is-toggle-active {
   margin-left: auto;
 }
 
+.project-topbar .toolbar > button {
+  flex: 0 0 auto;
+  width: auto;
+}
+
 .project-tabs {
   flex: 0 0 auto;
   display: inline-flex;

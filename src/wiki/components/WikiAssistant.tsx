@@ -43,6 +43,7 @@ export function WikiAssistant({
         <button type="button" onClick={onRefreshDictionary} disabled={!hasContent}>
           <RefreshCw size={15} />Atualizar dicionário
         </button>
+        {hasContent && <small className="wiki-tool-hint">Preserva descrições e regras escritas por você.</small>}
         {!hasContent && <button type="button" className="secondary-button" onClick={onStartBlank}><FilePlus2 size={15} />Começar em branco</button>}
       </div>
 

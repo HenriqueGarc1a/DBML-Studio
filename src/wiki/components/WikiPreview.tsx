@@ -1,4 +1,4 @@
-import { createElement, type ReactNode } from "react";
+import { createElement, useMemo, type ReactNode } from "react";
 import {
   isExternalMarkdownHref,
   parseMarkdownBlocks,
@@ -17,14 +17,19 @@ export function WikiPreview({
   className,
   emptyMessage = "Comece a escrever para visualizar a wiki.",
 }: WikiPreviewProps) {
-  const blocks = parseMarkdownBlocks(markdown);
-  const classes = ["wiki-markdown-preview", className].filter(Boolean).join(" ");
+  const blocks = useMemo(() => parseMarkdownBlocks(markdown), [markdown]);
+  const classes = ["wiki-document-pane", "wiki-preview-pane", className].filter(Boolean).join(" ");
 
-  if (blocks.length === 0) {
-    return <article className={`${classes} is-empty`}><p>{emptyMessage}</p></article>;
-  }
-
-  return <article className={classes}>{blocks.map((block, index) => renderBlock(block, `block-${index}`))}</article>;
+  return (
+    <section className={classes} aria-label="Preview da wiki">
+      <div className="wiki-pane-heading"><div><strong>Preview</strong><span>Atualização instantânea</span></div></div>
+      <div className="wiki-preview-scroll">
+        {blocks.length === 0
+          ? <div className="wiki-preview-empty"><p>{emptyMessage}</p></div>
+          : <article className="wiki-preview-content">{blocks.map((block, index) => renderBlock(block, `block-${index}`))}</article>}
+      </div>
+    </section>
+  );
 }
 
 function renderBlock(block: MarkdownBlock, key: string): ReactNode {

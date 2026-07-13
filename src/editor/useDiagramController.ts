@@ -89,6 +89,8 @@ export function useDiagramController(): DiagramController {
   const [snapToGrid, setSnapToGrid] = useState(true);
   const [saveMessage, setSaveMessage] = useState("");
   const [dbmlError, setDbmlError] = useState<string | undefined>();
+  const [loadedDiagramId, setLoadedDiagramId] = useState<string>();
+  const [libraryReady, setLibraryReady] = useState(false);
   const [, setHistoryVersion] = useState(0);
   const diagramRef = useRef<DiagramModel>(emptyDiagram);
   const diagramsRef = useRef<SavedDiagram[]>(initialLibrary.diagrams);
@@ -226,7 +228,9 @@ export function useDiagramController(): DiagramController {
     options: { resetHistory?: boolean; uiLayout?: string } = {},
   ) => {
     const revision = parseRevisionRef.current + 1;
+    const targetDiagramId = activeDiagramIdRef.current;
     parseRevisionRef.current = revision;
+    setLoadedDiagramId((current) => current === targetDiagramId ? undefined : current);
 
     try {
       const parsed = applyUiLayout(parseDbml(text), options.uiLayout);
@@ -246,6 +250,7 @@ export function useDiagramController(): DiagramController {
         resetHistory: options.resetHistory ?? true,
         source: "editor",
       });
+      if (activeDiagramIdRef.current === targetDiagramId) setLoadedDiagramId(targetDiagramId);
       setSelected(undefined);
       return true;
     } catch (error) {
@@ -276,6 +281,7 @@ export function useDiagramController(): DiagramController {
           name: normalizeDiagramName(file.name),
           dbml: migrateDarkOnlyDbml(file.dbml),
           wiki: file.wiki,
+          wikiDocument: file.wikiDocument,
           uiLayout: file.uiLayout,
           previewDataUrl: file.previewDataUrl,
           updatedAt: file.updatedAt,
@@ -309,7 +315,9 @@ export function useDiagramController(): DiagramController {
       }
     }
 
-    void loadInitialDiagram();
+    void loadInitialDiagram().finally(() => {
+      if (!cancelled) setLibraryReady(true);
+    });
 
     return () => {
       cancelled = true;
@@ -358,6 +366,7 @@ export function useDiagramController(): DiagramController {
     const current = diagramRef.current;
     const nextDbml = exportDbml(current);
     setDbmlText(nextDbml);
+    setLoadedDiagramId(activeDiagramIdRef.current);
     lastValidDbmlRef.current = nextDbml;
     setDbmlError(undefined);
     initialRelationsRef.current = new Map(current.relations.map((relation) => [relation.id, relation]));
@@ -414,14 +423,16 @@ export function useDiagramController(): DiagramController {
     const previousFilename = record.filename ?? dbmlFilename(record.name);
     const renamed = await renameWorkspaceDbml(previousFilename, filename);
     if (!renamed) return false;
+    const nextId = `file:${filename}`;
     const nextDiagrams = diagramsRef.current.map((item) => item.id === id
-      ? { ...item, name, filename, updatedAt: Date.now() }
+      ? { ...item, id: nextId, name, filename, updatedAt: Date.now() }
       : item);
     if (id === activeDiagramIdRef.current) {
       diagramNameRef.current = name;
       setDiagramNameState(name);
+      setLoadedDiagramId(nextId);
     }
-    commitDiagramLibrary(nextDiagrams, activeDiagramIdRef.current);
+    commitDiagramLibrary(nextDiagrams, id === activeDiagramIdRef.current ? nextId : activeDiagramIdRef.current);
     await saveWorkspaceDbml(filename, record.dbml, { uiLayout: record.uiLayout, previewDataUrl: record.previewDataUrl });
     setSaveMessage(`Renomeado para ${filename}`);
     return true;
@@ -449,10 +460,11 @@ export function useDiagramController(): DiagramController {
   const openDiagram = useCallback(async (id: string) => {
     if (id === activeDiagramIdRef.current) return;
 
-    const snapshot = persistCurrentDiagram({ silent: true });
-    void saveWorkspaceDbml(currentDbmlFilename(diagramsRef.current, activeDiagramIdRef.current, snapshot.name), snapshot.dbml, { uiLayout: snapshot.uiLayout });
     const record = diagramsRef.current.find((item) => item.id === id);
     if (!record) return;
+
+    const snapshot = persistCurrentDiagram({ silent: true });
+    void saveWorkspaceDbml(currentDbmlFilename(diagramsRef.current, activeDiagramIdRef.current, snapshot.name), snapshot.dbml, { uiLayout: snapshot.uiLayout });
 
     activeDiagramIdRef.current = record.id;
     diagramNameRef.current = record.name;
@@ -466,15 +478,15 @@ export function useDiagramController(): DiagramController {
     await importDbmlText(record.dbml, { resetHistory: true, uiLayout: record.uiLayout });
   }, [importDbmlText, persistCurrentDiagram]);
 
-  const saveWiki = useCallback(async (id: string, markdown: string) => {
+  const saveWiki = useCallback(async (id: string, markdown: string, document?: string) => {
     const record = diagramsRef.current.find((item) => item.id === id);
     if (!record) return false;
 
     const nextDiagrams = diagramsRef.current.map((item) => item.id === id
-      ? { ...item, wiki: markdown }
+      ? { ...item, wiki: markdown, wikiDocument: document, updatedAt: Date.now() }
       : item);
     commitDiagramLibrary(nextDiagrams, activeDiagramIdRef.current);
-    return saveWorkspaceWiki(record.filename ?? dbmlFilename(record.name), markdown);
+    return saveWorkspaceWiki(record.filename ?? dbmlFilename(record.name), markdown, document);
   }, [commitDiagramLibrary]);
 
   const createDiagram = useCallback(async () => {
@@ -483,8 +495,8 @@ export function useDiagramController(): DiagramController {
       keepalive: true, uiLayout: snapshot.uiLayout,
     });
 
-    const id = uniqueId("diagram");
     const name = nextDiagramName(diagramsRef.current);
+    const id = `file:${dbmlFilename(name)}`;
     const dbml = createBlankDiagramDbml();
     const now = Date.now();
     const record: SavedDiagram = { id, name, dbml, updatedAt: now, filename: dbmlFilename(name) };
@@ -509,8 +521,8 @@ export function useDiagramController(): DiagramController {
       keepalive: true, uiLayout: snapshot.uiLayout,
     });
 
-    const id = uniqueId("diagram");
     const name = nextNamedDiagramName(diagramsRef.current, "Esquema SQL");
+    const id = `file:${dbmlFilename(name)}`;
     const now = Date.now();
     const record: SavedDiagram = { id, name, dbml, updatedAt: now, filename: dbmlFilename(name) };
     const nextDiagrams = [...diagramsRef.current, record];
@@ -1168,6 +1180,8 @@ export function useDiagramController(): DiagramController {
     dbmlError,
     canUndo: historyRef.current.past.length > 0,
     canRedo: historyRef.current.future.length > 0,
+    diagramReady: loadedDiagramId === activeDiagramId,
+    libraryReady,
     setDbmlText: updateDbmlText,
     setSelected,
     setSnapToGrid,

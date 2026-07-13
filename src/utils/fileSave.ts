@@ -12,6 +12,7 @@ export interface WorkspaceDbmlFile {
   name: string;
   dbml: string;
   wiki?: string;
+  wikiDocument?: string;
   uiLayout?: string;
   previewDataUrl?: string;
   updatedAt: number;
@@ -90,14 +91,14 @@ export async function saveWorkspaceDbml(
   }
 }
 
-export async function saveWorkspaceWiki(filename: string, contents: string): Promise<boolean> {
+export async function saveWorkspaceWiki(filename: string, contents: string, document?: string): Promise<boolean> {
   if (!filename) return false;
 
   try {
     const response = await fetch("/__dbml/wiki", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ filename, contents }),
+      body: JSON.stringify({ filename, contents, document }),
     });
     return response.ok;
   } catch {
@@ -165,6 +166,7 @@ function isWorkspaceDbmlFile(value: unknown): value is WorkspaceDbmlFile {
     typeof item.name === "string" &&
     typeof item.dbml === "string" &&
     (item.wiki === undefined || typeof item.wiki === "string") &&
+    (item.wikiDocument === undefined || typeof item.wikiDocument === "string") &&
     (item.uiLayout === undefined || typeof item.uiLayout === "string") &&
     (item.previewDataUrl === undefined || typeof item.previewDataUrl === "string") &&
     typeof item.updatedAt === "number"

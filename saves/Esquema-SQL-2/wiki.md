@@ -17,16 +17,16 @@ O projeto **Esquema SQL 2** utiliza o esquema descrito abaixo. Use esta seção 
 
 O banco de dados possui **16 tabelas**, **19 relacionamentos** e **0 enumerações**.
 
-Descreva aqui como os dados se organizam, quais áreas do sistema são atendidas e quais decisões estruturais são importantes para a manutenção do projeto.
+_A documentar._
 
 <!-- DBML-STUDIO:DATA-DICTIONARY:START -->
 # Dicionário de Dados
 
-> Conteúdo gerado a partir do esquema atual. As descrições usam as notas cadastradas nas tabelas e nos campos.
+> Estrutura técnica sincronizada com o diagrama; descrições e regras são mantidas pelo construtor da Wiki.
 
 ## ages\_user
 
-> Adicione uma descrição para explicar a responsabilidade desta tabela no sistema.
+> _Adicione uma descrição para explicar a responsabilidade desta tabela._
 
 | Campo | Tipo | Descrição | Restrição |
 | --- | --- | --- | --- |
@@ -52,10 +52,9 @@ Descreva aqui como os dados se organizam, quais áreas do sistema são atendidas
 
 - [ ] Documentar as regras de negócio relacionadas à tabela `ages_user`.
 
-
 ## project
 
-> Adicione uma descrição para explicar a responsabilidade desta tabela no sistema.
+> _Adicione uma descrição para explicar a responsabilidade desta tabela._
 
 | Campo | Tipo | Descrição | Restrição |
 | --- | --- | --- | --- |
@@ -78,10 +77,9 @@ Descreva aqui como os dados se organizam, quais áreas do sistema são atendidas
 
 - [ ] Documentar as regras de negócio relacionadas à tabela `project`.
 
-
 ## team
 
-> Adicione uma descrição para explicar a responsabilidade desta tabela no sistema.
+> _Adicione uma descrição para explicar a responsabilidade desta tabela._
 
 | Campo | Tipo | Descrição | Restrição |
 | --- | --- | --- | --- |
@@ -99,10 +97,9 @@ Descreva aqui como os dados se organizam, quais áreas do sistema são atendidas
 
 - [ ] Documentar as regras de negócio relacionadas à tabela `team`.
 
-
 ## class
 
-> Adicione uma descrição para explicar a responsabilidade desta tabela no sistema.
+> _Adicione uma descrição para explicar a responsabilidade desta tabela._
 
 | Campo | Tipo | Descrição | Restrição |
 | --- | --- | --- | --- |
@@ -123,10 +120,9 @@ Descreva aqui como os dados se organizam, quais áreas do sistema são atendidas
 
 - [ ] Documentar as regras de negócio relacionadas à tabela `class`.
 
-
 ## semester\_profile
 
-> Adicione uma descrição para explicar a responsabilidade desta tabela no sistema.
+> _Adicione uma descrição para explicar a responsabilidade desta tabela._
 
 | Campo | Tipo | Descrição | Restrição |
 | --- | --- | --- | --- |
@@ -151,10 +147,9 @@ Descreva aqui como os dados se organizam, quais áreas do sistema são atendidas
 
 - [ ] Documentar as regras de negócio relacionadas à tabela `semester_profile`.
 
-
 ## lesson
 
-> Adicione uma descrição para explicar a responsabilidade desta tabela no sistema.
+> _Adicione uma descrição para explicar a responsabilidade desta tabela._
 
 | Campo | Tipo | Descrição | Restrição |
 | --- | --- | --- | --- |
@@ -171,10 +166,9 @@ Descreva aqui como os dados se organizam, quais áreas do sistema são atendidas
 
 - [ ] Documentar as regras de negócio relacionadas à tabela `lesson`.
 
-
 ## otp
 
-> Adicione uma descrição para explicar a responsabilidade desta tabela no sistema.
+> _Adicione uma descrição para explicar a responsabilidade desta tabela._
 
 | Campo | Tipo | Descrição | Restrição |
 | --- | --- | --- | --- |
@@ -192,10 +186,9 @@ Descreva aqui como os dados se organizam, quais áreas do sistema são atendidas
 
 - [ ] Documentar as regras de negócio relacionadas à tabela `otp`.
 
-
 ## schedule
 
-> Adicione uma descrição para explicar a responsabilidade desta tabela no sistema.
+> _Adicione uma descrição para explicar a responsabilidade desta tabela._
 
 | Campo | Tipo | Descrição | Restrição |
 | --- | --- | --- | --- |
@@ -214,10 +207,9 @@ Descreva aqui como os dados se organizam, quais áreas do sistema são atendidas
 
 - [ ] Documentar as regras de negócio relacionadas à tabela `schedule`.
 
-
 ## technology
 
-> Adicione uma descrição para explicar a responsabilidade desta tabela no sistema.
+> _Adicione uma descrição para explicar a responsabilidade desta tabela._
 
 | Campo | Tipo | Descrição | Restrição |
 | --- | --- | --- | --- |
@@ -233,16 +225,15 @@ Descreva aqui como os dados se organizam, quais áreas do sistema são atendidas
 
 - [ ] Documentar as regras de negócio relacionadas à tabela `technology`.
 
-
 ## project\_stack
 
-> Adicione uma descrição para explicar a responsabilidade desta tabela no sistema.
+> _Adicione uma descrição para explicar a responsabilidade desta tabela._
 
 | Campo | Tipo | Descrição | Restrição |
 | --- | --- | --- | --- |
 | `id` | `uuid` | _A documentar._ | PK |
-| `project_id` | `uuid` | _A documentar._ | NOT NULL<br>UNIQUE (`project_id`, `technology_id`) |
-| `technology_id` | `uuid` | _A documentar._ | NOT NULL<br>UNIQUE (`project_id`, `technology_id`) |
+| `project_id` | `uuid` | _A documentar._ | NOT NULL<br>UNIQUE (project_id, technology_id) |
+| `technology_id` | `uuid` | _A documentar._ | NOT NULL<br>UNIQUE (project_id, technology_id) |
 
 ### Relacionamentos
 
@@ -253,10 +244,9 @@ Descreva aqui como os dados se organizam, quais áreas do sistema são atendidas
 
 - [ ] Documentar as regras de negócio relacionadas à tabela `project_stack`.
 
-
 ## report
 
-> Adicione uma descrição para explicar a responsabilidade desta tabela no sistema.
+> _Adicione uma descrição para explicar a responsabilidade desta tabela._
 
 | Campo | Tipo | Descrição | Restrição |
 | --- | --- | --- | --- |
@@ -281,10 +271,9 @@ Descreva aqui como os dados se organizam, quais áreas do sistema são atendidas
 
 - [ ] Documentar as regras de negócio relacionadas à tabela `report`.
 
-
 ## examining\_board
 
-> Adicione uma descrição para explicar a responsabilidade desta tabela no sistema.
+> _Adicione uma descrição para explicar a responsabilidade desta tabela._
 
 | Campo | Tipo | Descrição | Restrição |
 | --- | --- | --- | --- |
@@ -303,10 +292,9 @@ Descreva aqui como os dados se organizam, quais áreas do sistema são atendidas
 
 - [ ] Documentar as regras de negócio relacionadas à tabela `examining_board`.
 
-
 ## examining\_board\_member
 
-> Adicione uma descrição para explicar a responsabilidade desta tabela no sistema.
+> _Adicione uma descrição para explicar a responsabilidade desta tabela._
 
 | Campo | Tipo | Descrição | Restrição |
 | --- | --- | --- | --- |
@@ -323,10 +311,9 @@ Descreva aqui como os dados se organizam, quais áreas do sistema são atendidas
 
 - [ ] Documentar as regras de negócio relacionadas à tabela `examining_board_member`.
 
-
 ## attendance
 
-> Adicione uma descrição para explicar a responsabilidade desta tabela no sistema.
+> _Adicione uma descrição para explicar a responsabilidade desta tabela._
 
 | Campo | Tipo | Descrição | Restrição |
 | --- | --- | --- | --- |
@@ -343,10 +330,9 @@ Descreva aqui como os dados se organizam, quais áreas do sistema são atendidas
 
 - [ ] Documentar as regras de negócio relacionadas à tabela `attendance`.
 
-
 ## sprint\_report
 
-> Adicione uma descrição para explicar a responsabilidade desta tabela no sistema.
+> _Adicione uma descrição para explicar a responsabilidade desta tabela._
 
 | Campo | Tipo | Descrição | Restrição |
 | --- | --- | --- | --- |
@@ -367,10 +353,9 @@ Descreva aqui como os dados se organizam, quais áreas do sistema são atendidas
 
 - [ ] Documentar as regras de negócio relacionadas à tabela `sprint_report`.
 
-
 ## hours\_report
 
-> Adicione uma descrição para explicar a responsabilidade desta tabela no sistema.
+> _Adicione uma descrição para explicar a responsabilidade desta tabela._
 
 | Campo | Tipo | Descrição | Restrição |
 | --- | --- | --- | --- |

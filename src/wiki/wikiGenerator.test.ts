@@ -40,23 +40,64 @@ describe("wikiGenerator", () => {
   });
 
   it("atualiza somente o bloco marcado e preserva as edições externas", () => {
-    const original = [
-      "# Introdução",
-      "Texto escrito manualmente.",
-      DATA_DICTIONARY_START_MARKER,
-      "Dicionário antigo que deve sair.",
-      DATA_DICTIONARY_END_MARKER,
-      "# Conclusão",
-      "Outra edição manual.",
-    ].join("\n");
+    const original = generateWikiMarkdown(createDiagram())
+      .replace("# Introdução\n", "# Introdução\n\nTexto escrito manualmente.\n")
+      .replace("# Conclusão\n", "# Conclusão\n\nOutra edição manual.\n");
+    const changedDiagram = createDiagram();
+    changedDiagram.tables[1].columns.push(column("created_at", "timestamp"));
 
-    const updated = updateDataDictionaryMarkdown(original, createDiagram());
+    const updated = updateDataDictionaryMarkdown(original, changedDiagram);
 
-    expect(updated.startsWith("# Introdução\nTexto escrito manualmente.\n")).toBe(true);
-    expect(updated.endsWith("\n# Conclusão\nOutra edição manual.")).toBe(true);
-    expect(updated).not.toContain("Dicionário antigo que deve sair.");
+    expect(updated).toContain("# Introdução\n\nTexto escrito manualmente.");
+    expect(updated).toContain("# Conclusão\n\nOutra edição manual.");
+    expect(updated).toContain("| `created_at` | `timestamp` | _A documentar._ | — |");
     expect(updated.match(new RegExp(DATA_DICTIONARY_START_MARKER, "g"))).toHaveLength(1);
     expect(updated.match(new RegExp(DATA_DICTIONARY_END_MARKER, "g"))).toHaveLength(1);
+  });
+
+  it("preserva textos manuais enquanto atualiza campos, restrições e relacionamentos", () => {
+    const original = generateWikiMarkdown(createDiagram())
+      .replace(
+        "> Pedidos feitos na loja.",
+        "> Registro central do fluxo de compra, descrito manualmente na wiki.",
+      )
+      .replace(
+        "| `id` | `uuid` | _A documentar._ | PK<br>NOT NULL |",
+        "| `id` | `uuid` | Identificador público preenchido pelo autor. | PK<br>NOT NULL |",
+      )
+      .replace(
+        "| `number` | `int` | _A documentar._ | NOT NULL<br>UNIQUE (`customer_id`, `number`) |",
+        "| `number` | `int` | Texto que deve sumir junto com o campo. | NOT NULL<br>UNIQUE (`customer_id`, `number`) |",
+      )
+      .replace(
+        "- [ ] Documentar as regras de negócio relacionadas à tabela `orders`.",
+        "- Um pedido pago não pode retornar ao estado pendente.\n- O número é atribuído pela aplicação.",
+      );
+    const changedDiagram = createDiagram();
+    const orders = changedDiagram.tables.find((table) => table.name === "orders")!;
+    const orderId = orders.columns.find((item) => item.name === "id")!;
+    orderId.unique = true;
+    orders.columns = orders.columns.filter((item) => item.name !== "number");
+    orders.columns.push(column("created_at", "timestamp", { nullable: false }));
+    orders.indexes = [];
+    changedDiagram.relations[0].label = "cliente responsável";
+
+    const updated = updateDataDictionaryMarkdown(original, changedDiagram);
+
+    expect(updated).toContain(
+      "> Registro central do fluxo de compra, descrito manualmente na wiki.",
+    );
+    expect(updated).toContain(
+      "| `id` | `uuid` | Identificador público preenchido pelo autor. | PK<br>NOT NULL<br>UNIQUE |",
+    );
+    expect(updated).toContain(
+      "| `created_at` | `timestamp` | _A documentar._ | NOT NULL |",
+    );
+    expect(updated).not.toContain("Texto que deve sumir junto com o campo.");
+    expect(updated).not.toContain("| `number` |");
+    expect(updated).toContain("cliente responsável");
+    expect(updated).toContain("- Um pedido pago não pode retornar ao estado pendente.");
+    expect(updated).toContain("- O número é atribuído pela aplicação.");
   });
 
   it("insere o bloco antes da conclusão quando uma wiki antiga não possui marcadores", () => {
@@ -81,6 +122,20 @@ describe("wikiGenerator", () => {
         createDiagram(),
       ),
     ).toThrow(/marcadores/i);
+  });
+
+  it("recusa um bloco marcado irreconhecível em vez de apagar seu conteúdo", () => {
+    expect(() =>
+      updateDataDictionaryMarkdown(
+        [
+          "# Wiki",
+          DATA_DICTIONARY_START_MARKER,
+          "Texto livre que não segue a estrutura gerada.",
+          DATA_DICTIONARY_END_MARKER,
+        ].join("\n"),
+        createDiagram(),
+      ),
+    ).toThrow(/formato esperado/i);
   });
 });
 

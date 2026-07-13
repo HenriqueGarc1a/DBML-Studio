@@ -4,12 +4,12 @@ import type { SavedDiagram } from "./diagramLibrary";
 export interface DiagramController {
   dbmlText: string; diagram: DiagramModel; diagrams: SavedDiagram[]; activeDiagramId: string;
   diagramName: string; diagramFilename: string; selected?: Selection; exportedDbml: string; exportedTikz: string;
-  snapToGrid: boolean; saveMessage: string; dbmlError?: string; canUndo: boolean; canRedo: boolean;
+  snapToGrid: boolean; saveMessage: string; dbmlError?: string; canUndo: boolean; canRedo: boolean; diagramReady: boolean; libraryReady: boolean;
   setDbmlText(value: string): void; setSelected(value: Selection | undefined): void; setSnapToGrid(value: boolean): void;
   undo(): void; redo(): void; beginHistoryBatch(): void; endHistoryBatch(): void; setDiagramName(value: string): void;
   renameSavedDiagram(id: string, value: string): Promise<boolean>; deleteDiagram(id: string): Promise<boolean>;
   createDiagram(): Promise<string>; createDiagramFromSql(sql: string): Promise<string>; openDiagram(id: string): Promise<void>;
-  saveWiki(id: string, markdown: string): Promise<boolean>;
+  saveWiki(id: string, markdown: string, document?: string): Promise<boolean>;
   applyAutoLayout(): Promise<DiagramModel>; saveLayoutToEditor(previewDataUrl?: string): Promise<string>;
   updateDiagramVisual(patch: Partial<DiagramModel["visual"]>): void;
   addTable(): void; updateTable(id: string, patch: Partial<TableModel>): void; moveTable(id: string, dx: number, dy: number): void;
