@@ -8,6 +8,7 @@ import type {
   Cardinality,
   ColumnModel,
   Direction,
+  EnumModel,
   LineStyle,
   RelationModel,
   SavedColor,
@@ -15,7 +16,7 @@ import type {
   TableVisual,
 } from "../model/types";
 import { getEffectiveTableVisual } from "../model/visualSelectors";
-import { CheckboxField, CollapsibleGroup, ColorField, NumberField, RangeField, SelectField, TextField, isHexColor } from "./propertyFields";
+import { CheckboxField, CollapsibleGroup, ColorField, NumberField, RangeField, SelectField, TextAreaField, TextField, isHexColor } from "./propertyFields";
 
 interface PropertiesPanelProps {
   controller: DiagramController;
@@ -112,6 +113,7 @@ export function PropertiesPanel({ controller, collapsed, onToggle }: PropertiesP
             colors={savedColors}
             onChange={(savedColors) => controller.updateDiagramVisual({ savedColors })}
           />
+          <EnumsEditor controller={controller} enums={controller.diagram.enums} />
         </section>
       )}
       {!collapsed && table && (
@@ -119,6 +121,22 @@ export function PropertiesPanel({ controller, collapsed, onToggle }: PropertiesP
           <h3>Tabela</h3>
           <CollapsibleGroup id="table.general" title="Geral">
             <TextField label="Nome" value={table.name} onChange={(name) => controller.updateTable(table.id, { name })} />
+            <TextField label="Alias" value={table.alias ?? ""} onChange={(alias) => controller.updateTable(table.id, { alias: alias || undefined })} />
+            <TextAreaField label="Nota" value={table.note ?? ""} onChange={(note) => controller.updateTable(table.id, { note: note || undefined })} />
+          </CollapsibleGroup>
+          <CollapsibleGroup id="table.dbml" title="DBML avançado" defaultOpen={false}>
+            <TextAreaField
+              label="Parciais"
+              value={(table.partials ?? []).join("\n")}
+              placeholder="timestamps"
+              onChange={(value) => controller.updateTable(table.id, { partials: splitLines(value) })}
+            />
+            <TextAreaField
+              label="Settings da tabela"
+              value={(table.headerSettings ?? []).join("\n")}
+              placeholder="headercolor: #3498DB"
+              onChange={(value) => controller.updateTable(table.id, { headerSettings: splitLines(value) })}
+            />
           </CollapsibleGroup>
           <CollapsibleGroup id="table.layout" title="Layout">
             <NumberField label="X" value={table.x} onChange={(x) => controller.updateTable(table.id, { x })} />
@@ -164,6 +182,9 @@ export function PropertiesPanel({ controller, collapsed, onToggle }: PropertiesP
             )}
           </CollapsibleGroup>
           <TableColumnsEditor controller={controller} table={table} />
+          <TableIndexesEditor controller={controller} table={table} />
+          <TableChecksEditor controller={controller} table={table} />
+          <TableImpactPanel controller={controller} table={table} />
           <CollapsibleGroup id="table.actions" title="Ações" defaultOpen={false}>
             <div className="button-row">
               <button
@@ -557,6 +578,109 @@ function SavedColorsEditor({
   );
 }
 
+function EnumsEditor({ controller, enums }: { controller: DiagramController; enums: EnumModel[] }) {
+  return (
+    <CollapsibleGroup
+      id="diagram.enums"
+      title={`Enums (${enums.length})`}
+      defaultOpen={false}
+      actions={<button type="button" className="icon-button" title="Adicionar enum" aria-label="Adicionar enum" onClick={controller.addEnum}><Plus size={15} /></button>}
+    >
+      {!enums.length && <div className="empty-state compact">Nenhum enum definido.</div>}
+      <div className="schema-advanced-list">
+        {enums.map((item) => (
+          <div className="schema-advanced-card" key={item.id}>
+            <div className="schema-advanced-heading">
+              <input aria-label="Nome do enum" value={item.name} onChange={(event) => controller.updateEnum(item.id, { name: event.target.value })} />
+              <button type="button" className="icon-button danger-action" title="Excluir enum" aria-label={`Excluir enum ${item.name}`} onClick={() => {
+                if (confirmRemoval(`Excluir o enum "${item.name}"?`)) controller.removeEnum(item.id);
+              }}><Trash2 size={14} /></button>
+            </div>
+            <label className="stacked-property-field"><span>Valores, um por linha</span><textarea rows={Math.min(8, Math.max(3, item.values.length + 1))} value={item.values.join("\n")} onChange={(event) => {
+              const values = splitLines(event.target.value);
+              const valueSettings = Object.fromEntries(values.flatMap((value) => item.valueSettings?.[value] ? [[value, item.valueSettings[value]]] : []));
+              controller.updateEnum(item.id, { values, valueSettings });
+            }} /></label>
+            <label className="stacked-property-field"><span>Nota</span><textarea rows={2} value={item.note ?? ""} onChange={(event) => controller.updateEnum(item.id, { note: event.target.value || undefined })} /></label>
+          </div>
+        ))}
+      </div>
+    </CollapsibleGroup>
+  );
+}
+
+function TableIndexesEditor({ controller, table }: { controller: DiagramController; table: TableModel }) {
+  const updateIndex = (index: number, patch: Partial<TableModel["indexes"][number]>) => {
+    controller.updateTable(table.id, {
+      indexes: table.indexes.map((item, itemIndex) => itemIndex === index ? { ...item, ...patch } : item),
+    });
+  };
+  return (
+    <CollapsibleGroup
+      id="table.indexes"
+      title={`Índices (${table.indexes.length})`}
+      defaultOpen={false}
+      actions={<button type="button" className="icon-button" title="Adicionar índice" aria-label="Adicionar índice" onClick={() => controller.updateTable(table.id, { indexes: [...table.indexes, { columns: table.columns[0] ? [table.columns[0].name] : [], raw: "", settings: [] }] })}><Plus size={15} /></button>}
+    >
+      {!table.indexes.length && <div className="empty-state compact">Nenhum índice definido.</div>}
+      <div className="schema-advanced-list">
+        {table.indexes.map((index, itemIndex) => (
+          <div className="schema-advanced-card" key={`${itemIndex}-${index.name ?? index.columns.join("-")}`}>
+            <div className="schema-advanced-heading"><strong>Índice {itemIndex + 1}</strong><button type="button" className="icon-button danger-action" title="Excluir índice" aria-label={`Excluir índice ${itemIndex + 1}`} onClick={() => controller.updateTable(table.id, { indexes: table.indexes.filter((_, indexToKeep) => indexToKeep !== itemIndex) })}><Trash2 size={14} /></button></div>
+            <TextField label="Campos" value={index.columns.join(", ")} onChange={(value) => updateIndex(itemIndex, { columns: value.split(",").map((column) => column.trim()).filter(Boolean), raw: "" })} />
+            <TextField label="Nome" value={index.name ?? ""} onChange={(name) => updateIndex(itemIndex, { name: name || undefined, raw: "" })} />
+            <TextField label="Tipo" value={index.type ?? ""} onChange={(type) => updateIndex(itemIndex, { type: type || undefined, raw: "" })} />
+            <CheckboxField label="Único" checked={Boolean(index.unique)} onChange={(unique) => updateIndex(itemIndex, { unique, raw: "" })} />
+            <CheckboxField label="Primary" checked={Boolean(index.primary)} onChange={(primary) => updateIndex(itemIndex, { primary, raw: "" })} />
+            <TextAreaField label="Settings extras" rows={2} value={getUnmanagedIndexSettings(index.settings ?? []).join("\n")} onChange={(value) => updateIndex(itemIndex, { settings: mergeIndexSettings(index, splitLines(value)), raw: "" })} />
+          </div>
+        ))}
+      </div>
+    </CollapsibleGroup>
+  );
+}
+
+function TableChecksEditor({ controller, table }: { controller: DiagramController; table: TableModel }) {
+  const checks = table.checks ?? [];
+  const updateCheck = (index: number, patch: Partial<(typeof checks)[number]>) => {
+    controller.updateTable(table.id, { checks: checks.map((item, itemIndex) => itemIndex === index ? { ...item, ...patch, raw: "" } : item) });
+  };
+  return <CollapsibleGroup
+    id="table.checks"
+    title={`Checks (${checks.length})`}
+    defaultOpen={false}
+    actions={<button type="button" className="icon-button" title="Adicionar check" aria-label="Adicionar check" onClick={() => controller.updateTable(table.id, { checks: [...checks, { expression: "campo > 0", raw: "", settings: [] }] })}><Plus size={15} /></button>}
+  >
+    {!checks.length && <div className="empty-state compact">Nenhum check de tabela definido.</div>}
+    <div className="schema-advanced-list">{checks.map((check, index) => <div className="schema-advanced-card" key={`${index}-${check.name ?? check.expression}`}>
+      <div className="schema-advanced-heading"><strong>Check {index + 1}</strong><button type="button" className="icon-button danger-action" title="Excluir check" aria-label={`Excluir check ${index + 1}`} onClick={() => controller.updateTable(table.id, { checks: checks.filter((_, itemIndex) => itemIndex !== index) })}><Trash2 size={14} /></button></div>
+      <TextAreaField label="Expressão" rows={2} value={check.expression} placeholder="debt + wealth >= 0" onChange={(expression) => updateCheck(index, { expression })} />
+      <TextField label="Nome" value={check.name ?? ""} onChange={(name) => updateCheck(index, { name: name || undefined })} />
+      <TextAreaField label="Settings extras" rows={2} value={(check.settings ?? []).filter((setting) => !setting.toLowerCase().startsWith("name:")).join("\n")} onChange={(value) => updateCheck(index, { settings: [...(check.settings ?? []).filter((setting) => setting.toLowerCase().startsWith("name:")), ...splitLines(value)] })} />
+    </div>)}</div>
+  </CollapsibleGroup>;
+}
+
+function TableImpactPanel({ controller, table }: { controller: DiagramController; table: TableModel }) {
+  const relations = controller.diagram.relations.filter((relation) => relation.fromTable === table.id || relation.toTable === table.id);
+  const tableMap = new Map(controller.diagram.tables.map((item) => [item.id, item]));
+  return <CollapsibleGroup id="table.impact" title={`Impacto (${relations.length})`} defaultOpen={false}>
+    {!relations.length && <div className="empty-state compact">Esta tabela não possui dependências.</div>}
+    <div className="impact-list">{relations.map((relation) => {
+      const outgoing = relation.fromTable === table.id;
+      const relatedId = outgoing ? relation.toTable : relation.fromTable;
+      const related = tableMap.get(relatedId);
+      const ownColumns = outgoing ? relation.fromColumns ?? [relation.fromColumn] : relation.toColumns ?? [relation.toColumn];
+      const relatedColumns = outgoing ? relation.toColumns ?? [relation.toColumn] : relation.fromColumns ?? [relation.fromColumn];
+      return <button type="button" key={relation.id} onClick={() => related && controller.setSelected({ type: "table", id: related.id })}>
+        <span className={outgoing ? "is-outgoing" : "is-incoming"}>{outgoing ? "Referencia" : "Referenciada por"}</span>
+        <strong>{related?.name ?? relatedId}</strong>
+        <small>{ownColumns.join(", ")} → {relatedColumns.join(", ")}</small>
+      </button>;
+    })}</div>
+  </CollapsibleGroup>;
+}
+
 function TableColumnsEditor({ controller, table }: { controller: DiagramController; table: TableModel }) {
   const relationBackedForeignKeys = new Set(
     controller.diagram.relations
@@ -608,55 +732,24 @@ function ColumnEditor({
   onRemove: () => void;
 }) {
   return (
-    <div className="column-editor">
-      <input
-        type="text"
-        value={column.name}
-        aria-label="Nome do campo"
-        onChange={(event) => onChange({ name: event.target.value })}
-      />
-      <input
-        type="text"
-        value={column.type}
-        aria-label="Tipo do campo"
-        onChange={(event) => onChange({ type: event.target.value })}
-      />
-      <label className="mini-check" title="Primary key">
-        <input
-          type="checkbox"
-          checked={column.primaryKey}
-          onChange={(event) => onChange({ primaryKey: event.target.checked })}
-        />
-        <span>PK</span>
-      </label>
-      <label className="mini-check" title={relationBackedFk ? "FK definido por uma relação" : "Foreign key"}>
-        <input
-          type="checkbox"
-          checked={column.foreignKey}
-          disabled={relationBackedFk}
-          onChange={(event) => onChange({ foreignKey: event.target.checked })}
-        />
-        <span>FK</span>
-      </label>
-      <label className="mini-check" title="Not null">
-        <input
-          type="checkbox"
-          checked={!column.nullable}
-          onChange={(event) => onChange({ nullable: !event.target.checked })}
-        />
-        <span>NN</span>
-      </label>
-      <label className="mini-check" title="Unique">
-        <input
-          type="checkbox"
-          checked={Boolean(column.unique)}
-          onChange={(event) => onChange({ unique: event.target.checked })}
-        />
-        <span>UQ</span>
-      </label>
-      <button type="button" className="icon-button" onClick={onRemove} title="Remover campo">
-        <Trash2 size={14} />
-      </button>
+    <div className="column-editor-card">
+      <div className="column-editor">
+        <input type="text" value={column.name} aria-label="Nome do campo" onChange={(event) => onChange({ name: event.target.value })} />
+        <input type="text" value={column.type} aria-label="Tipo do campo" onChange={(event) => onChange({ type: event.target.value })} />
+        <label className="mini-check" title="Primary key"><input type="checkbox" checked={column.primaryKey} onChange={(event) => onChange({ primaryKey: event.target.checked })} /><span>PK</span></label>
+        <label className="mini-check" title={relationBackedFk ? "FK definido por uma relação" : "Foreign key"}><input type="checkbox" checked={column.foreignKey} disabled={relationBackedFk} onChange={(event) => onChange({ foreignKey: event.target.checked })} /><span>FK</span></label>
+        <label className="mini-check" title="Not null"><input type="checkbox" checked={!column.nullable} onChange={(event) => onChange({ nullable: !event.target.checked })} /><span>NN</span></label>
+        <label className="mini-check" title="Unique"><input type="checkbox" checked={Boolean(column.unique)} onChange={(event) => onChange({ unique: event.target.checked })} /><span>UQ</span></label>
+        <button type="button" className="icon-button" onClick={onRemove} title="Remover campo" aria-label={`Remover campo ${column.name}`}><Trash2 size={14} /></button>
+      </div>
+      <details className="column-advanced-editor">
+        <summary>Default, nota e settings</summary>
+        <TextField label="Default" value={column.defaultValue ?? ""} onChange={(defaultValue) => onChange({ defaultValue: defaultValue || undefined })} />
+        <TextAreaField label="Nota" value={column.note ?? ""} rows={2} onChange={(note) => onChange({ note: note || undefined })} />
+        <CheckboxField label="Increment / identity" checked={hasRawSetting(column, "increment")} onChange={(checked) => onChange({ rawSettings: toggleRawSetting(column.rawSettings, "increment", checked) })} />
+        <TextAreaField label="Checks, um por linha" rows={2} value={getColumnChecks(column).join("\n")} placeholder="price > 0" onChange={(value) => onChange({ rawSettings: mergeColumnChecks(column.rawSettings, splitLines(value)) })} />
+        <TextAreaField label="Settings extras" rows={2} value={getExtraColumnSettings(column).join("\n")} onChange={(value) => onChange({ rawSettings: mergeColumnSettings(column.rawSettings, splitLines(value)) })} />
+      </details>
     </div>
   );
 }
@@ -832,6 +925,57 @@ function relationEndpointLabel(relation: RelationModel, tableMap: Map<string, Ta
   const fromTable = tableMap.get(relation.fromTable)?.name ?? relation.fromTable;
   const toTable = tableMap.get(relation.toTable)?.name ?? relation.toTable;
   return `${fromTable}.${relation.fromColumn} -> ${toTable}.${relation.toColumn}`;
+}
+
+function splitLines(value: string): string[] {
+  return value.split(/\r?\n/).map((item) => item.trim()).filter(Boolean);
+}
+
+function isManagedColumnSetting(value: string): boolean {
+  const lower = value.trim().toLowerCase();
+  return lower === "pk" || lower === "primary key" || lower === "fk" || lower === "foreign key" ||
+    lower === "not null" || lower === "not_null" || lower === "unique" || lower === "increment" ||
+    lower.startsWith("default:") || lower.startsWith("note:") || lower.startsWith("ref:") || lower.startsWith("check:");
+}
+
+function getExtraColumnSettings(column: ColumnModel): string[] {
+  return column.rawSettings.filter((setting) => !isManagedColumnSetting(setting));
+}
+
+function mergeColumnSettings(current: string[], extras: string[]): string[] {
+  return [...current.filter(isManagedColumnSetting), ...extras];
+}
+
+function getColumnChecks(column: ColumnModel): string[] {
+  return column.rawSettings.filter((setting) => setting.trim().toLowerCase().startsWith("check:"))
+    .map((setting) => setting.slice(setting.indexOf(":") + 1).trim().replace(/^`|`$/g, ""));
+}
+
+function mergeColumnChecks(current: string[], expressions: string[]): string[] {
+  const withoutChecks = current.filter((setting) => !setting.trim().toLowerCase().startsWith("check:"));
+  return [...withoutChecks, ...expressions.map((expression) => `check: \`${expression.replace(/^`|`$/g, "")}\``)];
+}
+
+function hasRawSetting(column: ColumnModel, setting: string): boolean {
+  return column.rawSettings.some((item) => item.trim().toLowerCase() === setting.toLowerCase());
+}
+
+function toggleRawSetting(settings: string[], setting: string, enabled: boolean): string[] {
+  const filtered = settings.filter((item) => item.trim().toLowerCase() !== setting.toLowerCase());
+  return enabled ? [...filtered, setting] : filtered;
+}
+
+function isManagedIndexSetting(value: string): boolean {
+  const lower = value.trim().toLowerCase();
+  return lower === "unique" || lower === "pk" || lower === "primary key" || lower.startsWith("name:") || lower.startsWith("type:");
+}
+
+function getUnmanagedIndexSettings(settings: string[]): string[] {
+  return settings.filter((setting) => !isManagedIndexSetting(setting));
+}
+
+function mergeIndexSettings(index: TableModel["indexes"][number], extras: string[]): string[] {
+  return [...(index.settings ?? []).filter(isManagedIndexSetting), ...extras];
 }
 
 function confirmRemoval(message: string): boolean {

@@ -41,12 +41,23 @@ export function applyUiLayout(diagram: DiagramModel, source?: string): DiagramMo
     }),
     relations: diagram.relations.map((relation) => {
       const layout = relationLayouts.get(relationKey(relation));
-      return layout ? { ...relation, ...layout, id: relation.id, fromTable: relation.fromTable, fromColumn: relation.fromColumn, toTable: relation.toTable, toColumn: relation.toColumn } : relation;
+      return layout ? {
+        ...relation,
+        ...layout,
+        id: relation.id,
+        fromTable: relation.fromTable,
+        fromColumn: relation.fromColumn,
+        fromColumns: relation.fromColumns,
+        toTable: relation.toTable,
+        toColumn: relation.toColumn,
+        toColumns: relation.toColumns,
+      } : relation;
     }),
     groups: file.groups ?? diagram.groups,
   };
 }
 
 function relationKey(relation: Pick<RelationModel, "fromTable" | "fromColumn" | "toTable" | "toColumn">): string {
-  return `${relation.fromTable}.${relation.fromColumn}>${relation.toTable}.${relation.toColumn}`;
+  const composite = relation as Pick<RelationModel, "fromTable" | "fromColumn" | "fromColumns" | "toTable" | "toColumn" | "toColumns">;
+  return `${composite.fromTable}.${(composite.fromColumns ?? [composite.fromColumn]).join(",")}>${composite.toTable}.${(composite.toColumns ?? [composite.toColumn]).join(",")}`;
 }

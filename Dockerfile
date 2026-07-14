@@ -15,10 +15,15 @@ ENV NODE_ENV=production \
     PORT=8080 \
     STATIC_DIR=/app/dist \
     DBML_SAVES_DIR=/data/saves \
+    DBML_SQLITE_ROOT=/data/saves \
     MAX_BODY_BYTES=33554432
 
 WORKDIR /app
-RUN mkdir -p /data/saves && chown -R node:node /data /app
+COPY package.json package-lock.json ./
+RUN npm ci --omit=dev \
+  && npm cache clean --force \
+  && mkdir -p /data/saves \
+  && chown -R node:node /data /app
 
 COPY --from=build --chown=node:node /app/dist ./dist
 COPY --chown=node:node scripts/production-server.mjs ./scripts/production-server.mjs

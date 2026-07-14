@@ -14,6 +14,10 @@ export interface SavedDiagram {
   filename?: string;
 }
 
+export interface TrashedDiagram extends SavedDiagram {
+  trashedAt: number;
+}
+
 export interface DiagramLibrary {
   diagrams: SavedDiagram[];
   activeDiagramId: string;
@@ -23,6 +27,7 @@ export interface DiagramLibrary {
 export const LEGACY_SAVED_DBML_KEY = "dbml-studio-saved-dbml";
 const DIAGRAMS_STORAGE_KEY = "dbml-studio-diagrams";
 const ACTIVE_DIAGRAM_STORAGE_KEY = "dbml-studio-active-diagram-id";
+const TRASHED_DIAGRAMS_STORAGE_KEY = "dbml-studio-trashed-diagrams";
 export const ACTIVE_DIAGRAM_FILENAME_STORAGE_KEY = "dbml-studio-active-diagram-filename";
 
 export function loadDiagramLibrary(): DiagramLibrary {
@@ -44,6 +49,15 @@ export function writeDiagramLibrary(diagrams: SavedDiagram[], activeDiagramId: s
   writeJson(DIAGRAMS_STORAGE_KEY, diagrams);
   safeSetItem(ACTIVE_DIAGRAM_STORAGE_KEY, activeDiagramId);
   if (active?.filename) safeSetItem(ACTIVE_DIAGRAM_FILENAME_STORAGE_KEY, active.filename);
+}
+
+export function loadDiagramTrash(): TrashedDiagram[] {
+  const parsed = readJson<unknown>(TRASHED_DIAGRAMS_STORAGE_KEY, []);
+  return Array.isArray(parsed) ? parsed.filter(isTrashedDiagram) : [];
+}
+
+export function writeDiagramTrash(diagrams: TrashedDiagram[]): void {
+  writeJson(TRASHED_DIAGRAMS_STORAGE_KEY, diagrams.slice(0, 40));
 }
 
 export function normalizeDiagramName(value: string): string { return value.trim() || "Diagrama sem nome"; }
@@ -83,4 +97,8 @@ function isStoredDiagram(value: unknown): value is SavedDiagram {
   return typeof item.id === "string" && typeof item.name === "string" && typeof item.dbml === "string" &&
     (item.wiki === undefined || typeof item.wiki === "string") &&
     (item.wikiDocument === undefined || typeof item.wikiDocument === "string") && typeof item.updatedAt === "number";
+}
+
+function isTrashedDiagram(value: unknown): value is TrashedDiagram {
+  return isStoredDiagram(value) && typeof (value as Partial<TrashedDiagram>).trashedAt === "number";
 }

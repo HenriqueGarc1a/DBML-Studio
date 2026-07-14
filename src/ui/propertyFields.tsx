@@ -22,6 +22,9 @@ function readOpen(id: string, fallback: boolean): boolean {
 export function TextField({ label, value, onChange }: { label: string; value: string; onChange: (value: string) => void }) {
   return <label className="field-row"><span>{label}</span><input type="text" value={value} onChange={(event) => onChange(event.target.value)} /></label>;
 }
+export function TextAreaField({ label, value, rows = 3, placeholder, onChange }: { label: string; value: string; rows?: number; placeholder?: string; onChange: (value: string) => void }) {
+  return <label className="field-row field-row-textarea"><span>{label}</span><textarea rows={rows} value={value} placeholder={placeholder} onChange={(event) => onChange(event.target.value)} /></label>;
+}
 export function NumberField({ label, value, min, max, step, onChange }: { label: string; value: number; min?: number; max?: number; step?: number; onChange: (value: number) => void }) {
   return <label className="field-row"><span>{label}</span><input type="number" min={min} max={max} step={step} value={Number(value.toFixed(1))} onChange={(event) => onChange(Number(event.target.value))} /></label>;
 }

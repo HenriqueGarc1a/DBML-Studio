@@ -1,4 +1,4 @@
-import { ChevronLeft, ChevronRight, CircleHelp, FileDown, Save } from "lucide-react";
+import { ChevronLeft, ChevronRight, CircleHelp, Database, FileDown, History, Save } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { toast } from "sonner";
@@ -10,6 +10,9 @@ import { downloadText } from "../../utils/download";
 import { saveTextFile, type TextFileHandle } from "../../utils/fileSave";
 import { safeGetItem, safeSetItem } from "../../utils/storage";
 import { HelpDialog } from "../components/HelpDialog";
+import { DiagramHistoryDialog } from "../components/DiagramHistoryDialog";
+import { DiagramExportDialog } from "../components/DiagramExportDialog";
+import { DatabaseDialog } from "../components/DatabaseDialog";
 import { ProjectHeader } from "../components/ProjectHeader";
 
 const DBML_COLLAPSED_STORAGE_KEY = "dbml-studio-dbml-collapsed";
@@ -23,6 +26,9 @@ export function EditorPage({ controller }: { controller: DiagramController }) {
   const [dbmlCollapsed, setDbmlCollapsed] = useStoredBoolean(DBML_COLLAPSED_STORAGE_KEY, false);
   const [propertiesCollapsed, setPropertiesCollapsed] = useStoredBoolean(PROPERTIES_COLLAPSED_STORAGE_KEY, false);
   const [helpOpen, setHelpOpen] = useState(false);
+  const [historyOpen, setHistoryOpen] = useState(false);
+  const [exportOpen, setExportOpen] = useState(false);
+  const [databaseOpen, setDatabaseOpen] = useState(false);
 
   useEffect(() => {
     if (diagramId && decodeURIComponent(diagramId) !== controller.activeDiagramId) {
@@ -67,12 +73,6 @@ export function EditorPage({ controller }: { controller: DiagramController }) {
     await controller.saveLayoutToEditor(preview);
     navigate(`/editor/${encodeURIComponent(controller.activeDiagramId)}/wiki`);
   };
-  const exportPdf = async () => {
-    const { exportDiagramPdf } = await import("../../utils/pdfExport");
-    await exportDiagramPdf(svgRef.current);
-    toast.success("PDF exportado");
-  };
-
   return (
     <div className="app-shell">
       <ProjectHeader
@@ -83,24 +83,44 @@ export function EditorPage({ controller }: { controller: DiagramController }) {
         onSectionChange={(section) => { if (section === "wiki") void goToWiki(); }}
         actions={(
           <>
+          <span className={`diagram-save-indicator is-${controller.saveStatus}`} title={controller.lastSavedAt ? `Última persistência: ${new Date(controller.lastSavedAt).toLocaleString()}` : undefined}>{saveStatusLabel(controller.saveStatus)}</span>
           <button type="button" onClick={() => void save()}><Save size={16} />Salvar</button>
-          <button type="button" onClick={() => void exportPdf()}><FileDown size={16} />Exportar PDF</button>
+          <button type="button" className="secondary-button" onClick={() => setHistoryOpen(true)}><History size={16} />Versões</button>
+          <button type="button" className="secondary-button" onClick={() => setDatabaseOpen(true)}><Database size={16} />Comparar banco</button>
+          <button type="button" onClick={() => setExportOpen(true)}><FileDown size={16} />Exportar</button>
           <button type="button" onClick={() => setHelpOpen(true)}><CircleHelp size={16} />Ajuda</button>
           </>
         )}
       />
       <main className={`workspace${dbmlCollapsed ? " is-dbml-collapsed" : ""}${propertiesCollapsed ? " is-properties-collapsed" : ""}`}>
-        <aside className={`dbml-pane${controller.dbmlError ? " has-error" : ""}${dbmlCollapsed ? " is-collapsed" : ""}`}>
+        <aside className={`dbml-pane${controller.dbmlError ? " has-error" : ""}${!controller.dbmlError && controller.diagram.dbmlWarnings?.length ? " has-warning" : ""}${dbmlCollapsed ? " is-collapsed" : ""}`}>
           <div className="pane-heading"><h2>{!dbmlCollapsed && "DBML"}</h2><button type="button" className="pane-toggle icon-button" onClick={() => setDbmlCollapsed(!dbmlCollapsed)}>{dbmlCollapsed ? <ChevronRight size={16} /> : <ChevronLeft size={16} />}</button></div>
-          {!dbmlCollapsed && controller.dbmlError && <div className="dbml-error">{controller.dbmlError}</div>}
+          {!dbmlCollapsed && controller.dbmlError && <div className="dbml-error" role="alert">{controller.dbmlError}</div>}
+          {!dbmlCollapsed && !controller.dbmlError && Boolean(controller.diagram.dbmlWarnings?.length) && (
+            <details className="dbml-warning" role="status">
+              <summary>{controller.diagram.dbmlWarnings?.length} aviso{controller.diagram.dbmlWarnings?.length === 1 ? "" : "s"} de compatibilidade</summary>
+              <ul>{controller.diagram.dbmlWarnings?.map((warning) => <li key={warning}>{warning}</li>)}</ul>
+            </details>
+          )}
           {!dbmlCollapsed && <textarea value={controller.dbmlText} onChange={(event) => controller.setDbmlText(event.target.value)} spellCheck={false} />}
         </aside>
         <section className="canvas-pane"><SvgCanvas controller={controller} svgRef={svgRef} /></section>
         <PropertiesPanel controller={controller} collapsed={propertiesCollapsed} onToggle={() => setPropertiesCollapsed(!propertiesCollapsed)} />
       </main>
       {helpOpen && <HelpDialog onClose={() => setHelpOpen(false)} />}
+      {historyOpen && <DiagramHistoryDialog snapshots={controller.snapshots.filter((item) => item.diagramId === controller.activeDiagramId)} onClose={() => setHistoryOpen(false)} onDelete={controller.deleteSnapshot} onRestore={async (id) => { const restored = await controller.restoreSnapshot(id); if (restored) { toast.success("Versão restaurada"); setHistoryOpen(false); } else toast.error("Não foi possível restaurar a versão"); return restored; }} />}
+      {exportOpen && <DiagramExportDialog svg={svgRef.current} filename={controller.diagramFilename} dbml={controller.exportedDbml} tikz={controller.exportedTikz} onClose={() => setExportOpen(false)} onExported={(message) => toast.success(message)} />}
+      {databaseOpen && <DatabaseDialog mode="sync" diagram={controller.diagram} onClose={() => setDatabaseOpen(false)} />}
     </div>
   );
+}
+
+function saveStatusLabel(status: DiagramController["saveStatus"]): string {
+  if (status === "dirty") return "Alterações pendentes";
+  if (status === "saving") return "Salvando…";
+  if (status === "local") return "Salvo localmente";
+  if (status === "error") return "Falha ao salvar";
+  return "Salvo";
 }
 
 function useStoredBoolean(key: string, fallback: boolean): [boolean, (value: boolean) => void] {

@@ -1,5 +1,6 @@
 import type { MouseEvent, MutableRefObject, PointerEvent, WheelEvent } from "react";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { Focus, Search, X } from "lucide-react";
 import {
   GROUP_LABEL_DEFAULT_X,
   GROUP_LABEL_DEFAULT_Y,
@@ -47,9 +48,9 @@ interface ResizeOrigin {
 type DragState =
   | {
       kind: "table";
-      id: string;
+      ids: string[];
       start: Point;
-      origin: Point;
+      origins: Record<string, Point>;
     }
   | {
       kind: "table-resize";
@@ -96,6 +97,8 @@ export function SvgCanvas({ controller, svgRef: externalSvgRef }: SvgCanvasProps
   const [zoomPanelPosition, setZoomPanelPosition] = useState<Point>({ x: 12, y: 12 });
   const [zoomPanelDrag, setZoomPanelDrag] = useState<{ pointerStart: Point; origin: Point } | undefined>();
   const [relationMode, setRelationMode] = useState(false);
+  const [selectedTableIds, setSelectedTableIds] = useState<string[]>([]);
+  const [focusNeighbors, setFocusNeighbors] = useState(false);
   // The first endpoint picked by the user is the referenced (parent) field.
   const [relationSource, setRelationSource] = useState<RelationFieldEndpoint | undefined>();
   const computedBounds = useMemo(
@@ -113,6 +116,17 @@ export function SvgCanvas({ controller, svgRef: externalSvgRef }: SvgCanvasProps
     [controller.diagram.tables],
   );
   const selected = controller.selected;
+  const focusedTableIds = useMemo(() => {
+    if (!focusNeighbors || selected?.type !== "table") return undefined;
+    const ids = new Set([selected.id]);
+    for (const relation of controller.diagram.relations) {
+      if (relation.fromTable === selected.id || relation.toTable === selected.id) {
+        ids.add(relation.fromTable);
+        ids.add(relation.toTable);
+      }
+    }
+    return ids;
+  }, [controller.diagram.relations, focusNeighbors, selected]);
   const selectedRelation = selected?.type === "relation"
     ? controller.diagram.relations.find((relation) => relation.id === selected.id)
     : undefined;
@@ -209,6 +223,14 @@ export function SvgCanvas({ controller, svgRef: externalSvgRef }: SvgCanvasProps
     }
   }, [relationSource, tableMap]);
 
+  useEffect(() => {
+    setSelectedTableIds((current) => current.filter((id) => tableMap.has(id)));
+    if (selected?.type !== "table") {
+      setFocusNeighbors(false);
+      setSelectedTableIds([]);
+    }
+  }, [selected?.type, tableMap]);
+
   const toSvgPoint = (event: Pick<PointerEvent | MouseEvent, "clientX" | "clientY">): Point => {
     const svg = svgRef.current;
     if (!svg) return { x: event.clientX, y: event.clientY };
@@ -238,13 +260,18 @@ export function SvgCanvas({ controller, svgRef: externalSvgRef }: SvgCanvasProps
     const point = toSvgPoint(event);
 
     if (drag.kind === "table") {
-      const nextX = drag.origin.x + point.x - drag.start.x;
-      const nextY = drag.origin.y + point.y - drag.start.y;
-      controller.updateTable(drag.id, {
-        x: controller.snapToGrid ? snapValue(nextX, gridSize) : nextX,
-        y: controller.snapToGrid ? snapValue(nextY, gridSize) : nextY,
-        layoutSource: "manual",
-      });
+      const dx = point.x - drag.start.x;
+      const dy = point.y - drag.start.y;
+      controller.moveTables(drag.ids.map((id) => {
+        const origin = drag.origins[id];
+        const x = origin.x + dx;
+        const y = origin.y + dy;
+        return {
+          id,
+          x: controller.snapToGrid ? snapValue(x, gridSize) : x,
+          y: controller.snapToGrid ? snapValue(y, gridSize) : y,
+        };
+      }));
     }
 
     if (drag.kind === "table-resize") {
@@ -316,7 +343,10 @@ export function SvgCanvas({ controller, svgRef: externalSvgRef }: SvgCanvasProps
     if (event.currentTarget.hasPointerCapture(event.pointerId)) {
       event.currentTarget.releasePointerCapture(event.pointerId);
     }
-    if (drag.kind === "table" || drag.kind === "table-resize") {
+    if (drag.kind === "table") {
+      drag.ids.forEach(controller.settleTable);
+    }
+    if (drag.kind === "table-resize") {
       controller.settleTable(drag.id);
     }
     if (drag.kind !== "pan") {
@@ -343,6 +373,7 @@ export function SvgCanvas({ controller, svgRef: externalSvgRef }: SvgCanvasProps
     if (!event.isPrimary || event.button !== 0) return;
     event.preventDefault();
     controller.setSelected(undefined);
+    setSelectedTableIds([]);
     event.currentTarget.setPointerCapture(event.pointerId);
     setDrag({
       kind: "pan",
@@ -364,6 +395,27 @@ export function SvgCanvas({ controller, svgRef: externalSvgRef }: SvgCanvasProps
 
   const fitDiagram = () => {
     setViewport(fitViewBoxToAspect(computedBounds, canvasSize.width, canvasSize.height));
+  };
+
+  const fitSelection = () => {
+    const selectedTables = controller.diagram.tables.filter((table) => selectedTableIds.includes(table.id));
+    if (!selectedTables.length && selected?.type === "table") {
+      const table = tableMap.get(selected.id);
+      if (table) selectedTables.push(table);
+    }
+    if (selectedTables.length) setViewport(fitViewBoxToAspect(getTableBounds(selectedTables), canvasSize.width, canvasSize.height));
+  };
+
+  const focusTable = (table: TableModel) => {
+    controller.setSelected({ type: "table", id: table.id });
+    setSelectedTableIds([table.id]);
+    const padding = Math.max(80, table.width * 0.45);
+    setViewport(fitViewBoxToAspect({
+      x: table.x - padding,
+      y: table.y - padding,
+      width: table.width + padding * 2,
+      height: table.height + padding * 2,
+    }, canvasSize.width, canvasSize.height));
   };
 
   const onWheel = (event: WheelEvent<SVGSVGElement>) => {
@@ -473,6 +525,7 @@ export function SvgCanvas({ controller, svgRef: externalSvgRef }: SvgCanvasProps
           </pattern>
         </defs>
         <rect
+          className="canvas-background"
           x={paintBounds.x}
           y={paintBounds.y}
           width={paintBounds.width}
@@ -480,6 +533,7 @@ export function SvgCanvas({ controller, svgRef: externalSvgRef }: SvgCanvasProps
           fill={controller.diagram.visual.backgroundColor}
         />
         <rect
+          className="canvas-grid"
           x={paintBounds.x}
           y={paintBounds.y}
           width={paintBounds.width}
@@ -553,6 +607,8 @@ export function SvgCanvas({ controller, svgRef: externalSvgRef }: SvgCanvasProps
             controller.diagram.visual.defaultTable,
             controller.diagram.groups,
           );
+          const focusDimmed = Boolean(focusNeighbors && selected?.type === "table" &&
+            sourceRelation.fromTable !== selected.id && sourceRelation.toTable !== selected.id);
 
           return (
             <RelationPath
@@ -563,6 +619,7 @@ export function SvgCanvas({ controller, svgRef: externalSvgRef }: SvgCanvasProps
               selected={selected?.type === "relation" && selected.id === sourceRelation.id}
               color={relationColor}
               highlighted={highlightedByTable}
+              dimmed={focusDimmed}
               flowDirection={flowDirection}
               flowColor={flowColor}
               exportFlowDirection="reverse"
@@ -587,17 +644,35 @@ export function SvgCanvas({ controller, svgRef: externalSvgRef }: SvgCanvasProps
             defaultVisual={controller.diagram.visual.defaultTable}
             groupVisual={getTableGroupVisual(table, controller.diagram.groups)}
             badgeVisuals={controller.diagram.visual.badges}
-            selected={selected?.type === "table" && selected.id === table.id}
+            selected={selectedTableIds.includes(table.id) || (selected?.type === "table" && selected.id === table.id)}
+            showResizeHandles={selected?.type === "table" && selected.id === table.id}
+            dimmed={Boolean(focusedTableIds && !focusedTableIds.has(table.id))}
             relationObstacle={relationEditor.obstacleTableIds.has(table.id)}
             relationMode={relationMode}
             relationSource={relationSource}
             onPointerDown={(event, item) => {
+              const nextIds = event.shiftKey
+                ? selectedTableIds.includes(item.id)
+                  ? selectedTableIds.filter((id) => id !== item.id)
+                  : [...selectedTableIds, item.id]
+                : selectedTableIds.includes(item.id) && selectedTableIds.length > 1
+                  ? selectedTableIds
+                  : [item.id];
+              if (!nextIds.length) {
+                controller.setSelected(undefined);
+                setSelectedTableIds([]);
+                return;
+              }
+              setSelectedTableIds(nextIds);
               controller.setSelected({ type: "table", id: item.id });
               beginSvgDrag(event, {
                 kind: "table",
-                id: item.id,
+                ids: nextIds,
                 start: toSvgPoint(event),
-                origin: { x: item.x, y: item.y },
+                origins: Object.fromEntries(nextIds.flatMap((id) => {
+                  const selectedTable = tableMap.get(id);
+                  return selectedTable ? [[id, { x: selectedTable.x, y: selectedTable.y }]] : [];
+                })),
               });
             }}
             onColumnPointerDown={(event, item, column) => {
@@ -634,6 +709,21 @@ export function SvgCanvas({ controller, svgRef: externalSvgRef }: SvgCanvasProps
         {relationEditor.alignment && <RelationSnapGuides alignment={relationEditor.alignment} />}
         {relationEditor.feedback && <RelationConstraintFeedback feedback={relationEditor.feedback} />}
       </svg>
+      <CanvasNavigator
+        tables={controller.diagram.tables}
+        selectedTableId={selected?.type === "table" ? selected.id : undefined}
+        selectedCount={selectedTableIds.length}
+        focusNeighbors={focusNeighbors}
+        onToggleFocus={() => setFocusNeighbors((value) => !value)}
+        onSelect={focusTable}
+      />
+      <DiagramMinimap
+        tables={controller.diagram.tables}
+        bounds={computedBounds}
+        viewport={viewport}
+        selectedIds={new Set(selectedTableIds)}
+        onCenter={(point) => setViewport((current) => ({ ...current, x: point.x - current.width / 2, y: point.y - current.height / 2 }))}
+      />
       <CanvasToolbar
         position={zoomPanelPosition} dragging={Boolean(zoomPanelDrag)} relationMode={relationMode}
         choosingTarget={Boolean(relationSource)} snapToGrid={controller.snapToGrid}
@@ -646,9 +736,65 @@ export function SvgCanvas({ controller, svgRef: externalSvgRef }: SvgCanvasProps
         onAutoLayout={() => void controller.applyAutoLayout().then((laidOut) => setViewport(fitViewBoxToAspect(getTableBounds(laidOut.tables), canvasSize.width, canvasSize.height)))}
         onToggleSnap={() => controller.setSnapToGrid(!controller.snapToGrid)}
         onZoomOut={() => zoomAt(1 / 1.2)} onZoomIn={() => zoomAt(1.2)} onFit={fitDiagram}
+        onFitSelection={fitSelection} canFitSelection={Boolean(selectedTableIds.length || selected?.type === "table")}
       />
     </>
   );
+}
+
+function CanvasNavigator({ tables, selectedTableId, selectedCount, focusNeighbors, onToggleFocus, onSelect }: {
+  tables: TableModel[];
+  selectedTableId?: string;
+  selectedCount: number;
+  focusNeighbors: boolean;
+  onToggleFocus(): void;
+  onSelect(table: TableModel): void;
+}) {
+  const [open, setOpen] = useState(false);
+  const [query, setQuery] = useState("");
+  const results = useMemo(() => {
+    const normalized = query.trim().toLocaleLowerCase();
+    if (!normalized) return tables.slice(0, 10);
+    return tables.filter((table) => table.name.toLocaleLowerCase().includes(normalized) ||
+      table.columns.some((column) => column.name.toLocaleLowerCase().includes(normalized) || column.type.toLocaleLowerCase().includes(normalized))).slice(0, 16);
+  }, [query, tables]);
+  return <div className={`canvas-navigator${open ? " is-open" : ""}`}>
+    <div className="canvas-navigator-bar">
+      <button type="button" className="icon-button" title="Buscar tabela ou campo" aria-label="Buscar tabela ou campo" onClick={() => setOpen((value) => !value)}>{open ? <X size={15} /> : <Search size={15} />}</button>
+      {open && <label><Search size={14} /><input autoFocus value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Tabela ou campo…" /></label>}
+      {selectedTableId && <button type="button" className={`icon-button${focusNeighbors ? " is-toggle-active" : ""}`} title="Focar tabela e dependências" aria-pressed={focusNeighbors} onClick={onToggleFocus}><Focus size={15} /></button>}
+      {selectedCount > 1 && <span className="canvas-selection-count">{selectedCount} selecionadas</span>}
+    </div>
+    {open && <div className="canvas-navigator-results">{results.map((table) => {
+      const matchingColumns = query.trim() ? table.columns.filter((column) => `${column.name} ${column.type}`.toLocaleLowerCase().includes(query.trim().toLocaleLowerCase())).slice(0, 3) : [];
+      return <button type="button" key={table.id} className={table.id === selectedTableId ? "is-active" : ""} onClick={() => { onSelect(table); setOpen(false); }}><strong>{table.name}</strong><small>{matchingColumns.length ? matchingColumns.map((column) => column.name).join(", ") : `${table.columns.length} campos`}</small></button>;
+    })}{!results.length && <span className="canvas-navigator-empty">Nada encontrado.</span>}</div>}
+  </div>;
+}
+
+function DiagramMinimap({ tables, bounds, viewport, selectedIds, onCenter }: {
+  tables: TableModel[];
+  bounds: ViewBox;
+  viewport: ViewBox;
+  selectedIds: Set<string>;
+  onCenter(point: Point): void;
+}) {
+  if (tables.length < 2) return null;
+  const click = (event: MouseEvent<SVGSVGElement>) => {
+    const rect = event.currentTarget.getBoundingClientRect();
+    if (!rect.width || !rect.height) return;
+    onCenter({
+      x: bounds.x + ((event.clientX - rect.left) / rect.width) * bounds.width,
+      y: bounds.y + ((event.clientY - rect.top) / rect.height) * bounds.height,
+    });
+  };
+  return <div className="diagram-minimap" aria-label="Minimapa do diagrama">
+    <svg viewBox={`${bounds.x} ${bounds.y} ${Math.max(1, bounds.width)} ${Math.max(1, bounds.height)}`} preserveAspectRatio="none" onClick={click}>
+      <rect x={bounds.x} y={bounds.y} width={bounds.width} height={bounds.height} className="minimap-background" />
+      {tables.map((table) => <rect key={table.id} x={table.x} y={table.y} width={table.width} height={table.height} rx={3} className={selectedIds.has(table.id) ? "minimap-table is-selected" : "minimap-table"} />)}
+      <rect x={viewport.x} y={viewport.y} width={viewport.width} height={viewport.height} className="minimap-viewport" />
+    </svg>
+  </div>;
 }
 
 function RelationSnapGuides({ alignment }: { alignment: RelationPointAlignment }) {

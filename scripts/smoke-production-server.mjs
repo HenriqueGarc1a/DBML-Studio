@@ -3,6 +3,7 @@ import { once } from "node:events";
 import { mkdir, readFile, rm, stat } from "node:fs/promises";
 import path from "node:path";
 import process from "node:process";
+import { DatabaseSync } from "node:sqlite";
 
 const root = process.cwd();
 const tempRoot = path.join("/tmp", `dbml-studio-production-smoke-${process.pid}`);
@@ -11,6 +12,23 @@ let child;
 
 try {
   await mkdir(savesDir, { recursive: true });
+  const sqlitePath = path.join(savesDir, "shop.sqlite");
+  const sqlite = new DatabaseSync(sqlitePath);
+  sqlite.exec(`
+    PRAGMA foreign_keys = ON;
+    CREATE TABLE customers (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      email TEXT NOT NULL UNIQUE
+    );
+    CREATE TABLE orders (
+      id INTEGER PRIMARY KEY,
+      customer_id INTEGER NOT NULL,
+      total NUMERIC(12, 2) DEFAULT 0,
+      FOREIGN KEY (customer_id) REFERENCES customers(id) ON DELETE CASCADE
+    );
+    CREATE INDEX orders_customer_idx ON orders(customer_id);
+  `);
+  sqlite.close();
   let runtime = await startServer();
   child = runtime.child;
 
@@ -20,6 +38,16 @@ try {
 
   const deepRoute = await fetch(`${runtime.origin}/editor/${encodeURIComponent("file:alpha.dbml")}/wiki`);
   assert(deepRoute.ok && (await deepRoute.text()).includes('id="root"'), "fallback do BrowserRouter falhou");
+
+  const introspection = await post(runtime.origin, "/__dbml/introspect", { dialect: "sqlite", path: "shop.sqlite" });
+  if (!introspection.ok) throw new Error(`introspecção SQLite retornou ${introspection.status}: ${await introspection.text()}`);
+  const introspectedSchema = (await introspection.json()).schema;
+  assert(introspectedSchema.tables.length === 2, "introspecção SQLite não encontrou as tabelas");
+  assert(introspectedSchema.tables.some((table) => table.foreignKeys.length === 1), "introspecção SQLite não encontrou a foreign key");
+  assert(introspectedSchema.tables.some((table) => table.indexes.some((index) => index.name === "orders_customer_idx")), "introspecção SQLite não encontrou o índice");
+
+  const escapedSqlite = await post(runtime.origin, "/__dbml/introspect", { dialect: "sqlite", path: "../outside.sqlite" });
+  assert(escapedSqlite.status === 403, "SQLite fora da raiz permitida não foi bloqueado");
 
   for (const filename of [".dbml", "..dbml", "...dbml"]) {
     const maliciousDelete = await post(runtime.origin, "/__dbml/delete", { filename });
@@ -93,6 +121,7 @@ try {
 
   console.log("✓ runtime: healthcheck e headers de segurança");
   console.log("✓ runtime: fallback de rotas do React Router");
+  console.log("✓ runtime: introspecção SQLite read-only, índices/FKs e isolamento de caminho");
   console.log("✓ runtime: save/list/wiki.json+wiki.md/rename/delete e preview");
   console.log("✓ runtime: persistência após reinício");
   console.log("✓ runtime: nomes perigosos, conflito, JSON inválido e limite de payload bloqueados");
@@ -113,6 +142,7 @@ async function startServer() {
       PORT: "0",
       STATIC_DIR: path.join(root, "dist"),
       DBML_SAVES_DIR: savesDir,
+      DBML_SQLITE_ROOT: savesDir,
       DBML_LEGACY_DIR: path.join(tempRoot, "legacy"),
       MAX_BODY_BYTES: "4096",
     },

@@ -231,6 +231,94 @@ Ref: audit_log.user_id > user.id
   it("rejects unfinished DBML blocks", () => {
     expect(() => parseDbml(`Table broken {
   id int [pk]
-`)).toThrow(/nao foi fechada/);
+    `)).toThrow(/nao foi fechada/);
+  });
+
+  it("preserves advanced DBML blocks and reports read-only compatibility warnings", () => {
+    const diagram = parseDbml(`Project commerce {
+  database_type: 'PostgreSQL'
+}
+
+TablePartial timestamps {
+  created_at timestamp [not null]
+}
+
+Table public.orders as O [headercolor: #3498DB] {
+  id int [pk]
+  ~timestamps
+}
+
+TableGroup sales {
+  public.orders
+}
+
+CustomBlock extension {
+  value: true
+}`);
+
+    expect(diagram.tables[0]).toMatchObject({ name: "public.orders", alias: "O", partials: ["timestamps"] });
+    expect(diagram.tables[0].headerSettings).toEqual(["headercolor: #3498DB"]);
+    expect(diagram.advancedBlocks?.map((block) => block.kind)).toEqual([
+      "Project",
+      "TablePartial",
+      "TableGroup",
+      "Unknown",
+    ]);
+    expect(diagram.advancedBlocks?.find((block) => block.kind === "TableGroup")?.tables).toEqual(["public.orders"]);
+    expect(diagram.dbmlWarnings?.join(" ")).toMatch(/TablePartial/);
+    expect(diagram.dbmlWarnings?.join(" ")).toMatch(/CustomBlock/);
+  });
+
+  it("parses multiline notes and composite relations", () => {
+    const diagram = parseDbml(`Table order_items {
+  order_id int [not null]
+  product_id int [not null]
+  description text [note: '''
+    Texto com // comentário literal
+    em mais de uma linha
+  ''']
+  Note: '''
+    Itens pertencentes a um pedido.
+    A nota continua aqui.
+  '''
+}
+
+Table products {
+  order_id int [not null]
+  id int [not null]
+}
+
+Ref composite_fk: order_items.(order_id, product_id) > products.(order_id, id) [delete: cascade]
+`);
+
+    expect(diagram.tables[0].note).toBe("Itens pertencentes a um pedido.\nA nota continua aqui.");
+    expect(diagram.tables[0].columns[2].note).toBe("Texto com // comentário literal\nem mais de uma linha");
+    expect(diagram.relations[0]).toMatchObject({
+      dbmlName: "composite_fk",
+      fromColumns: ["order_id", "product_id"],
+      toColumns: ["order_id", "id"],
+      dbmlSettings: ["delete: cascade"],
+    });
+    expect(diagram.dbmlWarnings).toContain("Relações compostas são preservadas integralmente; no canvas, a linha é ancorada no primeiro campo de cada lado.");
+  });
+
+  it("parses table and column checks while preserving unknown nested blocks", () => {
+    const diagram = parseDbml(`Table accounts {
+  balance integer [check: \`balance >= 0\`, check: \`balance < 1000000\`]
+  debt integer
+
+  checks {
+    \`balance - debt >= 0\` [name: 'positive_equity']
+  }
+
+  records (balance, debt) {
+    100, 20
+  }
+}`);
+
+    expect(diagram.tables[0].columns[0].rawSettings).toContain("check: `balance >= 0`");
+    expect(diagram.tables[0].checks?.[0]).toMatchObject({ expression: "balance - debt >= 0", name: "positive_equity" });
+    expect(diagram.tables[0].preservedBlocks?.[0]).toContain("records (balance, debt)");
+    expect(diagram.dbmlWarnings?.join(" ")).toMatch(/records.*somente leitura/i);
   });
 });

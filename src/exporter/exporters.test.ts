@@ -139,4 +139,69 @@ Ref: project.user_id > user.id
       viaPoints: [],
     });
   });
+
+  it("roundtrips advanced blocks, multiline notes and composite refs without dropping data", () => {
+    const advanced = `Project shop {
+  database_type: 'PostgreSQL'
+}
+
+TablePartial timestamps {
+  created_at timestamp
+}
+
+Table orders as O {
+  tenant_id int [not null]
+  id int [pk]
+  note text [note: '''
+    linha um
+    linha dois
+  ''']
+  ~timestamps
+  Note: '''
+    Nota da tabela
+    continua aqui
+  '''
+}
+
+Table tenants {
+  tenant_id int [not null]
+  order_id int [not null]
+}
+
+Ref order_tenant: orders.(tenant_id, id) > tenants.(tenant_id, order_id) [delete: cascade]
+
+TableGroup core {
+  orders
+  tenants
+}`;
+    const dbml = exportDbml(parseDbml(advanced));
+    const restored = parseDbml(dbml);
+
+    expect(dbml).toContain("Project shop");
+    expect(dbml).toContain("TablePartial timestamps");
+    expect(dbml).toContain("TableGroup core");
+    expect(dbml).toContain("Ref order_tenant: orders.(tenant_id, id) > tenants.(tenant_id, order_id) [delete: cascade]");
+    expect(restored.tables[0]).toMatchObject({ alias: "O", partials: ["timestamps"], note: "Nota da tabela\ncontinua aqui" });
+    expect(restored.tables[0].columns[2].note).toBe("linha um\nlinha dois");
+    expect(restored.relations[0].fromColumns).toEqual(["tenant_id", "id"]);
+  });
+
+  it("roundtrips checks and read-only records nested in a table", () => {
+    const sourceWithChecks = `Table accounts {
+  balance integer [check: \`balance >= 0\`]
+  debt integer
+  checks {
+    \`balance - debt >= 0\` [name: 'positive_equity']
+  }
+  records (balance, debt) {
+    100, 20
+  }
+}`;
+    const exported = exportDbml(parseDbml(sourceWithChecks));
+    const restored = parseDbml(exported);
+    expect(exported).toContain("`balance - debt >= 0` [name: positive_equity]");
+    expect(exported).toContain("records (balance, debt)");
+    expect(restored.tables[0].checks?.[0].name).toBe("positive_equity");
+    expect(restored.tables[0].preservedBlocks?.[0]).toContain("100, 20");
+  });
 });

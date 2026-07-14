@@ -16,6 +16,8 @@ interface TableNodeProps {
   groupVisual?: TableVisual;
   badgeVisuals: BadgeVisualSet;
   selected: boolean;
+  showResizeHandles?: boolean;
+  dimmed?: boolean;
   relationObstacle?: boolean;
   relationMode: boolean;
   relationSource?: RelationFieldEndpoint;
@@ -34,6 +36,8 @@ export function TableNode({
   groupVisual,
   badgeVisuals,
   selected,
+  showResizeHandles = selected,
+  dimmed = false,
   relationObstacle = false,
   relationMode,
   relationSource,
@@ -56,7 +60,7 @@ export function TableNode({
 
   return (
     <g
-      className={`table-node${selected ? " is-selected" : ""}${relationObstacle ? " is-route-obstacle" : ""}`}
+      className={`table-node${selected ? " is-selected" : ""}${relationObstacle ? " is-route-obstacle" : ""}${dimmed ? " is-focus-dimmed" : ""}`}
       data-table-id={table.id}
       data-route-obstacle={relationObstacle ? "true" : "false"}
       transform={`translate(${table.x} ${table.y})`}
@@ -155,7 +159,7 @@ export function TableNode({
           </g>
         );
       })}
-      {selected && (
+      {showResizeHandles && (
         <ResizeHandles
           mode="horizontal"
           width={table.width}

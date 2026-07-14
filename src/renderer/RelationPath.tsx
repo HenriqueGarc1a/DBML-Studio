@@ -11,6 +11,7 @@ interface RelationPathProps {
   selected: boolean;
   color: string;
   highlighted?: boolean;
+  dimmed?: boolean;
   flowDirection?: "forward" | "reverse";
   flowColor?: string;
   exportFlowDirection?: "forward" | "reverse";
@@ -34,6 +35,7 @@ export function RelationPath({
   selected,
   color,
   highlighted = false,
+  dimmed = false,
   flowDirection = "forward",
   flowColor,
   exportFlowDirection,
@@ -65,7 +67,7 @@ export function RelationPath({
 
   return (
     <g
-      className={`relation-path${selected ? " is-selected" : ""}${highlighted ? " is-table-highlighted" : ""}${editing ? " is-editing" : ""}${constrained ? " is-constrained" : ""}`}
+      className={`relation-path${selected ? " is-selected" : ""}${highlighted ? " is-table-highlighted" : ""}${editing ? " is-editing" : ""}${constrained ? " is-constrained" : ""}${dimmed ? " is-focus-dimmed" : ""}`}
       data-relation-id={relation.id}
       data-route-points={JSON.stringify(geometry.points)}
       data-drag-state={editing ? "dragging" : "idle"}

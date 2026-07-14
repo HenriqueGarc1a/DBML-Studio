@@ -3,24 +3,41 @@ import react from "@vitejs/plugin-react";
 import { mkdir, readdir, readFile, rename, rm, stat, writeFile } from "node:fs/promises";
 import type { IncomingMessage, ServerResponse } from "node:http";
 import path from "node:path";
+import { DatabaseIntrospectionError, introspectDatabase } from "./scripts/database-introspection.mjs";
 
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), "");
   return {
-    plugins: [react(), dbmlFilesPlugin(env.DBML_SAVES_DIR, env.DBML_LEGACY_DIR)],
+    plugins: [react(), dbmlFilesPlugin(env.DBML_SAVES_DIR, env.DBML_LEGACY_DIR, env.DBML_SQLITE_ROOT)],
     build: {
       chunkSizeWarningLimit: 1500,
     },
   };
 });
 
-function dbmlFilesPlugin(configuredSavesDir?: string, configuredLegacyDir?: string) {
+function dbmlFilesPlugin(configuredSavesDir?: string, configuredLegacyDir?: string, configuredSqliteRoot?: string) {
   const savesDir = path.resolve(configuredSavesDir ?? path.join(process.cwd(), "saves"));
   const legacyDir = path.resolve(configuredLegacyDir ?? path.join(process.cwd(), "dbml"));
+  const sqliteRoot = path.resolve(configuredSqliteRoot ?? savesDir);
 
   return {
     name: "dbml-files",
     configureServer(server) {
+      server.middlewares.use("/__dbml/introspect", async (request, response) => {
+        if (request.method !== "POST") {
+          sendJson(response, 405, { error: "Method not allowed" });
+          return;
+        }
+        try {
+          const schema = await introspectDatabase(await readJsonBody(request), sqliteRoot);
+          sendJson(response, 200, { schema });
+        } catch (error) {
+          const status = error instanceof DatabaseIntrospectionError ? error.status : 502;
+          const message = error instanceof Error ? error.message : "Database introspection failed";
+          sendJson(response, status, { error: status >= 500 ? `Não foi possível introspectar o banco: ${message}` : message });
+        }
+      });
+
       server.middlewares.use("/__dbml/list", async (_request, response) => {
         try {
           await migrateLegacySaves(legacyDir, savesDir);

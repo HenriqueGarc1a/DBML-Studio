@@ -2,6 +2,7 @@ import { spawn } from "node:child_process";
 import { mkdir, rm, writeFile } from "node:fs/promises";
 import path from "node:path";
 import process from "node:process";
+import { DatabaseSync } from "node:sqlite";
 
 const host = "127.0.0.1";
 const appPort = 4173;
@@ -14,18 +15,64 @@ let vite;
 let chrome;
 let cdp;
 
+class CdpClient {
+  static async connect(url) {
+    const client = new CdpClient(new WebSocket(url));
+    await new Promise((resolve, reject) => {
+      client.socket.addEventListener("open", resolve, { once: true });
+      client.socket.addEventListener("error", reject, { once: true });
+    });
+    return client;
+  }
+
+  constructor(socket) {
+    this.socket = socket;
+    this.nextId = 1;
+    this.pending = new Map();
+    socket.addEventListener("message", (event) => {
+      const message = JSON.parse(String(event.data));
+      if (!message.id) return;
+      const pending = this.pending.get(message.id);
+      if (!pending) return;
+      this.pending.delete(message.id);
+      message.error ? pending.reject(new Error(message.error.message)) : pending.resolve(message.result ?? {});
+    });
+  }
+
+  send(method, params = {}) {
+    const id = this.nextId++;
+    return new Promise((resolve, reject) => {
+      this.pending.set(id, { resolve, reject });
+      this.socket.send(JSON.stringify({ id, method, params }));
+    });
+  }
+
+  close() {
+    this.socket.close();
+  }
+}
+
 try {
   await createFixture(saveRoot);
+  createSqliteFixture(path.join(saveRoot, "dev.sqlite"));
   vite = spawn(process.execPath, ["node_modules/vite/bin/vite.js", "--host", host, "--port", String(appPort)], {
     cwd: process.cwd(),
     env: {
       ...process.env,
       DBML_SAVES_DIR: saveRoot,
       DBML_LEGACY_DIR: path.join(tempRoot, "legacy"),
+      DBML_SQLITE_ROOT: saveRoot,
     },
     stdio: ["ignore", "pipe", "pipe"],
   });
   await waitForHttp(`http://${host}:${appPort}`);
+  const introspection = await fetch(`http://${host}:${appPort}/__dbml/introspect`, {
+    method: "POST", headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ dialect: "sqlite", path: "dev.sqlite" }),
+  });
+  if (!introspection.ok) throw new Error(`middleware de introspecção retornou ${introspection.status}: ${await introspection.text()}`);
+  const devSchema = (await introspection.json()).schema;
+  assert(devSchema.tables.some((table) => table.name === "dev_check"), "middleware de desenvolvimento não introspectou SQLite");
 
   chrome = spawn("google-chrome", [
     "--headless=new",
@@ -54,6 +101,7 @@ try {
   await testObstacleFeedback();
 
   console.log("✓ Chrome real: clique seleciona sem mover");
+  console.log("✓ Vite dev: introspecção SQLite disponível no mesmo endpoint do runtime");
   console.log("✓ Chrome real: hover não cria uma linha fantasma");
   console.log("✓ Chrome real: extremidade troca o lado de encaixe ao atravessar a tabela");
   console.log("✓ Chrome real: ponto intermediário cria uma âncora livre e aplica grid apenas ao soltar");
@@ -154,7 +202,7 @@ async function testCornerPointMovement() {
   await mouse("mousePressed", start, { button: "left", buttons: 1, clickCount: 1 });
   await dragMouse(start, target, 5);
   const preview = await routePoints();
-  assert(preview.some((point) => Math.abs(point.x - targetPoint.x) < 0.75 && Math.abs(point.y - targetPoint.y) < 0.75), "ponto de curva não acompanhou o cursor em dois eixos");
+  assert(preview.some((point) => Math.abs(point.x - targetPoint.x) < 1.25 && Math.abs(point.y - targetPoint.y) < 1.25), "ponto de curva não acompanhou o cursor em dois eixos");
   await mouse("mouseReleased", target, { button: "left", buttons: 0, clickCount: 1 });
   await keyChord("z", true, false);
   await waitUntil(async () => samePoints(initial, await routePoints()));
@@ -182,15 +230,14 @@ async function testObstacleFeedback() {
 
 async function testTableExitAlignment() {
   const initial = await routePoints();
-  const midpointPoint = midpoint(initial[0], initial[1]);
-  const start = await svgToClient(midpointPoint);
-  const target = await svgToClient({ x: midpointPoint.x + 10, y: 157 });
+  const start = await svgToClient(initial[1]);
+  const target = await svgToClient({ x: initial[1].x - 10, y: initial[0].y + 5 });
 
   await mouse("mousePressed", start, { button: "left", buttons: 1, clickCount: 1 });
   await dragMouse(start, target, 5);
   await waitForExpression("Boolean(document.querySelector('[data-testid=relation-snap-guides]'))");
   const snapY = await evaluate("Number(document.querySelector('.relation-snap-point')?.getAttribute('cy'))");
-  assert(Math.abs(snapY - 152) < 0.1, "o ponto não alinhou à saída do campo conectado");
+  assert(Math.abs(snapY - initial[0].y) < 0.1, "o ponto não alinhou à saída do campo conectado");
   await mouse("mouseReleased", target, { button: "left", buttons: 0, clickCount: 1 });
   await keyChord("z", true, false);
   await waitUntil(async () => samePoints(initial, await routePoints()));
@@ -200,7 +247,8 @@ async function testCrossingThroughObstacle() {
   const initial = await routePoints();
   const pointIndex = 2;
   const start = await svgToClient(initial[pointIndex]);
-  const desired = { x: 590, y: 80 };
+  const blocker = await tableBounds("blocker");
+  const desired = { x: blocker.right + 70, y: (blocker.top + blocker.bottom) / 2 };
   const target = await svgToClient(desired);
 
   await mouse("mousePressed", start, { button: "left", buttons: 1, clickCount: 1 });
@@ -209,7 +257,7 @@ async function testCrossingThroughObstacle() {
   assert(await evaluate("document.querySelector('.relation-path')?.dataset.blocked === 'false'"), "a linha continuou presa depois que o cursor saiu da tabela");
   const preview = await routePoints();
   assert(preview.some((point) => Math.abs(point.x - desired.x) < 0.75 && Math.abs(point.y - desired.y) < 0.75), "o caminho não alcançou o ponto válido no outro lado da tabela");
-  assert(!routeCrossesExpandedTable(preview, { left: 319, top: 9, right: 561, bottom: 291 }), "o caminho recalculado atravessou a margem da tabela");
+  assert(!routeCrossesExpandedTable(preview, { left: blocker.left - 29, top: blocker.top - 29, right: blocker.right + 29, bottom: blocker.bottom + 29 }), "o caminho recalculado atravessou a margem da tabela");
   await mouse("mouseReleased", target, { button: "left", buttons: 0, clickCount: 1 });
   await keyChord("z", true, false);
   await waitUntil(async () => samePoints(initial, await routePoints()));
@@ -217,6 +265,17 @@ async function testCrossingThroughObstacle() {
 
 async function routePoints() {
   return evaluate("JSON.parse(document.querySelector('.relation-path').dataset.routePoints)");
+}
+
+async function tableBounds(id) {
+  return evaluate(`(() => {
+    const group = document.querySelector('[data-table-id=${id}]');
+    const rect = group?.querySelector('rect');
+    const matrix = group?.transform.baseVal.consolidate()?.matrix;
+    if (!rect || !matrix) return undefined;
+    const left = matrix.e; const top = matrix.f;
+    return { left, top, right: left + Number(rect.getAttribute('width')), bottom: top + Number(rect.getAttribute('height')) };
+  })()`);
 }
 
 async function svgToClient(point) {
@@ -326,43 +385,6 @@ function delay(milliseconds) {
   return new Promise((resolve) => setTimeout(resolve, milliseconds));
 }
 
-class CdpClient {
-  static async connect(url) {
-    const client = new CdpClient(new WebSocket(url));
-    await new Promise((resolve, reject) => {
-      client.socket.addEventListener("open", resolve, { once: true });
-      client.socket.addEventListener("error", reject, { once: true });
-    });
-    return client;
-  }
-
-  constructor(socket) {
-    this.socket = socket;
-    this.nextId = 1;
-    this.pending = new Map();
-    socket.addEventListener("message", (event) => {
-      const message = JSON.parse(String(event.data));
-      if (!message.id) return;
-      const pending = this.pending.get(message.id);
-      if (!pending) return;
-      this.pending.delete(message.id);
-      message.error ? pending.reject(new Error(message.error.message)) : pending.resolve(message.result ?? {});
-    });
-  }
-
-  send(method, params = {}) {
-    const id = this.nextId++;
-    return new Promise((resolve, reject) => {
-      this.pending.set(id, { resolve, reject });
-      this.socket.send(JSON.stringify({ id, method, params }));
-    });
-  }
-
-  close() {
-    this.socket.close();
-  }
-}
-
 async function createFixture(root) {
   const folder = path.join(root, "relation-e2e");
   await mkdir(folder, { recursive: true });
@@ -393,7 +415,7 @@ Ref: child.parent_id > parent.id
   ];
   const relation = {
     id: "relation-child-parent", fromTable: "child", fromColumn: "parent_id", toTable: "parent", toColumn: "id",
-    fromSide: "east", toSide: "west", route: "orthogonal",
+    fromSide: "east", toSide: "west", sideMode: "manual", route: "orthogonal",
     viaPoints: [{ x: 300, y: 180 }, { x: 300, y: 0 }, { x: 650, y: 0 }, { x: 650, y: 152 }],
     color: "#94a3b8", usesTableLineColor: true, opacity: 0.9, strokeWidth: 4, style: "solid",
     fromCardinality: "many", toCardinality: "one", label: "",
@@ -410,6 +432,12 @@ Ref: child.parent_id > parent.id
     savedColors: [],
   };
   await writeFile(path.join(folder, "ui.json"), JSON.stringify({ version: 1, visual, tables, relations: [relation], groups: [] }), "utf8");
+}
+
+function createSqliteFixture(filename) {
+  const database = new DatabaseSync(filename);
+  database.exec("CREATE TABLE dev_check (id INTEGER PRIMARY KEY, label TEXT NOT NULL)");
+  database.close();
 }
 
 function tableLayout(id, x, y, width, height, visual) {

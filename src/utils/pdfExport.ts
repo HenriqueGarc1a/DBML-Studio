@@ -12,8 +12,16 @@ interface PdfImageLayout {
   height: number;
 }
 
-interface SvgExportOptions {
+export interface SvgExportOptions {
   variant?: "normal" | "all-flow";
+  includeGrid?: boolean;
+  transparentBackground?: boolean;
+  scale?: number;
+}
+
+export interface PdfExportOptions extends SvgExportOptions {
+  filename?: string;
+  pages?: "normal" | "all-flow" | "both";
 }
 
 interface FlowArrowPlacement {
@@ -47,15 +55,25 @@ const INLINE_STYLE_PROPERTIES = [
 
 export async function exportDiagramPdf(
   svg: SVGSVGElement | null,
-  filename = "diagram.pdf",
+  optionsOrFilename: PdfExportOptions | string = {},
 ): Promise<boolean> {
   if (!svg) return false;
+
+  const options: PdfExportOptions = typeof optionsOrFilename === "string"
+    ? { filename: optionsOrFilename }
+    : optionsOrFilename;
 
   const dimensions = getSvgDimensions(svg);
   if (dimensions.width <= 0 || dimensions.height <= 0) return false;
 
-  const allFlowPng = await svgToPng(svg, dimensions, { variant: "all-flow" });
-  const normalPng = await svgToPng(svg, dimensions);
+  const pages = options.pages ?? "normal";
+  const sharedOptions = {
+    includeGrid: options.includeGrid,
+    transparentBackground: options.transparentBackground,
+    scale: options.scale,
+  };
+  const normalPng = pages === "all-flow" ? undefined : await svgToPng(svg, dimensions, sharedOptions);
+  const allFlowPng = pages === "normal" ? undefined : await svgToPng(svg, dimensions, { ...sharedOptions, variant: "all-flow" });
   const { jsPDF } = await import("jspdf");
   const margin = 0;
   const pageWidth = Math.max(320, dimensions.width);
@@ -69,9 +87,37 @@ export async function exportDiagramPdf(
 
   const layout = getPdfImageLayout(dimensions, pageWidth, pageHeight, margin);
 
-  addImagePage(pdf, normalPng, layout);
-  pdf.save(filename);
+  addImagePage(pdf, normalPng ?? allFlowPng!, layout);
+  if (pages === "both" && allFlowPng) {
+    pdf.addPage([pageWidth, pageHeight], orientation);
+    addImagePage(pdf, allFlowPng, layout);
+  }
+  pdf.save(options.filename ?? "diagram.pdf");
   return true;
+}
+
+export async function exportDiagramSvg(
+  svg: SVGSVGElement | null,
+  filename = "diagram.svg",
+  options: SvgExportOptions = {},
+): Promise<boolean> {
+  if (!svg) return false;
+  const dimensions = getSvgDimensions(svg);
+  const clone = cloneSvgForExport(svg, dimensions, options);
+  const source = new XMLSerializer().serializeToString(clone);
+  return downloadBlob(filename, new Blob([source], { type: "image/svg+xml;charset=utf-8" }));
+}
+
+export async function exportDiagramPng(
+  svg: SVGSVGElement | null,
+  filename = "diagram.png",
+  options: SvgExportOptions = {},
+): Promise<boolean> {
+  if (!svg) return false;
+  const dimensions = getSvgDimensions(svg);
+  const dataUrl = await svgToPng(svg, dimensions, options);
+  const response = await fetch(dataUrl);
+  return downloadBlob(filename, await response.blob());
 }
 
 async function svgToPng(
@@ -86,7 +132,7 @@ async function svgToPng(
 
   try {
     const image = await loadImage(url);
-    const requestedScale = window.devicePixelRatio > 1 ? 2 : 1.5;
+    const requestedScale = options.scale ?? (window.devicePixelRatio > 1 ? 2 : 1.5);
     const scale = Math.max(1, Math.min(requestedScale, MAX_CANVAS_SIDE / Math.max(dimensions.width, dimensions.height)));
     const canvas = document.createElement("canvas");
     canvas.width = Math.ceil(dimensions.width * scale);
@@ -97,6 +143,7 @@ async function svgToPng(
       throw new Error("Nao foi possivel criar contexto 2D para exportar PDF.");
     }
 
+    if (!options.transparentBackground) context.clearRect(0, 0, canvas.width, canvas.height);
     context.drawImage(image, 0, 0, canvas.width, canvas.height);
     return canvas.toDataURL("image/png");
   } finally {
@@ -140,6 +187,13 @@ function cloneSvgForExport(
   if (options.variant === "all-flow") {
     prepareAllFlowExport(svg, clone);
   }
+
+  clone.querySelectorAll(".relation-edit-handles, .relation-endpoint-handles, .relation-segment-hitbox, .relation-edit-feedback, .relation-snap-guides, .table-route-obstacle-indicator, .resize-handle").forEach((element) => element.remove());
+  if (options.includeGrid === false) clone.querySelectorAll(".canvas-grid").forEach((element) => element.remove());
+  if (options.transparentBackground) clone.querySelectorAll<SVGElement>(".canvas-background").forEach((element) => {
+    element.setAttribute("fill", "none");
+    element.style.setProperty("fill", "none");
+  });
 
   return clone;
 }
@@ -395,4 +449,17 @@ function loadImage(url: string): Promise<HTMLImageElement> {
     image.onerror = () => reject(new Error("Nao foi possivel carregar o SVG para exportar PDF."));
     image.src = url;
   });
+}
+
+function downloadBlob(filename: string, blob: Blob): boolean {
+  const url = URL.createObjectURL(blob);
+  const anchor = document.createElement("a");
+  anchor.href = url;
+  anchor.download = filename;
+  anchor.style.display = "none";
+  document.body.appendChild(anchor);
+  anchor.click();
+  anchor.remove();
+  window.setTimeout(() => URL.revokeObjectURL(url), 0);
+  return true;
 }

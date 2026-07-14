@@ -1,4 +1,4 @@
-import { Check, Cloud, Download, Eye, HardDrive, LoaderCircle, Save, Sparkles, X } from "lucide-react";
+import { Check, Cloud, Download, Eye, FileCode2, FileText, HardDrive, LoaderCircle, Save, Sparkles, X } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { toast } from "sonner";
@@ -6,6 +6,7 @@ import type { DiagramController } from "../../editor/types";
 import type { TableModel } from "../../model/types";
 import { downloadText } from "../../utils/download";
 import { slugify } from "../../utils/id";
+import { downloadWikiHtml, exportWikiPdf } from "../../wiki/wikiExport";
 import { WikiArchiveView } from "../../wiki/components/WikiArchiveView";
 import {
   WikiBuilderSidebar,
@@ -94,6 +95,16 @@ export function WikiPage({ controller }: { controller: DiagramController }) {
     if (downloadText(`${slugify(projectName)}-wiki.md`, wiki.markdown)) toast.success("Wiki baixada em Markdown");
     else toast.warning("A Wiki ainda não possui conteúdo para baixar");
   }, [projectName, wiki.markdown]);
+
+  const downloadHtml = useCallback(() => {
+    downloadWikiHtml(`${slugify(projectName)}-wiki.html`, wiki.document?.project.title || projectName, wiki.markdown);
+    toast.success("Wiki exportada em HTML");
+  }, [projectName, wiki.document?.project.title, wiki.markdown]);
+
+  const downloadPdf = useCallback(async () => {
+    await exportWikiPdf(`${slugify(projectName)}-wiki.pdf`, wiki.document?.project.title || projectName, wiki.markdown);
+    toast.success("Wiki exportada em PDF");
+  }, [projectName, wiki.document?.project.title, wiki.markdown]);
 
   const copyMarkdown = useCallback(async () => {
     try {
@@ -192,6 +203,12 @@ export function WikiPage({ controller }: { controller: DiagramController }) {
             </button>
             <button type="button" className="secondary-button" onClick={download} disabled={!wiki.ready}>
               <Download size={16} />Baixar .md
+            </button>
+            <button type="button" className="secondary-button" onClick={downloadHtml} disabled={!wiki.ready}>
+              <FileCode2 size={16} />HTML
+            </button>
+            <button type="button" className="secondary-button" onClick={() => void downloadPdf()} disabled={!wiki.ready}>
+              <FileText size={16} />PDF
             </button>
           </>
         )}

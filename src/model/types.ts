@@ -71,14 +71,27 @@ export interface TableIndexModel {
   columns: string[];
   unique?: boolean;
   primary?: boolean;
+  name?: string;
+  type?: string;
+  settings?: string[];
+  raw: string;
+}
+
+export interface TableCheckModel {
+  expression: string;
+  name?: string;
+  settings?: string[];
   raw: string;
 }
 
 export interface TableModel {
   id: string;
   name: string;
+  alias?: string;
+  headerSettings?: string[];
   columns: ColumnModel[];
   columnOrder?: string[];
+  partials?: string[];
   x: number;
   y: number;
   width: number;
@@ -87,6 +100,8 @@ export interface TableModel {
   usesDefaultStyle: boolean;
   usesGroupStyle: boolean;
   indexes: TableIndexModel[];
+  checks?: TableCheckModel[];
+  preservedBlocks?: string[];
   note?: string;
   layoutSource: LayoutSource;
 }
@@ -95,14 +110,21 @@ export interface EnumModel {
   id: string;
   name: string;
   values: string[];
+  valueSettings?: Record<string, string[]>;
+  note?: string;
 }
 
 export interface RelationModel {
   id: string;
+  dbmlName?: string;
+  dbmlOperator?: ">" | "<" | "-" | "<>";
+  dbmlSettings?: string[];
   fromTable: string;
   fromColumn: string;
+  fromColumns?: string[];
   toTable: string;
   toColumn: string;
+  toColumns?: string[];
   fromSide: Direction;
   toSide: Direction;
   sideMode?: "auto" | "manual";
@@ -116,6 +138,15 @@ export interface RelationModel {
   fromCardinality: Cardinality;
   toCardinality: Cardinality;
   label: string;
+}
+
+export type DbmlAdvancedBlockKind = "Project" | "TableGroup" | "TablePartial" | "Unknown";
+
+export interface DbmlAdvancedBlock {
+  kind: DbmlAdvancedBlockKind;
+  name: string;
+  raw: string;
+  tables?: string[];
 }
 
 export interface GroupModel {
@@ -142,5 +173,8 @@ export interface DiagramModel {
   relations: RelationModel[];
   groups: GroupModel[];
   enums: EnumModel[];
+  advancedBlocks?: DbmlAdvancedBlock[];
+  preservedStatements?: string[];
+  dbmlWarnings?: string[];
   source: string;
 }

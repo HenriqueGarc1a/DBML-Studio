@@ -15,6 +15,7 @@ export interface DiagramCanvasController {
   endHistoryBatch(): void;
   addTable(): void;
   updateTable(id: string, patch: Partial<TableModel>): void;
+  moveTables(items: Array<{ id: string; x: number; y: number }>): void;
   settleTable(id: string): void;
   addRelation(fromTableId: string, fromColumn: string, toTableId: string, toColumn: string): void;
   updateRelation(id: string, patch: Partial<RelationModel>): void;

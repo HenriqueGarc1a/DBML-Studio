@@ -1,4 +1,4 @@
-import { FolderPlus, GripVertical, Link2, Magnet, Maximize2, Redo2, Route, Sparkles, Table2, Undo2, ZoomIn, ZoomOut } from "lucide-react";
+import { FolderPlus, GripVertical, Link2, Magnet, Maximize2, Redo2, Route, ScanSearch, Sparkles, Table2, Undo2, ZoomIn, ZoomOut } from "lucide-react";
 import type { PointerEvent, ReactNode } from "react";
 import type { Point } from "../model/types";
 
@@ -7,7 +7,8 @@ interface CanvasToolbarProps {
   canUndo: boolean; canRedo: boolean; hasRelations: boolean; canAutoLayout: boolean;
   onDragStart(event: PointerEvent<HTMLButtonElement>): void; onDrag(event: PointerEvent<HTMLButtonElement>): void; onDragEnd(event: PointerEvent<HTMLButtonElement>): void;
   onUndo(): void; onRedo(): void; onAddTable(): void; onAddGroup(): void; onToggleRelation(): void; onTidy(): void;
-  onAutoLayout(): void; onToggleSnap(): void; onZoomOut(): void; onZoomIn(): void; onFit(): void;
+  onAutoLayout(): void; onToggleSnap(): void; onZoomOut(): void; onZoomIn(): void; onFit(): void; onFitSelection(): void;
+  canFitSelection: boolean;
 }
 
 export function CanvasToolbar(props: CanvasToolbarProps) {
@@ -25,6 +26,7 @@ export function CanvasToolbar(props: CanvasToolbarProps) {
       <Tool title="Diminuir zoom" onClick={props.onZoomOut}><ZoomOut size={16} /></Tool>
       <Tool title="Aumentar zoom" onClick={props.onZoomIn}><ZoomIn size={16} /></Tool>
       <Tool title="Centralizar diagrama" onClick={props.onFit}><Maximize2 size={16} /></Tool>
+      <Tool title="Enquadrar seleção" onClick={props.onFitSelection} disabled={!props.canFitSelection}><ScanSearch size={16} /></Tool>
     </div>
   </div>;
 }
